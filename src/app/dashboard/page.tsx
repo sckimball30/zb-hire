@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { Briefcase, Users, UserCheck, TrendingUp, Clock, CheckCircle } from 'lucide-react'
