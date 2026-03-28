@@ -2,14 +2,14 @@
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { Search } from 'lucide-react'
-import { useCallback } from 'react'
+import { useCallback, Suspense } from 'react'
 
 interface SearchInputProps {
   placeholder?: string
   defaultValue?: string
 }
 
-export function SearchInput({ placeholder = 'Search...', defaultValue = '' }: SearchInputProps) {
+function SearchInputInner({ placeholder = 'Search...', defaultValue = '' }: SearchInputProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -38,5 +38,18 @@ export function SearchInput({ placeholder = 'Search...', defaultValue = '' }: Se
         onChange={handleChange}
       />
     </div>
+  )
+}
+
+export function SearchInput(props: SearchInputProps) {
+  return (
+    <Suspense fallback={
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <input type="text" className="input pl-9 w-64" placeholder={props.placeholder ?? 'Search...'} defaultValue={props.defaultValue ?? ''} readOnly />
+      </div>
+    }>
+      <SearchInputInner {...props} />
+    </Suspense>
   )
 }
