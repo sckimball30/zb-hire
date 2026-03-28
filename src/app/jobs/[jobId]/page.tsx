@@ -37,7 +37,7 @@ export default async function JobPipelinePage({ params }: { params: { jobId: str
 
   const grouped = ALL_STAGES.reduce<Record<CandidateStage, ApplicationWithRelations[]>>(
     (acc, stage) => {
-      acc[stage] = job.applications.filter(a => a.stage === stage) as ApplicationWithRelations[]
+      acc[stage] = job.applications.filter(a => a.stage === stage) as unknown as ApplicationWithRelations[]
       return acc
     },
     {} as Record<CandidateStage, ApplicationWithRelations[]>

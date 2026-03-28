@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     if (invitation.email !== email) {
       return NextResponse.json({ error: 'Email does not match invitation.' }, { status: 400 })
     }
-    role = invitation.role
+    role = invitation.role as 'ADMIN' | 'RECRUITER' | 'INTERVIEWER'
     await prisma.invitation.update({ where: { token }, data: { acceptedAt: new Date() } })
   } else {
     // First user ever becomes admin

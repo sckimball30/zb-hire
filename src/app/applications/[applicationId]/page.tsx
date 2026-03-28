@@ -86,7 +86,7 @@ export default async function ApplicationPage({
           </div>
 
           <div className="flex flex-col items-end gap-3">
-            <StageSelector applicationId={application.id} currentStage={application.stage} />
+            <StageSelector applicationId={application.id} currentStage={application.stage as any} />
             <Link
               href={`/applications/${application.id}/scorecard/new`}
               className="btn-outline text-xs"

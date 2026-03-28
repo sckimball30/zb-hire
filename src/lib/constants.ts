@@ -9,7 +9,7 @@ export const STAGE_ORDER: Record<string, number> = {
   REJECTED: 5,
 }
 
-export const STAGE_LABELS: Record<CandidateStage, string> = {
+export const STAGE_LABELS: Record<string, string> = {
   APPLIED: 'Applied',
   PHONE_SCREEN: 'Phone Screen',
   ONSITE: 'Onsite',
@@ -18,7 +18,7 @@ export const STAGE_LABELS: Record<CandidateStage, string> = {
   REJECTED: 'Rejected',
 }
 
-export const STAGE_COLORS: Record<CandidateStage, string> = {
+export const STAGE_COLORS: Record<string, string> = {
   APPLIED: 'bg-slate-100 text-slate-700',
   PHONE_SCREEN: 'bg-blue-100 text-blue-700',
   ONSITE: 'bg-purple-100 text-purple-700',
@@ -27,7 +27,7 @@ export const STAGE_COLORS: Record<CandidateStage, string> = {
   REJECTED: 'bg-red-100 text-red-700',
 }
 
-export const STAGE_COLUMN_COLORS: Record<CandidateStage, string> = {
+export const STAGE_COLUMN_COLORS: Record<string, string> = {
   APPLIED: 'border-t-slate-400',
   PHONE_SCREEN: 'border-t-blue-400',
   ONSITE: 'border-t-purple-400',
@@ -36,7 +36,7 @@ export const STAGE_COLUMN_COLORS: Record<CandidateStage, string> = {
   REJECTED: 'border-t-red-400',
 }
 
-export const RATING_LABELS: Record<Rating, string> = {
+export const RATING_LABELS: Record<string, string> = {
   STRONG_NO: 'Strong No',
   NO: 'No',
   NEUTRAL: 'Neutral',
@@ -44,7 +44,7 @@ export const RATING_LABELS: Record<Rating, string> = {
   STRONG_YES: 'Strong Yes',
 }
 
-export const RATING_COLORS: Record<Rating, string> = {
+export const RATING_COLORS: Record<string, string> = {
   STRONG_NO: 'bg-red-600 text-white',
   NO: 'bg-red-200 text-red-800',
   NEUTRAL: 'bg-gray-200 text-gray-800',
@@ -52,7 +52,7 @@ export const RATING_COLORS: Record<Rating, string> = {
   STRONG_YES: 'bg-green-600 text-white',
 }
 
-export const CATEGORY_LABELS: Record<CompetencyCategory, string> = {
+export const CATEGORY_LABELS: Record<string, string> = {
   TECHNICAL: 'Technical',
   BEHAVIORAL: 'Behavioral',
   CULTURE_FIT: 'Culture Fit',
@@ -62,7 +62,7 @@ export const CATEGORY_LABELS: Record<CompetencyCategory, string> = {
   ROLE_SPECIFIC: 'Role Specific',
 }
 
-export const CATEGORY_COLORS: Record<CompetencyCategory, string> = {
+export const CATEGORY_COLORS: Record<string, string> = {
   TECHNICAL: 'bg-blue-100 text-blue-800',
   BEHAVIORAL: 'bg-purple-100 text-purple-800',
   CULTURE_FIT: 'bg-pink-100 text-pink-800',
@@ -72,7 +72,7 @@ export const CATEGORY_COLORS: Record<CompetencyCategory, string> = {
   ROLE_SPECIFIC: 'bg-yellow-100 text-yellow-800',
 }
 
-export const INTERVIEW_TYPE_LABELS: Record<InterviewType, string> = {
+export const INTERVIEW_TYPE_LABELS: Record<string, string> = {
   PHONE_SCREEN: 'Phone Screen',
   TECHNICAL: 'Technical',
   BEHAVIORAL: 'Behavioral',
@@ -81,14 +81,14 @@ export const INTERVIEW_TYPE_LABELS: Record<InterviewType, string> = {
   HIRING_MANAGER: 'Hiring Manager',
 }
 
-export const JOB_STATUS_LABELS: Record<JobStatus, string> = {
+export const JOB_STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Draft',
   OPEN: 'Open',
   CLOSED: 'Closed',
   ARCHIVED: 'Archived',
 }
 
-export const JOB_STATUS_COLORS: Record<JobStatus, string> = {
+export const JOB_STATUS_COLORS: Record<string, string> = {
   DRAFT: 'bg-gray-100 text-gray-700',
   OPEN: 'bg-green-100 text-green-700',
   CLOSED: 'bg-red-100 text-red-700',
