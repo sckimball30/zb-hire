@@ -38,14 +38,9 @@ export function Sidebar() {
     <aside className="flex flex-col w-60 bg-[#111111] flex-shrink-0">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/logos/zb-designs-icon.svg"
-          alt="ZB Designs"
-          width={36}
-          height={36}
-          className="flex-shrink-0"
-        />
+        <div className="flex items-center justify-center w-9 h-9 rounded-md bg-white/10 flex-shrink-0">
+          <span className="text-white font-black text-base tracking-tighter leading-none">ZB</span>
+        </div>
         <div className="min-w-0">
           <span className="text-white font-bold text-base leading-tight block">ZB Hire</span>
           <span className="text-white/40 text-xs leading-tight">by ZB Designs</span>
