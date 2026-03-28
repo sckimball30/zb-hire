@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 110" fill="none">
+  <!-- Icon mark -->
+  <rect width="72" height="72" x="74" y="0" rx="12" fill="#111111"/>
+  <!-- Z -->
+  <line x1="86" y1="17" x2="110" y2="17" stroke="white" stroke-width="5.5" stroke-linecap="round"/>
+  <line x1="110" y1="17" x2="86" y2="55" stroke="white" stroke-width="5.5" stroke-linecap="round"/>
+  <line x1="86" y1="55" x2="110" y2="55" stroke="white" stroke-width="5.5" stroke-linecap="round"/>
+  <!-- B -->
+  <line x1="112" y1="17" x2="112" y2="55" stroke="white" stroke-width="5.5" stroke-linecap="round"/>
+  <path d="M112 17 Q132 17 132 29 Q132 36 112 36" stroke="white" stroke-width="5.5" stroke-linecap="round" fill="none"/>
+  <path d="M112 36 Q135 36 135 46 Q135 55 112 55" stroke="white" stroke-width="5.5" stroke-linecap="round" fill="none"/>
+  <!-- DESIGNS text -->
+  <text x="110" y="96" text-anchor="middle" font-family="Arial Black, Helvetica Neue, sans-serif" font-weight="900" font-size="16" fill="#111111" letter-spacing="6">DESIGNS</text>
+</svg>

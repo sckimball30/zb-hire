@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80" fill="none">
+  <!-- Colored dot accents -->
+  <circle cx="16" cy="44" r="10" fill="#4AFFD2"/>
+  <circle cx="38" cy="32" r="8" fill="#F26D77"/>
+  <circle cx="56" cy="48" r="7" fill="#F5D020"/>
+  <!-- THE ORIGINAL small text -->
+  <text x="180" y="18" text-anchor="middle" font-family="Arial Black, Helvetica Neue, sans-serif" font-weight="900" font-size="11" fill="#111111" letter-spacing="3">THE ORIGINAL</text>
+  <!-- Wigglitz main text with color segments -->
+  <text x="80" y="65" font-family="Arial Rounded MT Bold, Nunito ExtraBold, Arial Black, sans-serif" font-weight="900" font-size="50" fill="#4AFFD2">W</text>
+  <text x="120" y="65" font-family="Arial Rounded MT Bold, Nunito ExtraBold, Arial Black, sans-serif" font-weight="900" font-size="50" fill="#3AADE0">ig</text>
+  <text x="162" y="65" font-family="Arial Rounded MT Bold, Nunito ExtraBold, Arial Black, sans-serif" font-weight="900" font-size="50" fill="#4AFFD2">g</text>
+  <text x="195" y="65" font-family="Arial Rounded MT Bold, Nunito ExtraBold, Arial Black, sans-serif" font-weight="900" font-size="50" fill="#F26D77">li</text>
+  <text x="228" y="65" font-family="Arial Rounded MT Bold, Nunito ExtraBold, Arial Black, sans-serif" font-weight="900" font-size="50" fill="#3AADE0">tz</text>
+  <text x="278" y="30" font-family="Arial, sans-serif" font-size="14" fill="#666">™</text>
+  <!-- Dot accents right side -->
+  <circle cx="308" cy="32" r="7" fill="#F5D020"/>
+  <circle cx="326" cy="48" r="8" fill="#4AFFD2"/>
+  <circle cx="348" cy="36" r="10" fill="#F26D77"/>
+</svg>

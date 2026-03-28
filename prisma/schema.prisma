@@ -1,0 +1,296 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth Models (NextAuth) ───────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          String    @default("RECRUITER")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  invitationsSent Invitation[] @relation("InvitedBy")
+  candidateNotes  CandidateNote[]
+  messageLogs     MessageLog[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Collaboration ────────────────────────────────────────────────────────────
+
+model Invitation {
+  id          String    @id @default(cuid())
+  email       String
+  role        String    @default("RECRUITER")
+  token       String    @unique @default(cuid())
+  invitedById String
+  invitedBy   User      @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: Cascade)
+  acceptedAt  DateTime?
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+}
+
+// ─── Core ATS Models ─────────────────────────────────────────────────────────
+
+model Interviewer {
+  id              String           @id @default(cuid())
+  name            String
+  email           String           @unique
+  title           String?
+  avatarUrl       String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  jobAssignments  JobInterviewer[]
+  scorecards      Scorecard[]
+  interviewEvents InterviewEvent[]
+}
+
+model Candidate {
+  id           String          @id @default(cuid())
+  firstName    String
+  lastName     String
+  email        String          @unique
+  phone        String?
+  address      String?
+  linkedInUrl  String?
+  resumeUrl    String?
+  source       String?
+  notes        String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  applications Application[]
+  candidateNotes CandidateNote[]
+  messageLogs  MessageLog[]
+}
+
+model CandidateNote {
+  id          String    @id @default(cuid())
+  candidateId String
+  content     String
+  authorId    String?
+  authorName  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  author      User?     @relation(fields: [authorId], references: [id], onDelete: SetNull)
+}
+
+model Job {
+  id                String             @id @default(cuid())
+  title             String
+  department        String?
+  location          String?
+  description       String?
+  status            String             @default("DRAFT")
+  employmentType    String?
+  payType           String?
+  salaryMin         Int?
+  salaryMax         Int?
+  salaryCurrency    String             @default("USD")
+  hiringGoal        Int?
+  interviewCount    Int                @default(3)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  applications      Application[]
+  interviewers      JobInterviewer[]
+  scorecardTemplate ScorecardTemplate?
+}
+
+model JobInterviewer {
+  id            String      @id @default(cuid())
+  jobId         String
+  interviewerId String
+  role          String?
+  assignedAt    DateTime    @default(now())
+  job           Job         @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  interviewer   Interviewer @relation(fields: [interviewerId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, interviewerId])
+}
+
+model Application {
+  id           String           @id @default(cuid())
+  candidateId  String
+  jobId        String
+  stage        String           @default("APPLIED")
+  stageOrder   Int              @default(0)
+  starRating   Int?
+  rejectedAt   DateTime?
+  hiredAt      DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  candidate    Candidate        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  job          Job              @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  events       InterviewEvent[]
+  scorecards   Scorecard[]
+  activityLog  ActivityLog[]
+
+  @@unique([candidateId, jobId])
+}
+
+model InterviewEvent {
+  id            String        @id @default(cuid())
+  applicationId String
+  interviewerId String
+  type          String
+  scheduledAt   DateTime?
+  durationMins  Int           @default(60)
+  location      String?
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  application   Application   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  interviewer   Interviewer   @relation(fields: [interviewerId], references: [id], onDelete: Cascade)
+  scorecard     Scorecard?
+}
+
+model ScorecardTemplate {
+  id        String                    @id @default(cuid())
+  jobId     String                    @unique
+  name      String
+  createdAt DateTime                  @default(now())
+  updatedAt DateTime                  @updatedAt
+  job       Job                       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  sections  ScorecardTemplateSection[]
+}
+
+model ScorecardTemplateSection {
+  id         String                      @id @default(cuid())
+  templateId String
+  title      String
+  sortOrder  Int                         @default(0)
+  template   ScorecardTemplate           @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  questions  ScorecardTemplateQuestion[]
+}
+
+model ScorecardTemplateQuestion {
+  id         String                   @id @default(cuid())
+  sectionId  String
+  questionId String
+  sortOrder  Int                      @default(0)
+  required   Boolean                  @default(false)
+  section    ScorecardTemplateSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  question   Question                 @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model Scorecard {
+  id               String              @id @default(cuid())
+  applicationId    String
+  interviewerId    String
+  interviewEventId String?             @unique
+  overallRating    String?
+  summary          String?
+  recommendation   String?
+  submittedAt      DateTime?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  application      Application         @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  interviewer      Interviewer         @relation(fields: [interviewerId], references: [id], onDelete: Cascade)
+  interviewEvent   InterviewEvent?     @relation(fields: [interviewEventId], references: [id])
+  responses        ScorecardResponse[]
+}
+
+model ScorecardResponse {
+  id          String    @id @default(cuid())
+  scorecardId String
+  questionId  String
+  rating      String?
+  notes       String?
+  scorecard   Scorecard @relation(fields: [scorecardId], references: [id], onDelete: Cascade)
+  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([scorecardId, questionId])
+}
+
+model Question {
+  id                         String                      @id @default(cuid())
+  text                       String
+  guidance                   String?
+  category                   String
+  tags                       String?
+  isArchived                 Boolean                     @default(false)
+  createdAt                  DateTime                    @default(now())
+  updatedAt                  DateTime                    @updatedAt
+  scorecardTemplateQuestions ScorecardTemplateQuestion[]
+  scorecardResponses         ScorecardResponse[]
+}
+
+model ActivityLog {
+  id            String      @id @default(cuid())
+  applicationId String
+  action        String
+  metadata      String?
+  actorName     String?
+  createdAt     DateTime    @default(now())
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+// ─── Messaging ────────────────────────────────────────────────────────────────
+
+model MessageTemplate {
+  id          String       @id @default(cuid())
+  name        String
+  subject     String
+  body        String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  messageLogs MessageLog[]
+}
+
+model MessageLog {
+  id          String           @id @default(cuid())
+  candidateId String
+  templateId  String?
+  subject     String
+  body        String
+  sentAt      DateTime         @default(now())
+  sentById    String?
+  sentByName  String?
+  candidate   Candidate        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  template    MessageTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  sentBy      User?            @relation(fields: [sentById], references: [id], onDelete: SetNull)
+}
