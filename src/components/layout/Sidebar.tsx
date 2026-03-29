@@ -13,6 +13,7 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  BarChart2,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -20,6 +21,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/jobs', label: 'Jobs', icon: Briefcase },
   { href: '/candidates', label: 'Candidates', icon: Users },
+  { href: '/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/questions', label: 'Questions', icon: HelpCircle },
   { href: '/interviewers', label: 'Interviewers', icon: UserCheck },
   { href: '/messages/templates', label: 'Messages', icon: Mail },
