@@ -31,11 +31,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'An interviewer with this email already exists' }, { status: 409 })
     }
 
+    const { calendlyUrl } = body
     const interviewer = await prisma.interviewer.create({
       data: {
         name: name.trim(),
         email: email.trim().toLowerCase(),
         title: title?.trim() || null,
+        calendlyUrl: calendlyUrl?.trim() || null,
       },
     })
 

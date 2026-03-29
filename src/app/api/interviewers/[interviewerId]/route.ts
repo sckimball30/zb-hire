@@ -35,7 +35,7 @@ export async function PATCH(
 ) {
   try {
     const body = await request.json()
-    const { name, email, title, avatarUrl } = body
+    const { name, email, title, avatarUrl, calendlyUrl } = body
 
     const interviewer = await prisma.interviewer.update({
       where: { id: params.interviewerId },
@@ -44,6 +44,7 @@ export async function PATCH(
         ...(email !== undefined && { email: email.trim().toLowerCase() }),
         ...(title !== undefined && { title: title?.trim() || null }),
         ...(avatarUrl !== undefined && { avatarUrl: avatarUrl?.trim() || null }),
+        ...(calendlyUrl !== undefined && { calendlyUrl: calendlyUrl?.trim() || null }),
       },
     })
 

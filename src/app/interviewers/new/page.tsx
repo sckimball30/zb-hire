@@ -13,6 +13,7 @@ export default function NewInterviewerPage() {
     name: '',
     email: '',
     title: '',
+    calendlyUrl: '',
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,6 +36,7 @@ export default function NewInterviewerPage() {
           name: form.name,
           email: form.email,
           title: form.title || undefined,
+          calendlyUrl: form.calendlyUrl || undefined,
         }),
       })
 
@@ -103,6 +105,20 @@ export default function NewInterviewerPage() {
               value={form.title}
               onChange={handleChange}
             />
+          </div>
+
+          <div>
+            <label htmlFor="calendlyUrl" className="label">Calendly Link</label>
+            <input
+              id="calendlyUrl"
+              name="calendlyUrl"
+              type="url"
+              className="input"
+              placeholder="https://calendly.com/username/30min"
+              value={form.calendlyUrl}
+              onChange={handleChange}
+            />
+            <p className="text-xs text-gray-400 mt-1">Used to send scheduling links to candidates</p>
           </div>
 
           <div className="flex items-center gap-3 pt-2">

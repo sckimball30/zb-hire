@@ -7,6 +7,7 @@ import { ArrowLeft, Plus, Calendar, Star, Clock } from 'lucide-react'
 import { STAGE_LABELS, STAGE_COLORS, RATING_LABELS, RATING_COLORS, INTERVIEW_TYPE_LABELS } from '@/lib/constants'
 import { formatDate, formatDateTime, timeAgo } from '@/lib/utils'
 import { StageSelector } from '@/components/applications/StageSelector'
+import { ScheduleInterviewButton } from '@/components/applications/ScheduleInterviewButton'
 
 export default async function ApplicationPage({
   params,
@@ -17,7 +18,13 @@ export default async function ApplicationPage({
     where: { id: params.applicationId },
     include: {
       candidate: true,
-      job: true,
+      job: {
+        include: {
+          interviewers: {
+            include: { interviewer: { select: { id: true, name: true, title: true, calendlyUrl: true } } },
+          },
+        },
+      },
       events: {
         include: { interviewer: true, scorecard: true },
         orderBy: { scheduledAt: 'desc' },
@@ -39,6 +46,7 @@ export default async function ApplicationPage({
 
   const { candidate, job } = application
   const submittedScorecards = application.scorecards.filter((s) => s.submittedAt)
+  const jobInterviewers = job.interviewers.map(ji => ji.interviewer)
 
   return (
     <div className="p-8 max-w-5xl">
@@ -108,6 +116,10 @@ export default async function ApplicationPage({
           <div className="card overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
               <h2 className="text-base font-semibold text-gray-900">Interviews ({application.events.length})</h2>
+              <ScheduleInterviewButton
+                applicationId={application.id}
+                interviewers={jobInterviewers}
+              />
             </div>
             {application.events.length === 0 ? (
               <div className="px-6 py-8 text-center text-sm text-gray-500">
@@ -139,6 +151,16 @@ export default async function ApplicationPage({
                         )}
                         {event.notes && (
                           <p className="mt-2 text-sm text-gray-600 bg-gray-50 rounded p-2">{event.notes}</p>
+                        )}
+                        {(event as any).calendlyEventUrl && (
+                          <a
+                            href={(event as any).calendlyEventUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                          >
+                            View Calendly Event ↗
+                          </a>
                         )}
                       </div>
                     </div>
