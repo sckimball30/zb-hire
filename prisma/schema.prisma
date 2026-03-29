@@ -24,6 +24,7 @@ model User {
   invitationsSent Invitation[] @relation("InvitedBy")
   candidateNotes  CandidateNote[]
   messageLogs     MessageLog[]
+  jobAssignments  JobRecruiter[]
 }
 
 model Account {
@@ -137,7 +138,22 @@ model Job {
   updatedAt         DateTime           @updatedAt
   applications      Application[]
   interviewers      JobInterviewer[]
+  recruiters        JobRecruiter[]
   scorecardTemplate ScorecardTemplate?
+}
+
+model JobRecruiter {
+  id                 String   @id @default(cuid())
+  jobId              String
+  userId             String
+  isMain             Boolean  @default(false)
+  emailNotifications Boolean  @default(true)
+  createdAt          DateTime @default(now())
+
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, userId])
 }
 
 model JobInterviewer {

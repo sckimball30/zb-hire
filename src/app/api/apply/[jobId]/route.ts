@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { put } from '@vercel/blob'
+import { sendNewApplicationEmail } from '@/lib/email'
 
 // Public GET — returns job info for the apply page (no auth required)
 export async function GET(
@@ -61,7 +62,16 @@ export async function POST(
     return NextResponse.json({ error: 'First name, last name, and email are required.' }, { status: 400 })
   }
 
-  const job = await prisma.job.findUnique({ where: { id: params.jobId }, select: { id: true, status: true } })
+  const job = await prisma.job.findUnique({
+    where: { id: params.jobId },
+    select: {
+      id: true, status: true, title: true,
+      recruiters: {
+        where: { isMain: true, emailNotifications: true },
+        include: { user: { select: { name: true, email: true } } },
+      },
+    },
+  })
   if (!job || job.status !== 'OPEN') {
     return NextResponse.json({ error: 'This position is not currently accepting applications.' }, { status: 400 })
   }
@@ -114,6 +124,19 @@ export async function POST(
         authorName: 'Applicant',
       },
     })
+  }
+
+  // Notify main recruiter(s) with email alerts enabled
+  for (const assignment of job.recruiters) {
+    if (assignment.user.email) {
+      sendNewApplicationEmail({
+        to: assignment.user.email,
+        recruiterName: assignment.user.name ?? 'Recruiter',
+        candidateName: `${firstName.trim()} ${lastName.trim()}`,
+        jobTitle: job.title,
+        jobId: job.id,
+      }).catch(() => {}) // fire-and-forget
+    }
   }
 
   return NextResponse.json({ ok: true })

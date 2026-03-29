@@ -14,7 +14,7 @@ function formatSalary(amount: number, currency = 'USD') {
 }
 
 export default async function JobPipelinePage({ params }: { params: { jobId: string } }) {
-  const [job, allInterviewers] = await Promise.all([
+  const [job, allInterviewers, allRecruiters] = await Promise.all([
     prisma.job.findUnique({
       where: { id: params.jobId },
       include: {
@@ -29,10 +29,19 @@ export default async function JobPipelinePage({ params }: { params: { jobId: str
           include: { interviewer: true },
           orderBy: { assignedAt: 'asc' },
         },
+        recruiters: {
+          include: { user: { select: { id: true, name: true, email: true } } },
+          orderBy: [{ isMain: 'desc' }, { createdAt: 'asc' }],
+        },
         _count: { select: { applications: true, interviewers: true } },
       },
     }),
     prisma.interviewer.findMany({ orderBy: { name: 'asc' } }),
+    prisma.user.findMany({
+      where: { role: { in: ['ADMIN', 'RECRUITER'] } },
+      select: { id: true, name: true, email: true },
+      orderBy: { name: 'asc' },
+    }),
   ])
 
   if (!job) notFound()
@@ -126,6 +135,8 @@ export default async function JobPipelinePage({ params }: { params: { jobId: str
         groupedApplications={grouped}
         currentTeam={job.interviewers}
         allInterviewers={allInterviewers}
+        currentRecruiters={job.recruiters}
+        allRecruiters={allRecruiters}
         jobStatusColors={JOB_STATUS_COLORS}
         jobStatusLabels={JOB_STATUS_LABELS}
       />
