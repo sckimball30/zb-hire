@@ -29,6 +29,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { jobId: string } }
 ) {
+  try {
   let firstName: string, lastName: string, email: string
   let phone = '', address = '', linkedInUrl = '', coverLetter = ''
   let resumeUrl: string | null = null
@@ -47,10 +48,15 @@ export async function POST(
 
     const resumeFile = fd.get('resume') as File | null
     if (resumeFile && resumeFile.size > 0) {
-      const safeName = resumeFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-      const filename = `resumes/${Date.now()}-${safeName}`
-      const blob = await put(filename, resumeFile, { access: 'public' })
-      resumeUrl = blob.url
+      try {
+        const safeName = resumeFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+        const filename = `resumes/${Date.now()}-${safeName}`
+        const blob = await put(filename, resumeFile, { access: 'public' })
+        resumeUrl = blob.url
+      } catch (uploadErr) {
+        console.error('Resume upload failed (application will still be saved):', uploadErr)
+        // Continue without resume — don't block the application
+      }
     }
   } else {
     // Fallback JSON (e.g. webhooks)
@@ -140,4 +146,8 @@ export async function POST(
   }
 
   return NextResponse.json({ ok: true })
+  } catch (err) {
+    console.error('Apply submission error:', err)
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 })
+  }
 }
