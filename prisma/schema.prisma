@@ -89,6 +89,7 @@ model Interviewer {
   jobAssignments  JobInterviewer[]
   scorecards      Scorecard[]
   interviewEvents InterviewEvent[]
+  rounds          RoundInterviewer[]
 }
 
 model Candidate {
@@ -160,6 +161,7 @@ model Job {
   interviewers      JobInterviewer[]
   recruiters        JobRecruiter[]
   scorecardTemplate ScorecardTemplate?
+  rounds            InterviewRound[]
 }
 
 model JobRecruiter {
@@ -324,6 +326,26 @@ model ActivityLog {
   actorName     String?
   createdAt     DateTime    @default(now())
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model InterviewRound {
+  id          String             @id @default(cuid())
+  jobId       String
+  name        String
+  roundNumber Int                @default(1)
+  duration    Int                @default(60)
+  createdAt   DateTime           @default(now())
+  job         Job                @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  interviewers RoundInterviewer[]
+}
+
+model RoundInterviewer {
+  roundId       String
+  interviewerId String
+  round         InterviewRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  interviewer   Interviewer    @relation(fields: [interviewerId], references: [id], onDelete: Cascade)
+
+  @@id([roundId, interviewerId])
 }
 
 // ─── Messaging ────────────────────────────────────────────────────────────────

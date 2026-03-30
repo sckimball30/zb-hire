@@ -60,7 +60,9 @@ export default async function JobsPage() {
               {jobs.map((job) => (
                 <tr key={job.id}>
                   <td>
-                    <div className="font-medium text-gray-900">{job.title}</div>
+                    <Link href={`/jobs/${job.id}`} className="font-medium text-gray-900 hover:text-blue-600 hover:underline">
+                      {job.title}
+                    </Link>
                   </td>
                   <td className="text-gray-600">{job.department || '—'}</td>
                   <td className="text-gray-600">{job.location || '—'}</td>
@@ -84,21 +86,12 @@ export default async function JobsPage() {
                   <td className="text-gray-700">{job._count.applications}</td>
                   <td className="text-gray-700">{job._count.interviewers}</td>
                   <td>
-                    <div className="flex items-center gap-2">
-                      <Link
-                        href={`/jobs/${job.id}`}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                      >
-                        Pipeline
-                      </Link>
-                      <span className="text-gray-300">|</span>
-                      <Link
-                        href={`/jobs/${job.id}/team`}
-                        className="text-gray-600 hover:text-gray-800 text-sm"
-                      >
-                        Team
-                      </Link>
-                    </div>
+                    <Link
+                      href={`/jobs/${job.id}/pipeline`}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    >
+                      Pipeline
+                    </Link>
                   </td>
                 </tr>
               ))}
