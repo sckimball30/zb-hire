@@ -49,14 +49,15 @@ export async function POST(
     const resumeFile = fd.get('resume') as File | null
     if (resumeFile && resumeFile.size > 0) {
       try {
+        const token = process.env.BLOB_READ_WRITE_TOKEN ?? process.env.BLOB2_READ_WRITE_TOKEN
+        console.log('Resume upload attempt — token present:', !!token, '| file:', resumeFile.name, resumeFile.size, 'bytes')
         const safeName = resumeFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')
         const filename = `resumes/${Date.now()}-${safeName}`
-        const token = process.env.BLOB_READ_WRITE_TOKEN ?? process.env.BLOB2_READ_WRITE_TOKEN
         const blob = await put(filename, resumeFile, { access: 'public', token })
         resumeUrl = blob.url
-      } catch (uploadErr) {
-        console.error('Resume upload failed (application will still be saved):', uploadErr)
-        // Continue without resume — don't block the application
+        console.log('Resume upload success:', resumeUrl)
+      } catch (uploadErr: any) {
+        console.error('Resume upload failed:', uploadErr?.message ?? uploadErr)
       }
     }
   } else {
