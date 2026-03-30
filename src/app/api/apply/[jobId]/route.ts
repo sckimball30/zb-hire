@@ -53,7 +53,7 @@ export async function POST(
         console.log('Resume upload attempt — token present:', !!token, '| file:', resumeFile.name, resumeFile.size, 'bytes')
         const safeName = resumeFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')
         const filename = `resumes/${Date.now()}-${safeName}`
-        const blob = await put(filename, resumeFile, { access: 'public', token })
+        const blob = await put(filename, resumeFile, { access: 'private', token })
         resumeUrl = blob.url
         console.log('Resume upload success:', resumeUrl)
       } catch (uploadErr: any) {

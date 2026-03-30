@@ -123,7 +123,7 @@ export default async function CandidatePage({ params }: { params: { candidateId:
             <div className="flex gap-2 mt-1">
               {candidate.resumeUrl && (
                 <a
-                  href={candidate.resumeUrl}
+                  href={`/api/resume/${candidate.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-700 transition-colors"
@@ -169,7 +169,7 @@ export default async function CandidatePage({ params }: { params: { candidateId:
                 <h2 className="text-base font-semibold text-gray-900">Resume</h2>
               </div>
               {candidate.resumeUrl && (
-                <a href={candidate.resumeUrl} target="_blank" rel="noopener noreferrer"
+                <a href={`/api/resume/${candidate.id}`} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium">
                   <Download className="w-3.5 h-3.5" /> Download
                 </a>
@@ -178,7 +178,7 @@ export default async function CandidatePage({ params }: { params: { candidateId:
             {candidate.resumeUrl ? (
               <div className="w-full bg-gray-50" style={{ height: 600 }}>
                 <iframe
-                  src={candidate.resumeUrl}
+                  src={`/api/resume/${candidate.id}`}
                   className="w-full h-full border-0"
                   title="Resume"
                 />
