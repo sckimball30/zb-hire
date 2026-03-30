@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { ArrowLeft, Plus, Calendar, Star, Clock } from 'lucide-react'
+import { ArrowLeft, Plus, Calendar, Star, Clock, FileText, Download } from 'lucide-react'
 import { STAGE_LABELS, STAGE_COLORS, RATING_LABELS, RATING_COLORS, INTERVIEW_TYPE_LABELS } from '@/lib/constants'
 import { formatDate, formatDateTime, timeAgo } from '@/lib/utils'
 import { StageSelector } from '@/components/applications/StageSelector'
@@ -111,6 +111,38 @@ export default async function ApplicationPage({
       <div className="grid grid-cols-3 gap-6">
         {/* Main content - left 2/3 */}
         <div className="col-span-2 space-y-6">
+
+          {/* Resume */}
+          <div className="card overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-gray-400" />
+                <h2 className="text-base font-semibold text-gray-900">Resume</h2>
+              </div>
+              {candidate.resumeUrl && (
+                <a
+                  href={`/api/resume/${candidate.id}?download=1`}
+                  className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-800 font-medium"
+                >
+                  <Download className="w-3.5 h-3.5" /> Download
+                </a>
+              )}
+            </div>
+            {candidate.resumeUrl ? (
+              <div className="w-full bg-gray-50" style={{ height: 700 }}>
+                <iframe
+                  src={`/api/resume/${candidate.id}`}
+                  className="w-full h-full border-0"
+                  title="Resume"
+                />
+              </div>
+            ) : (
+              <div className="px-6 py-10 text-center">
+                <FileText className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                <p className="text-sm text-gray-400">No resume on file</p>
+              </div>
+            )}
+          </div>
 
           {/* Interview Events */}
           <div className="card overflow-hidden">
