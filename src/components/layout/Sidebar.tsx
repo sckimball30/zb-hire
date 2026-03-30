@@ -75,7 +75,7 @@ export function Sidebar() {
       {/* Settings link */}
       <div className="px-3 pb-2">
         <Link
-          href="/settings/users"
+          href="/settings/profile"
           className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors group ${
             pathname?.startsWith('/settings')
               ? 'bg-[#4AFFD2]/20 text-[#4AFFD2]'
