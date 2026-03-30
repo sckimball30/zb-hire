@@ -9,6 +9,7 @@ import { formatDate, formatDateTime, timeAgo } from '@/lib/utils'
 import { StageSelector } from '@/components/applications/StageSelector'
 import { ScheduleInterviewButton } from '@/components/applications/ScheduleInterviewButton'
 import { SendMessageButton } from '@/components/candidates/SendMessageButton'
+import { OfferPanel } from '@/components/offers/OfferPanel'
 
 export default async function ApplicationPage({
   params,
@@ -40,6 +41,7 @@ export default async function ApplicationPage({
       activityLog: {
         orderBy: { createdAt: 'desc' },
       },
+      offer: true,
     },
   })
 
@@ -205,6 +207,13 @@ export default async function ApplicationPage({
               </ul>
             )}
           </div>
+
+          {/* Offer */}
+          <OfferPanel
+            offer={application.offer as any}
+            applicationId={application.id}
+            jobTitle={job.title}
+          />
 
           {/* Scorecards */}
           <div className="card overflow-hidden">

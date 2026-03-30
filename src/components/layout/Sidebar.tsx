@@ -33,7 +33,7 @@ export function Sidebar() {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
 
   const isAuthPage = pathname?.startsWith('/auth')
-  const isPublicPage = pathname?.startsWith('/apply')
+  const isPublicPage = pathname?.startsWith('/apply') || pathname?.startsWith('/offers')
   if (isAuthPage || isPublicPage) return null
 
   return (
