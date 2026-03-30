@@ -123,9 +123,7 @@ export default async function CandidatePage({ params }: { params: { candidateId:
             <div className="flex gap-2 mt-1">
               {candidate.resumeUrl && (
                 <a
-                  href={`/api/resume/${candidate.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={`/api/resume/${candidate.id}?download=1`}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-700 transition-colors"
                 >
                   <Download className="w-3.5 h-3.5" />
@@ -169,14 +167,18 @@ export default async function CandidatePage({ params }: { params: { candidateId:
                 <h2 className="text-base font-semibold text-gray-900">Resume</h2>
               </div>
               {candidate.resumeUrl && (
-                <a href={`/api/resume/${candidate.id}`} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium">
-                  <Download className="w-3.5 h-3.5" /> Download
-                </a>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={`/api/resume/${candidate.id}?download=1`}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Download
+                  </a>
+                </div>
               )}
             </div>
             {candidate.resumeUrl ? (
-              <div className="w-full bg-gray-50" style={{ height: 600 }}>
+              <div className="w-full bg-gray-50" style={{ height: 700 }}>
                 <iframe
                   src={`/api/resume/${candidate.id}`}
                   className="w-full h-full border-0"
@@ -184,10 +186,10 @@ export default async function CandidatePage({ params }: { params: { candidateId:
                 />
               </div>
             ) : (
-              <div className="px-6 py-10 text-center">
-                <FileText className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                <p className="text-sm text-gray-400">No resume uploaded</p>
-                <p className="text-xs text-gray-300 mt-1">Resume will appear here when submitted via the apply form</p>
+              <div className="px-6 py-12 text-center">
+                <FileText className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                <p className="text-sm font-medium text-gray-400">No resume on file</p>
+                <p className="text-xs text-gray-300 mt-1">Resume will appear here once the candidate submits via the apply form</p>
               </div>
             )}
           </div>
