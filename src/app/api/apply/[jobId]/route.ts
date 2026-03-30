@@ -51,7 +51,8 @@ export async function POST(
       try {
         const safeName = resumeFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')
         const filename = `resumes/${Date.now()}-${safeName}`
-        const blob = await put(filename, resumeFile, { access: 'public' })
+        const token = process.env.BLOB_READ_WRITE_TOKEN ?? process.env.BLOB2_READ_WRITE_TOKEN
+        const blob = await put(filename, resumeFile, { access: 'public', token })
         resumeUrl = blob.url
       } catch (uploadErr) {
         console.error('Resume upload failed (application will still be saved):', uploadErr)
