@@ -208,12 +208,14 @@ export default async function ApplicationPage({
             )}
           </div>
 
-          {/* Offer */}
-          <OfferPanel
-            offer={application.offer as any}
-            applicationId={application.id}
-            jobTitle={job.title}
-          />
+          {/* Offer — only shown when candidate is at Offer stage or beyond */}
+          {['OFFER', 'HIRED'].includes(application.stage) && (
+            <OfferPanel
+              offer={application.offer as any}
+              applicationId={application.id}
+              jobTitle={job.title}
+            />
+          )}
 
           {/* Scorecards */}
           <div className="card overflow-hidden">
