@@ -8,6 +8,7 @@ import { STAGE_LABELS, STAGE_COLORS, RATING_LABELS, RATING_COLORS, INTERVIEW_TYP
 import { formatDate, formatDateTime, timeAgo } from '@/lib/utils'
 import { StageSelector } from '@/components/applications/StageSelector'
 import { ScheduleInterviewButton } from '@/components/applications/ScheduleInterviewButton'
+import { SendMessageButton } from '@/components/candidates/SendMessageButton'
 
 export default async function ApplicationPage({
   params,
@@ -97,13 +98,16 @@ export default async function ApplicationPage({
 
           <div className="flex flex-col items-end gap-3">
             <StageSelector applicationId={application.id} currentStage={application.stage as any} />
-            <Link
-              href={`/applications/${application.id}/scorecard/new`}
-              className="btn-outline text-xs"
-            >
-              <Plus className="w-3 h-3" />
-              Add Scorecard
-            </Link>
+            <div className="flex items-center gap-2">
+              <SendMessageButton candidateId={candidate.id} candidateEmail={candidate.email} />
+              <Link
+                href={`/applications/${application.id}/scorecard/new`}
+                className="btn-outline text-xs"
+              >
+                <Plus className="w-3 h-3" />
+                Add Scorecard
+              </Link>
+            </div>
           </div>
         </div>
       </div>
