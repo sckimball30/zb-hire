@@ -22,12 +22,13 @@ const JOB_COLORS = [
 export default async function CandidatesPage({
   searchParams,
 }: {
-  searchParams: { q?: string; jobId?: string; dateFrom?: string; dateTo?: string }
+  searchParams: { q?: string; jobId?: string; dateFrom?: string; dateTo?: string; tagId?: string }
 }) {
   const query    = searchParams.q?.trim() || ''
   const jobId    = searchParams.jobId || ''
   const dateFrom = searchParams.dateFrom || ''
   const dateTo   = searchParams.dateTo || ''
+  const tagId    = searchParams.tagId || ''
 
   // Build application date filter
   const appDateFilter = (dateFrom || dateTo) ? {
@@ -39,7 +40,7 @@ export default async function CandidatesPage({
     },
   } : undefined
 
-  const [candidates, allJobs] = await Promise.all([
+  const [candidates, allJobs, allTags] = await Promise.all([
     prisma.candidate.findMany({
       where: {
         AND: [
@@ -52,6 +53,7 @@ export default async function CandidatesPage({
           } : {},
           jobId ? { applications: { some: { jobId } } } : {},
           appDateFilter ? { applications: appDateFilter } : {},
+          tagId ? { tags: { some: { tagId } } } : {},
         ],
       },
       include: {
@@ -59,10 +61,12 @@ export default async function CandidatesPage({
           include: { job: { select: { id: true, title: true } } },
           orderBy: { createdAt: 'desc' },
         },
+        tags: { include: { tag: true } },
       },
       orderBy: { createdAt: 'desc' },
     }),
     prisma.job.findMany({ select: { id: true, title: true }, orderBy: { title: 'asc' } }),
+    prisma.tag.findMany({ orderBy: { name: 'asc' } }),
   ])
 
   // Build consistent color map: jobId → color index
@@ -92,10 +96,12 @@ export default async function CandidatesPage({
         <Suspense fallback={null}>
           <CandidateFilters
             jobs={allJobs}
+            tags={allTags}
             currentQ={query}
             currentJobId={jobId}
             currentDateFrom={dateFrom}
             currentDateTo={dateTo}
+            currentTagId={tagId}
           />
         </Suspense>
       </div>
@@ -104,11 +110,11 @@ export default async function CandidatesPage({
         {candidates.length === 0 ? (
           <div className="py-16 text-center">
             <p className="text-gray-500">
-              {(query || jobId || dateFrom || dateTo)
+              {(query || jobId || dateFrom || dateTo || tagId)
                 ? 'No candidates match your filters.'
                 : 'No candidates yet. Add your first candidate.'}
             </p>
-            {!query && !jobId && !dateFrom && !dateTo && (
+            {!query && !jobId && !dateFrom && !dateTo && !tagId && (
               <Link href="/candidates/new" className="btn-primary mt-4 inline-flex">
                 <Plus className="w-4 h-4" />
                 Add Candidate
@@ -121,6 +127,7 @@ export default async function CandidatesPage({
               <tr>
                 <th>Name</th>
                 <th>Role(s)</th>
+                <th>Tags</th>
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Applied</th>
@@ -160,6 +167,24 @@ export default async function CandidatesPage({
                               </span>
                             )
                           })
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="flex items-center gap-1">
+                        {candidate.tags.slice(0, 3).map(ct => (
+                          <span
+                            key={ct.tagId}
+                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: ct.tag.color }}
+                            title={ct.tag.name}
+                          />
+                        ))}
+                        {candidate.tags.length > 3 && (
+                          <span className="text-xs text-gray-400">+{candidate.tags.length - 3}</span>
+                        )}
+                        {candidate.tags.length === 0 && (
+                          <span className="text-gray-300 text-sm">—</span>
                         )}
                       </div>
                     </td>

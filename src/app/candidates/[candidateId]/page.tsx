@@ -12,6 +12,7 @@ import { STAGE_LABELS, STAGE_COLORS } from '@/lib/constants'
 import { formatDate, timeAgo } from '@/lib/utils'
 import { NotesPanel } from '@/components/candidates/NotesPanel'
 import { SendMessageButton } from '@/components/candidates/SendMessageButton'
+import { CandidateTags } from '@/components/candidates/CandidateTags'
 
 const RATING_COLORS: Record<string, string> = {
   STRONG_YES: 'bg-green-100 text-green-700',
@@ -46,6 +47,7 @@ export default async function CandidatePage({ params }: { params: { candidateId:
       },
       candidateNotes: { orderBy: { createdAt: 'desc' } },
       messageLogs: { orderBy: { sentAt: 'desc' }, take: 10 },
+      tags: { include: { tag: true } },
     },
   })
 
@@ -95,6 +97,12 @@ export default async function CandidatePage({ params }: { params: { candidateId:
             {candidate.source && (
               <p className="text-sm text-gray-400 mt-0.5">Source: {candidate.source}</p>
             )}
+            <div className="mt-2">
+              <CandidateTags
+                candidateId={candidate.id}
+                initialTags={candidate.tags.map(ct => ct.tag)}
+              />
+            </div>
             <div className="flex flex-wrap gap-4 mt-3">
               <a href={`mailto:${candidate.email}`} className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition-colors">
                 <Mail className="w-4 h-4 text-gray-400" />{candidate.email}

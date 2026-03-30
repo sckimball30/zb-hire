@@ -5,16 +5,19 @@ import { useCallback } from 'react'
 import { Search, X } from 'lucide-react'
 
 interface Job { id: string; title: string }
+interface Tag { id: string; name: string; color: string }
 
 interface Props {
   jobs: Job[]
+  tags: Tag[]
   currentQ: string
   currentJobId: string
   currentDateFrom: string
   currentDateTo: string
+  currentTagId: string
 }
 
-export function CandidateFilters({ jobs, currentQ, currentJobId, currentDateFrom, currentDateTo }: Props) {
+export function CandidateFilters({ jobs, tags, currentQ, currentJobId, currentDateFrom, currentDateTo, currentTagId }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -27,7 +30,7 @@ export function CandidateFilters({ jobs, currentQ, currentJobId, currentDateFrom
   }, [router, pathname, searchParams])
 
   const clearAll = () => router.replace(pathname)
-  const hasFilters = currentQ || currentJobId || currentDateFrom || currentDateTo
+  const hasFilters = currentQ || currentJobId || currentDateFrom || currentDateTo || currentTagId
 
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -52,6 +55,18 @@ export function CandidateFilters({ jobs, currentQ, currentJobId, currentDateFrom
         <option value="">All roles</option>
         {jobs.map(j => (
           <option key={j.id} value={j.id}>{j.title}</option>
+        ))}
+      </select>
+
+      {/* Tag filter */}
+      <select
+        value={currentTagId}
+        onChange={e => update('tagId', e.target.value)}
+        className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4AFFD2]/40 focus:border-[#4AFFD2] bg-white text-gray-700"
+      >
+        <option value="">All tags</option>
+        {tags.map(t => (
+          <option key={t.id} value={t.id}>{t.name}</option>
         ))}
       </select>
 
