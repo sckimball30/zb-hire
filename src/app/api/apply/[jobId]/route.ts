@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { put } from '@vercel/blob'
 import { sendNewApplicationEmail } from '@/lib/email'
+import { sendApplicationConfirmation } from '@/lib/automations'
 
 // Public GET — returns job info for the apply page (no auth required)
 export async function GET(
@@ -73,7 +74,7 @@ export async function POST(
   const job = await prisma.job.findUnique({
     where: { id: params.jobId },
     select: {
-      id: true, status: true, title: true,
+      id: true, status: true, title: true, department: true,
       recruiters: {
         where: { isMain: true, emailNotifications: true },
         include: { user: { select: { name: true, email: true } } },
@@ -133,6 +134,15 @@ export async function POST(
       },
     })
   }
+
+  // Send application confirmation to candidate
+  sendApplicationConfirmation({
+    candidateEmail: email.trim().toLowerCase(),
+    firstName: firstName.trim(),
+    fullName: `${firstName.trim()} ${lastName.trim()}`,
+    jobTitle: job.title,
+    department: job.department,
+  }).catch(() => {})
 
   // Notify main recruiter(s) with email alerts enabled
   for (const assignment of job.recruiters) {

@@ -2,11 +2,12 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { User, Users } from 'lucide-react'
+import { User, Users, Zap } from 'lucide-react'
 
 const tabs = [
   { href: '/settings/profile', label: 'My Profile', icon: User },
   { href: '/settings/users', label: 'Team & Users', icon: Users },
+  { href: '/settings/automations', label: 'Automations', icon: Zap },
 ]
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
