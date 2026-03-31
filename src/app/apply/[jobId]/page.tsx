@@ -47,7 +47,7 @@ export default function PublicApplyPage() {
 
   const [form, setForm] = useState({
     firstName: '', lastName: '', email: '', phone: '',
-    address: '', linkedInUrl: '', coverLetter: '',
+    address: '', linkedInUrl: '', coverLetter: '', source: '',
   })
 
   useEffect(() => {
@@ -101,6 +101,7 @@ export default function PublicApplyPage() {
     fd.append('address', form.address.trim())
     fd.append('linkedInUrl', form.linkedInUrl.trim())
     fd.append('coverLetter', form.coverLetter.trim())
+    fd.append('source', form.source.trim())
     fd.append('resume', resumeFile)
 
     const res = await fetch(`/api/apply/${jobId}`, { method: 'POST', body: fd })
@@ -327,6 +328,31 @@ export default function PublicApplyPage() {
                   <p className="text-xs text-gray-400 mt-1">PDF, DOC, DOCX · Max 10 MB</p>
                 </button>
               )}
+            </div>
+
+            {/* Source */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                How did you hear about us?
+                <span className="text-gray-400 font-normal ml-1">(optional)</span>
+              </label>
+              <select
+                name="source"
+                value={form.source}
+                onChange={e => setForm(f => ({ ...f, source: e.target.value }))}
+                className="input w-full text-sm"
+              >
+                <option value="">Select an option</option>
+                <option value="LinkedIn">LinkedIn</option>
+                <option value="Indeed">Indeed</option>
+                <option value="Glassdoor">Glassdoor</option>
+                <option value="Company Website">Company Website</option>
+                <option value="Referral">Employee Referral</option>
+                <option value="Instagram">Instagram</option>
+                <option value="TikTok">TikTok</option>
+                <option value="Other Social Media">Other Social Media</option>
+                <option value="Other">Other</option>
+              </select>
             </div>
 
             {/* Cover Letter — optional */}

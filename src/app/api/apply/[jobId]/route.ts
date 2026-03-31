@@ -32,7 +32,7 @@ export async function POST(
 ) {
   try {
   let firstName: string, lastName: string, email: string
-  let phone = '', address = '', linkedInUrl = '', coverLetter = ''
+  let phone = '', address = '', linkedInUrl = '', coverLetter = '', source = ''
   let resumeUrl: string | null = null
 
   const contentType = req.headers.get('content-type') ?? ''
@@ -46,6 +46,7 @@ export async function POST(
     address   = (fd.get('address')   as string)?.trim() ?? ''
     linkedInUrl  = (fd.get('linkedInUrl')  as string)?.trim() ?? ''
     coverLetter  = (fd.get('coverLetter')  as string)?.trim() ?? ''
+    source       = (fd.get('source')       as string)?.trim() ?? ''
 
     const resumeFile = fd.get('resume') as File | null
     if (resumeFile && resumeFile.size > 0) {
@@ -97,7 +98,7 @@ export async function POST(
       linkedInUrl: linkedInUrl || null,
       resumeUrl: resumeUrl,
       notes: coverLetter || null,
-      source: 'Direct Apply',
+      source: source || 'Direct Apply',
     },
     update: {
       phone: phone || undefined,
