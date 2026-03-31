@@ -10,6 +10,7 @@ import { StageSelector } from '@/components/applications/StageSelector'
 import { ScheduleInterviewButton } from '@/components/applications/ScheduleInterviewButton'
 import { SendMessageButton } from '@/components/candidates/SendMessageButton'
 import { OfferPanel } from '@/components/offers/OfferPanel'
+import { HireDecisionPanel } from '@/components/applications/HireDecisionPanel'
 
 export default async function ApplicationPage({
   params,
@@ -42,6 +43,9 @@ export default async function ApplicationPage({
         orderBy: { createdAt: 'desc' },
       },
       offer: true,
+      hireDecisions: {
+        orderBy: { createdAt: 'desc' },
+      },
     },
   })
 
@@ -281,6 +285,12 @@ export default async function ApplicationPage({
               </ul>
             )}
           </div>
+
+          {/* Hire Decision Panel */}
+          <HireDecisionPanel
+            applicationId={application.id}
+            decisions={application.hireDecisions}
+          />
         </div>
 
         {/* Sidebar - right 1/3 */}
@@ -296,6 +306,10 @@ export default async function ApplicationPage({
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Scorecards</span>
                 <span className="font-medium">{submittedScorecards.length}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Hire Evaluations</span>
+                <span className="font-medium">{application.hireDecisions.length}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Days in pipeline</span>

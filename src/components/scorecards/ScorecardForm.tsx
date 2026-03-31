@@ -4,8 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { RatingSelect } from './RatingSelect'
-import { RATING_LABELS } from '@/lib/constants'
-import type { Rating, Interviewer, ScorecardTemplateWithRelations } from '@/types'
+import type { Interviewer, ScorecardTemplateWithRelations } from '@/types'
 
 interface ScorecardFormProps {
   applicationId: string
@@ -14,21 +13,21 @@ interface ScorecardFormProps {
 }
 
 interface ResponseState {
-  rating: Rating | null
+  rating: string | null
   notes: string
 }
 
 export function ScorecardForm({ applicationId, template, interviewers }: ScorecardFormProps) {
   const router = useRouter()
   const [interviewerId, setInterviewerId] = useState(interviewers[0]?.id || '')
-  const [overallRating, setOverallRating] = useState<Rating | null>(null)
+  const [overallRating, setOverallRating] = useState<string | null>(null)
   const [summary, setSummary] = useState('')
   const [recommendation, setRecommendation] = useState('')
   const [responses, setResponses] = useState<Record<string, ResponseState>>({})
   const [saving, setSaving] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
-  const setResponse = (questionId: string, field: keyof ResponseState, value: string | Rating | null) => {
+  const setResponse = (questionId: string, field: keyof ResponseState, value: string | null) => {
     setResponses((prev) => ({
       ...prev,
       [questionId]: {
@@ -166,6 +165,7 @@ export function ScorecardForm({ applicationId, template, interviewers }: Scoreca
           <div className="divide-y divide-gray-100">
             {section.questions.map((tq) => {
               const response = responses[tq.questionId] || { rating: null, notes: '' }
+              const q = tq.question as any
               return (
                 <div key={tq.id} className="px-5 py-4">
                   <div className="flex items-start justify-between gap-4 mb-3">
@@ -182,12 +182,38 @@ export function ScorecardForm({ applicationId, template, interviewers }: Scoreca
 
                   <div className="space-y-3">
                     <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1.5 block">Rating</label>
+                      <label className="text-xs font-medium text-gray-600 mb-1.5 block">Rating (A / B / C)</label>
                       <RatingSelect
                         value={response.rating}
                         onChange={(rating) => setResponse(tq.questionId, 'rating', rating)}
+                        mode="abc"
                       />
                     </div>
+
+                    {/* A/B/C guide inline */}
+                    {(q.aPlayerAnswer || q.bPlayerAnswer || q.cPlayerAnswer) && (
+                      <div className="grid grid-cols-3 gap-2 mt-2">
+                        {q.aPlayerAnswer && (
+                          <div className="rounded border border-green-200 bg-green-50 p-2">
+                            <p className="text-xs font-semibold text-green-700 mb-1">A Player</p>
+                            <p className="text-xs text-green-900 leading-relaxed">{q.aPlayerAnswer}</p>
+                          </div>
+                        )}
+                        {q.bPlayerAnswer && (
+                          <div className="rounded border border-amber-200 bg-amber-50 p-2">
+                            <p className="text-xs font-semibold text-amber-700 mb-1">B Player</p>
+                            <p className="text-xs text-amber-900 leading-relaxed">{q.bPlayerAnswer}</p>
+                          </div>
+                        )}
+                        {q.cPlayerAnswer && (
+                          <div className="rounded border border-red-200 bg-red-50 p-2">
+                            <p className="text-xs font-semibold text-red-700 mb-1">C Player</p>
+                            <p className="text-xs text-red-900 leading-relaxed">{q.cPlayerAnswer}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div>
                       <label className="text-xs font-medium text-gray-600 mb-1.5 block">Notes</label>
                       <textarea
@@ -217,6 +243,7 @@ export function ScorecardForm({ applicationId, template, interviewers }: Scoreca
               value={overallRating}
               onChange={setOverallRating}
               size="lg"
+              mode="abc"
             />
           </div>
 

@@ -6,6 +6,9 @@ import { prisma } from '@/lib/prisma'
 import { Edit2, Calendar, Target, Users, Clock } from 'lucide-react'
 import { JOB_STATUS_LABELS, JOB_STATUS_COLORS, EMPLOYMENT_TYPE_LABELS } from '@/lib/constants'
 import { CopyApplyLink } from '@/components/jobs/CopyApplyLink'
+import { OutcomesEditor } from '@/components/jobs/OutcomesEditor'
+import { ResponsibilitiesEditor } from '@/components/jobs/ResponsibilitiesEditor'
+import { ScorecardMeta } from '@/components/jobs/ScorecardMeta'
 
 function formatSalary(amount: number, currency = 'USD') {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount)
@@ -17,6 +20,8 @@ export default async function JobOverviewPage({ params }: { params: { jobId: str
     include: {
       _count: { select: { applications: true } },
       applications: { select: { stage: true } },
+      outcomes: { orderBy: { priority: 'asc' } },
+      responsibilities: { orderBy: { number: 'asc' } },
     },
   })
   if (!job) notFound()
@@ -84,6 +89,12 @@ export default async function JobOverviewPage({ params }: { params: { jobId: str
               </div>
             </div>
           )}
+
+          {/* Outcomes */}
+          <OutcomesEditor jobId={job.id} initialOutcomes={job.outcomes} />
+
+          {/* Responsibilities */}
+          <ResponsibilitiesEditor jobId={job.id} initialResponsibilities={job.responsibilities} />
         </div>
 
         {/* Right: details sidebar */}
@@ -104,6 +115,13 @@ export default async function JobOverviewPage({ params }: { params: { jobId: str
               </div>
             ))}
           </div>
+
+          {/* Scorecard Context (Reports To + Mission) */}
+          <ScorecardMeta
+            jobId={job.id}
+            initialReportsTo={job.reportsTo ?? null}
+            initialMission={job.mission ?? null}
+          />
         </div>
       </div>
     </div>

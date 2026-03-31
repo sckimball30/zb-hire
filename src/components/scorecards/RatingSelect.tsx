@@ -4,12 +4,34 @@ import { cn } from '@/lib/utils'
 import type { Rating } from '@/types'
 
 interface RatingSelectProps {
-  value: Rating | null
-  onChange: (rating: Rating | null) => void
+  value: string | null
+  onChange: (rating: string | null) => void
   size?: 'sm' | 'lg'
+  mode?: 'abc' | 'full'
 }
 
-const RATINGS: Array<{ value: Rating; label: string; short: string; activeClass: string; hoverClass: string }> = [
+const ABC_RATINGS: Array<{ value: string; label: string; activeClass: string; hoverClass: string }> = [
+  {
+    value: 'A',
+    label: 'A',
+    activeClass: 'bg-green-600 text-white border-green-600',
+    hoverClass: 'hover:bg-green-50 hover:border-green-300',
+  },
+  {
+    value: 'B',
+    label: 'B',
+    activeClass: 'bg-amber-400 text-white border-amber-400',
+    hoverClass: 'hover:bg-amber-50 hover:border-amber-300',
+  },
+  {
+    value: 'C',
+    label: 'C',
+    activeClass: 'bg-red-600 text-white border-red-600',
+    hoverClass: 'hover:bg-red-50 hover:border-red-300',
+  },
+]
+
+const FULL_RATINGS: Array<{ value: string; label: string; short: string; activeClass: string; hoverClass: string }> = [
   {
     value: 'STRONG_NO',
     label: 'Strong No',
@@ -47,28 +69,32 @@ const RATINGS: Array<{ value: Rating; label: string; short: string; activeClass:
   },
 ]
 
-export function RatingSelect({ value, onChange, size = 'sm' }: RatingSelectProps) {
+export function RatingSelect({ value, onChange, size = 'sm', mode = 'abc' }: RatingSelectProps) {
   const isLg = size === 'lg'
+  const ratings = mode === 'full' ? FULL_RATINGS : ABC_RATINGS
 
   return (
     <div className="flex items-center gap-1.5">
-      {RATINGS.map((rating) => {
+      {ratings.map((rating) => {
         const isSelected = value === rating.value
+        const showFull = mode === 'full'
         return (
           <button
             key={rating.value}
             type="button"
             onClick={() => onChange(isSelected ? null : rating.value)}
             className={cn(
-              'border rounded-md font-medium transition-all',
-              isLg ? 'px-3 py-1.5 text-sm min-w-[72px]' : 'px-2 py-1 text-xs min-w-[44px]',
+              'border rounded-md font-bold transition-all',
+              mode === 'full'
+                ? isLg ? 'px-3 py-1.5 text-sm min-w-[72px]' : 'px-2 py-1 text-xs min-w-[44px]'
+                : isLg ? 'px-4 py-1.5 text-base min-w-[52px]' : 'px-2.5 py-1 text-sm min-w-[36px]',
               isSelected
                 ? rating.activeClass
                 : cn('bg-white text-gray-600 border-gray-200', rating.hoverClass)
             )}
-            title={rating.label}
+            title={mode === 'full' ? (rating as any).label : `${rating.label} Player`}
           >
-            {isLg ? rating.label : rating.short}
+            {mode === 'full' ? (isLg ? rating.label : (rating as any).short) : rating.label}
           </button>
         )
       })}

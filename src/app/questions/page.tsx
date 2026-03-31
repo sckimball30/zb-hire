@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { Plus } from 'lucide-react'
 import { CATEGORY_LABELS, CATEGORY_COLORS } from '@/lib/constants'
 import type { CompetencyCategory } from '@/types'
+import { QuestionRow } from '@/components/questions/QuestionRow'
 
 const CATEGORIES: CompetencyCategory[] = [
   'TECHNICAL', 'BEHAVIORAL', 'CULTURE_FIT', 'LEADERSHIP',
@@ -90,34 +91,25 @@ export default async function QuestionsPage({
             </thead>
             <tbody>
               {questions.map((q) => (
-                <tr key={q.id}>
-                  <td>
-                    <div className="max-w-lg">
-                      <p className="text-gray-900 font-medium">{q.text}</p>
-                      {q.guidance && (
-                        <p className="text-sm text-gray-500 mt-0.5 line-clamp-1">{q.guidance}</p>
-                      )}
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${CATEGORY_COLORS[q.category]}`}>
-                      {CATEGORY_LABELS[q.category]}
+                <QuestionRow
+                  key={q.id}
+                  question={q}
+                  categoryBadge={
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${CATEGORY_COLORS[q.category] ?? 'bg-gray-100 text-gray-700'}`}>
+                      {CATEGORY_LABELS[q.category] ?? q.category}
                     </span>
-                  </td>
-                  <td>
-                    {q.tags ? (
-                      <div className="flex flex-wrap gap-1">
-                        {q.tags.split(',').map((tag) => (
-                          <span key={tag} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-600">
-                            {tag.trim()}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
-                  </td>
-                </tr>
+                  }
+                  deleteButton={
+                    !q.isStandard ? (
+                      <Link
+                        href={`/questions/${q.id}/delete`}
+                        className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                      >
+                        Delete
+                      </Link>
+                    ) : undefined
+                  }
+                />
               ))}
             </tbody>
           </table>

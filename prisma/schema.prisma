@@ -155,6 +155,8 @@ model Job {
   salaryCurrency    String             @default("USD")
   hiringGoal        Int?
   interviewCount    Int                @default(3)
+  reportsTo         String?
+  mission           String?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   applications      Application[]
@@ -162,6 +164,8 @@ model Job {
   recruiters        JobRecruiter[]
   scorecardTemplate ScorecardTemplate?
   rounds            InterviewRound[]
+  outcomes          JobOutcome[]
+  responsibilities  JobResponsibility[]
 }
 
 model JobRecruiter {
@@ -176,6 +180,51 @@ model JobRecruiter {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([jobId, userId])
+}
+
+model JobOutcome {
+  id       String @id @default(cuid())
+  jobId    String
+  priority Int
+  outcome  String
+  kpi      String?
+  job      Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  @@unique([jobId, priority])
+}
+
+model JobResponsibility {
+  id          String  @id @default(cuid())
+  jobId       String
+  number      Int
+  description String
+  ownsWith    String?
+  job         Job     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  @@unique([jobId, number])
+}
+
+model HireDecision {
+  id                      String    @id @default(cuid())
+  applicationId           String
+  interviewerName         String?
+  outcomesMatch           String?
+  resultsOrientation      String?
+  fierceOwnership         String?
+  decisiveAction          String?
+  mentalToughness         String?
+  competitiveExcellence   String?
+  roleSpecificFit         String?
+  whoInterviewPattern     String?
+  referenceCheck          String?
+  gutCheckThrilled        String?
+  gutCheckTeam            String?
+  gutCheckEmbarrassed     String?
+  overallRating           String?
+  rationale               String?
+  recommendation          String?
+  submittedAt             DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  application             Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
 
 model JobInterviewer {
@@ -207,6 +256,7 @@ model Application {
   scorecards   Scorecard[]
   activityLog  ActivityLog[]
   offer        Offer?
+  hireDecisions HireDecision[]
 
   @@unique([candidateId, jobId])
 }
@@ -312,6 +362,10 @@ model Question {
   category                   String
   tags                       String?
   isArchived                 Boolean                     @default(false)
+  isStandard                 Boolean                     @default(false)
+  aPlayerAnswer              String?
+  bPlayerAnswer              String?
+  cPlayerAnswer              String?
   createdAt                  DateTime                    @default(now())
   updatedAt                  DateTime                    @updatedAt
   scorecardTemplateQuestions ScorecardTemplateQuestion[]
