@@ -109,6 +109,7 @@ model Candidate {
   candidateNotes CandidateNote[]
   messageLogs  MessageLog[]
   tags         CandidateTag[]
+  scheduledMessages ScheduledMessage[]
 }
 
 model Tag {
@@ -429,6 +430,20 @@ model MessageTemplate {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   messageLogs MessageLog[]
+}
+
+model ScheduledMessage {
+  id          String    @id @default(cuid())
+  candidateId String
+  subject     String
+  body        String
+  templateId  String?
+  scheduledFor DateTime
+  sentAt      DateTime?
+  createdAt   DateTime  @default(now())
+  sentById    String?
+  sentByName  String?
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 }
 
 model MessageLog {

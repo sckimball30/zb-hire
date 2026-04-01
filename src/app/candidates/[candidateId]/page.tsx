@@ -13,6 +13,7 @@ import { formatDate, timeAgo } from '@/lib/utils'
 import { NotesPanel } from '@/components/candidates/NotesPanel'
 import { SendMessageButton } from '@/components/candidates/SendMessageButton'
 import { CandidateTags } from '@/components/candidates/CandidateTags'
+import { ScheduledMessagesList } from '@/components/candidates/ScheduledMessagesList'
 
 const RATING_COLORS: Record<string, string> = {
   STRONG_YES: 'bg-green-100 text-green-700',
@@ -48,6 +49,11 @@ export default async function CandidatePage({ params }: { params: { candidateId:
       candidateNotes: { orderBy: { createdAt: 'desc' } },
       messageLogs: { orderBy: { sentAt: 'desc' }, take: 10 },
       tags: { include: { tag: true } },
+      scheduledMessages: {
+        where: { sentAt: null },
+        orderBy: { scheduledFor: 'asc' },
+        include: { candidate: false },
+      },
     },
   })
 
@@ -138,7 +144,11 @@ export default async function CandidatePage({ params }: { params: { candidateId:
                   Resume
                 </a>
               )}
-              <SendMessageButton candidateId={candidate.id} candidateEmail={candidate.email} />
+              <SendMessageButton
+                candidateId={candidate.id}
+                candidateEmail={candidate.email}
+                candidateFirstName={candidate.firstName}
+              />
             </div>
           </div>
         </div>
