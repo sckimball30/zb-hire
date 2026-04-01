@@ -6,9 +6,16 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 
+function parseMoney(val: string): number | undefined {
+  const clean = val.replace(/[$,\s]/g, '')
+  const n = parseInt(clean, 10)
+  return isNaN(n) ? undefined : n
+}
+
 export default function NewJobPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [compMode, setCompMode] = useState<'fixed' | 'range'>('range')
   const [form, setForm] = useState({
     title: '',
     department: '',
@@ -17,6 +24,8 @@ export default function NewJobPage() {
     status: 'DRAFT' as 'DRAFT' | 'OPEN',
     hiringGoal: '',
     employmentType: '',
+    payType: 'SALARY',
+    salaryFixed: '',
     salaryMin: '',
     salaryMax: '',
     salaryCurrency: 'USD',
@@ -33,6 +42,9 @@ export default function NewJobPage() {
       return
     }
 
+    const salaryMin = compMode === 'fixed' ? parseMoney(form.salaryFixed) : parseMoney(form.salaryMin)
+    const salaryMax = compMode === 'fixed' ? parseMoney(form.salaryFixed) : parseMoney(form.salaryMax)
+
     setLoading(true)
     try {
       const res = await fetch('/api/jobs', {
@@ -46,8 +58,9 @@ export default function NewJobPage() {
           status: form.status,
           hiringGoal: form.hiringGoal ? parseInt(form.hiringGoal) : undefined,
           employmentType: form.employmentType || undefined,
-          salaryMin: form.salaryMin ? parseInt(form.salaryMin) : undefined,
-          salaryMax: form.salaryMax ? parseInt(form.salaryMax) : undefined,
+          payType: form.payType,
+          salaryMin,
+          salaryMax,
           salaryCurrency: form.salaryCurrency,
         }),
       })
@@ -67,6 +80,8 @@ export default function NewJobPage() {
     }
   }
 
+  const payLabel = form.payType === 'HOURLY' ? 'Hourly Rate' : 'Salary'
+
   return (
     <div className="p-8 max-w-2xl">
       <div className="mb-6">
@@ -79,57 +94,37 @@ export default function NewJobPage() {
 
       <div className="card p-6">
         <form onSubmit={handleSubmit} className="space-y-5">
+
+          {/* Title */}
           <div>
             <label htmlFor="title" className="label">Job Title <span className="text-red-500">*</span></label>
             <input
-              id="title"
-              name="title"
-              type="text"
-              className="input"
+              id="title" name="title" type="text" className="input"
               placeholder="e.g. Senior Software Engineer"
-              value={form.title}
-              onChange={handleChange}
-              required
+              value={form.title} onChange={handleChange} required
             />
           </div>
 
+          {/* Department + Location */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="department" className="label">Department</label>
-              <input
-                id="department"
-                name="department"
-                type="text"
-                className="input"
-                placeholder="e.g. Engineering"
-                value={form.department}
-                onChange={handleChange}
-              />
+              <input id="department" name="department" type="text" className="input"
+                placeholder="e.g. Sales" value={form.department} onChange={handleChange} />
             </div>
             <div>
               <label htmlFor="location" className="label">Location</label>
-              <input
-                id="location"
-                name="location"
-                type="text"
-                className="input"
-                placeholder="e.g. Remote"
-                value={form.location}
-                onChange={handleChange}
-              />
+              <input id="location" name="location" type="text" className="input"
+                placeholder="e.g. Remote" value={form.location} onChange={handleChange} />
             </div>
           </div>
 
+          {/* Employment Type + Pay Type */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="employmentType" className="label">Employment Type</label>
-              <select
-                id="employmentType"
-                name="employmentType"
-                className="input"
-                value={form.employmentType}
-                onChange={handleChange}
-              >
+              <select id="employmentType" name="employmentType" className="input"
+                value={form.employmentType} onChange={handleChange}>
                 <option value="">— Select —</option>
                 <option value="FULL_TIME">Full-time</option>
                 <option value="PART_TIME">Part-time</option>
@@ -139,87 +134,97 @@ export default function NewJobPage() {
               </select>
             </div>
             <div>
-              <label htmlFor="hiringGoal" className="label">Hiring Goal</label>
-              <input
-                id="hiringGoal"
-                name="hiringGoal"
-                type="number"
-                min="1"
-                className="input"
-                placeholder="e.g. 2"
-                value={form.hiringGoal}
-                onChange={handleChange}
-              />
+              <label htmlFor="payType" className="label">Pay Type</label>
+              <select id="payType" name="payType" className="input"
+                value={form.payType} onChange={handleChange}>
+                <option value="SALARY">Salary (annual)</option>
+                <option value="HOURLY">Hourly</option>
+              </select>
             </div>
           </div>
 
-          {/* Salary Range */}
+          {/* Compensation */}
           <div>
-            <label className="label">Budgeted Salary Range</label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="label mb-0">{payLabel}</label>
+              {/* Fixed vs Range toggle */}
+              <div className="flex rounded-lg border border-gray-200 overflow-hidden text-xs">
+                <button
+                  type="button"
+                  onClick={() => setCompMode('fixed')}
+                  className={`px-3 py-1 font-medium transition-colors ${compMode === 'fixed' ? 'bg-[#111] text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+                >
+                  Fixed
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCompMode('range')}
+                  className={`px-3 py-1 font-medium transition-colors ${compMode === 'range' ? 'bg-[#111] text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+                >
+                  Range
+                </button>
+              </div>
+            </div>
+
             <div className="flex items-center gap-2">
-              <select
-                name="salaryCurrency"
-                className="input w-24 flex-shrink-0"
-                value={form.salaryCurrency}
-                onChange={handleChange}
-              >
+              <select name="salaryCurrency" className="input w-20 flex-shrink-0"
+                value={form.salaryCurrency} onChange={handleChange}>
                 <option value="USD">USD</option>
                 <option value="EUR">EUR</option>
                 <option value="GBP">GBP</option>
                 <option value="CAD">CAD</option>
                 <option value="AUD">AUD</option>
               </select>
-              <input
-                name="salaryMin"
-                type="number"
-                min="0"
-                step="1000"
-                className="input flex-1"
-                placeholder="Min (e.g. 80000)"
-                value={form.salaryMin}
-                onChange={handleChange}
-              />
-              <span className="text-gray-400 text-sm flex-shrink-0">to</span>
-              <input
-                name="salaryMax"
-                type="number"
-                min="0"
-                step="1000"
-                className="input flex-1"
-                placeholder="Max (e.g. 120000)"
-                value={form.salaryMax}
-                onChange={handleChange}
-              />
+
+              {compMode === 'fixed' ? (
+                <input
+                  name="salaryFixed" type="text" className="input flex-1"
+                  placeholder={form.payType === 'HOURLY' ? 'e.g. 18 or $18.50' : 'e.g. 37,440 or $95,000'}
+                  value={form.salaryFixed} onChange={handleChange}
+                />
+              ) : (
+                <>
+                  <input
+                    name="salaryMin" type="text" className="input flex-1"
+                    placeholder={form.payType === 'HOURLY' ? 'Min (e.g. 15)' : 'Min (e.g. 80,000)'}
+                    value={form.salaryMin} onChange={handleChange}
+                  />
+                  <span className="text-gray-400 text-sm flex-shrink-0">to</span>
+                  <input
+                    name="salaryMax" type="text" className="input flex-1"
+                    placeholder={form.payType === 'HOURLY' ? 'Max (e.g. 25)' : 'Max (e.g. 120,000)'}
+                    value={form.salaryMax} onChange={handleChange}
+                  />
+                </>
+              )}
             </div>
-            <p className="text-xs text-gray-400 mt-1">Visible internally only — not shown to candidates</p>
+            <p className="text-xs text-gray-400 mt-1">Commas and $ signs are fine — visible internally only</p>
           </div>
 
+          {/* Hiring Goal + Status */}
           <div className="grid grid-cols-2 gap-4">
             <div>
+              <label htmlFor="hiringGoal" className="label">Hiring Goal</label>
+              <input id="hiringGoal" name="hiringGoal" type="number" min="1" className="input"
+                placeholder="e.g. 2" value={form.hiringGoal} onChange={handleChange} />
+            </div>
+            <div>
               <label htmlFor="status" className="label">Status</label>
-              <select
-                id="status"
-                name="status"
-                className="input"
-                value={form.status}
-                onChange={handleChange}
-              >
+              <select id="status" name="status" className="input"
+                value={form.status} onChange={handleChange}>
                 <option value="DRAFT">Draft</option>
                 <option value="OPEN">Open</option>
               </select>
             </div>
           </div>
 
+          {/* Description */}
           <div>
             <label htmlFor="description" className="label">Description</label>
             <textarea
-              id="description"
-              name="description"
-              rows={5}
-              className="input h-auto"
+              id="description" name="description" rows={5} className="input h-auto"
               placeholder="Describe the role, responsibilities, and requirements..."
-              value={form.description}
-              onChange={handleChange}
+              value={form.description} onChange={handleChange}
             />
           </div>
 
@@ -227,9 +232,7 @@ export default function NewJobPage() {
             <button type="submit" disabled={loading} className="btn-primary">
               {loading ? 'Creating...' : 'Create Job'}
             </button>
-            <Link href="/jobs" className="btn-secondary">
-              Cancel
-            </Link>
+            <Link href="/jobs" className="btn-secondary">Cancel</Link>
           </div>
         </form>
       </div>
