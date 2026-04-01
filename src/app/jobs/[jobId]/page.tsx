@@ -9,12 +9,19 @@ import { CopyApplyLink } from '@/components/jobs/CopyApplyLink'
 import { OutcomesEditor } from '@/components/jobs/OutcomesEditor'
 import { ResponsibilitiesEditor } from '@/components/jobs/ResponsibilitiesEditor'
 import { ScorecardMeta } from '@/components/jobs/ScorecardMeta'
+import { ScorecardTemplateBuilder } from '@/components/jobs/ScorecardTemplateBuilder'
 
 function formatSalary(amount: number, currency = 'USD') {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount)
 }
 
 export default async function JobOverviewPage({ params }: { params: { jobId: string } }) {
+  const allQuestions = await prisma.question.findMany({
+    where: { isArchived: false },
+    orderBy: [{ isStandard: 'desc' }, { category: 'asc' }, { createdAt: 'desc' }],
+    select: { id: true, text: true, category: true, isStandard: true, guidance: true },
+  })
+
   const job = await prisma.job.findUnique({
     where: { id: params.jobId },
     include: {
@@ -22,6 +29,19 @@ export default async function JobOverviewPage({ params }: { params: { jobId: str
       applications: { select: { stage: true } },
       outcomes: { orderBy: { priority: 'asc' } },
       responsibilities: { orderBy: { number: 'asc' } },
+      scorecardTemplate: {
+        include: {
+          sections: {
+            orderBy: { sortOrder: 'asc' },
+            include: {
+              questions: {
+                orderBy: { sortOrder: 'asc' },
+                include: { question: true },
+              },
+            },
+          },
+        },
+      },
     },
   })
   if (!job) notFound()
@@ -121,6 +141,13 @@ export default async function JobOverviewPage({ params }: { params: { jobId: str
             jobId={job.id}
             initialReportsTo={job.reportsTo ?? null}
             initialMission={job.mission ?? null}
+          />
+
+          {/* Scorecard Template Builder */}
+          <ScorecardTemplateBuilder
+            jobId={job.id}
+            initialTemplate={job.scorecardTemplate as any}
+            allQuestions={allQuestions}
           />
         </div>
       </div>
