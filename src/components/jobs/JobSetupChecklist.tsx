@@ -9,40 +9,31 @@ interface ChecklistProps {
   hasScorecardTemplate: boolean
   isOpen: boolean
   hasDescription: boolean
-  onEditClick?: () => void
 }
 
-interface CheckItem {
-  label: string
-  done: boolean
-  hint: string
-  action?: { label: string; href?: string; onClick?: () => void }
-}
-
-export function JobSetupChecklist({ jobId, hasInterviewers, hasScorecardTemplate, isOpen, hasDescription, onEditClick }: ChecklistProps) {
-  const items: CheckItem[] = [
+export function JobSetupChecklist({ jobId, hasInterviewers, hasScorecardTemplate, isOpen, hasDescription }: ChecklistProps) {
+  const items = [
     {
       label: 'Write the job description',
       done: hasDescription,
-      hint: 'Help candidates understand the role.',
-      action: { label: 'Edit Job', onClick: onEditClick },
+      hint: "Click 'Edit Job' above to add a description.",
     },
     {
       label: 'Assign interviewers',
       done: hasInterviewers,
-      hint: 'Add the people who will be interviewing for this role.',
-      action: { label: 'Go to Team tab', href: `/jobs/${jobId}/team` },
+      hint: 'Add the people who will be interviewing candidates.',
+      href: `/jobs/${jobId}/team`,
+      linkLabel: 'Go to Team tab',
     },
     {
       label: 'Build a scorecard template',
       done: hasScorecardTemplate,
-      hint: 'Define the questions interviewers will use to evaluate candidates.',
+      hint: 'Scroll down to the Scorecard Template section below.',
     },
     {
       label: 'Open the job to applicants',
       done: isOpen,
-      hint: 'Change the job status to Open so candidates can apply.',
-      action: { label: 'Edit Job', onClick: onEditClick },
+      hint: "Click 'Edit Job' above and set the status to Open.",
     },
   ]
 
@@ -58,7 +49,6 @@ export function JobSetupChecklist({ jobId, hasInterviewers, hasScorecardTemplate
         <span className="text-xs text-gray-400">{doneCount} / {items.length} complete</span>
       </div>
 
-      {/* Progress bar */}
       <div className="w-full h-1.5 bg-gray-100 rounded-full mb-4 overflow-hidden">
         <div
           className="h-full bg-[#4AFFD2] rounded-full transition-all"
@@ -80,24 +70,14 @@ export function JobSetupChecklist({ jobId, hasInterviewers, hasScorecardTemplate
               {!item.done && (
                 <div className="flex items-center gap-2 mt-0.5">
                   <p className="text-xs text-gray-400">{item.hint}</p>
-                  {item.action && (
-                    item.action.onClick ? (
-                      <button
-                        onClick={item.action.onClick}
-                        className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-0.5 flex-shrink-0"
-                      >
-                        {item.action.label}
-                        <ChevronRight className="w-3 h-3" />
-                      </button>
-                    ) : (
-                      <Link
-                        href={item.action.href!}
-                        className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-0.5 flex-shrink-0"
-                      >
-                        {item.action.label}
-                        <ChevronRight className="w-3 h-3" />
-                      </Link>
-                    )
+                  {'href' in item && item.href && (
+                    <Link
+                      href={item.href}
+                      className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-0.5 flex-shrink-0"
+                    >
+                      {item.linkLabel}
+                      <ChevronRight className="w-3 h-3" />
+                    </Link>
                   )}
                 </div>
               )}
