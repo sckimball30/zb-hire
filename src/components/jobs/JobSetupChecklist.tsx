@@ -9,22 +9,23 @@ interface ChecklistProps {
   hasScorecardTemplate: boolean
   isOpen: boolean
   hasDescription: boolean
+  onEditClick?: () => void
 }
 
 interface CheckItem {
   label: string
   done: boolean
   hint: string
-  action?: { label: string; href: string }
+  action?: { label: string; href?: string; onClick?: () => void }
 }
 
-export function JobSetupChecklist({ jobId, hasInterviewers, hasScorecardTemplate, isOpen, hasDescription }: ChecklistProps) {
+export function JobSetupChecklist({ jobId, hasInterviewers, hasScorecardTemplate, isOpen, hasDescription, onEditClick }: ChecklistProps) {
   const items: CheckItem[] = [
     {
       label: 'Write the job description',
       done: hasDescription,
       hint: 'Help candidates understand the role.',
-      action: { label: 'Edit Job', href: `/jobs/${jobId}/edit` },
+      action: { label: 'Edit Job', onClick: onEditClick },
     },
     {
       label: 'Assign interviewers',
@@ -36,13 +37,12 @@ export function JobSetupChecklist({ jobId, hasInterviewers, hasScorecardTemplate
       label: 'Build a scorecard template',
       done: hasScorecardTemplate,
       hint: 'Define the questions interviewers will use to evaluate candidates.',
-      // action is scroll-to on same page — handled via hint text
     },
     {
       label: 'Open the job to applicants',
       done: isOpen,
       hint: 'Change the job status to Open so candidates can apply.',
-      action: { label: 'Edit Job', href: `/jobs/${jobId}/edit` },
+      action: { label: 'Edit Job', onClick: onEditClick },
     },
   ]
 
@@ -81,13 +81,23 @@ export function JobSetupChecklist({ jobId, hasInterviewers, hasScorecardTemplate
                 <div className="flex items-center gap-2 mt-0.5">
                   <p className="text-xs text-gray-400">{item.hint}</p>
                   {item.action && (
-                    <Link
-                      href={item.action.href}
-                      className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-0.5 flex-shrink-0"
-                    >
-                      {item.action.label}
-                      <ChevronRight className="w-3 h-3" />
-                    </Link>
+                    item.action.onClick ? (
+                      <button
+                        onClick={item.action.onClick}
+                        className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-0.5 flex-shrink-0"
+                      >
+                        {item.action.label}
+                        <ChevronRight className="w-3 h-3" />
+                      </button>
+                    ) : (
+                      <Link
+                        href={item.action.href!}
+                        className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-0.5 flex-shrink-0"
+                      >
+                        {item.action.label}
+                        <ChevronRight className="w-3 h-3" />
+                      </Link>
+                    )
                   )}
                 </div>
               )}

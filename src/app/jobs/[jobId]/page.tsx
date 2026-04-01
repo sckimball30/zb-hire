@@ -6,12 +6,11 @@ import { prisma } from '@/lib/prisma'
 import { Calendar, Target, Users, Clock } from 'lucide-react'
 import { JOB_STATUS_LABELS, JOB_STATUS_COLORS, EMPLOYMENT_TYPE_LABELS } from '@/lib/constants'
 import { CopyApplyLink } from '@/components/jobs/CopyApplyLink'
-import { EditJobButton } from '@/components/jobs/EditJobButton'
+import { JobOverviewEditSection } from '@/components/jobs/EditJobButton'
 import { OutcomesEditor } from '@/components/jobs/OutcomesEditor'
 import { ResponsibilitiesEditor } from '@/components/jobs/ResponsibilitiesEditor'
 import { ScorecardMeta } from '@/components/jobs/ScorecardMeta'
 import { ScorecardTemplateBuilder } from '@/components/jobs/ScorecardTemplateBuilder'
-import { JobSetupChecklist } from '@/components/jobs/JobSetupChecklist'
 
 function formatSalary(amount: number, currency = 'USD') {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount)
@@ -65,32 +64,27 @@ export default async function JobOverviewPage({ params }: { params: { jobId: str
 
   return (
     <div className="p-8 max-w-4xl">
-      {/* Action bar */}
-      <div className="flex items-center justify-between mb-6">
+      {/* Action bar + Setup checklist — unified so checklist links open the same modal */}
+      <div className="flex items-center justify-between mb-0">
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${JOB_STATUS_COLORS[job.status]}`}>
           {JOB_STATUS_LABELS[job.status] ?? job.status}
         </span>
-        <EditJobButton job={{
-          id: job.id,
-          title: job.title,
-          department: job.department,
-          location: job.location,
-          description: job.description,
-          status: job.status,
-          employmentType: job.employmentType,
-          payType: job.payType,
-          salaryMin: job.salaryMin,
-          salaryMax: job.salaryMax,
-          salaryCurrency: job.salaryCurrency,
-          hiringGoal: job.hiringGoal,
-          interviewCount: job.interviewCount,
-        }} />
-      </div>
-
-      {/* Setup checklist — hidden once everything is done */}
-      <div className="mb-6">
-        <JobSetupChecklist
-          jobId={job.id}
+        <JobOverviewEditSection
+          job={{
+            id: job.id,
+            title: job.title,
+            department: job.department,
+            location: job.location,
+            description: job.description,
+            status: job.status,
+            employmentType: job.employmentType,
+            payType: job.payType,
+            salaryMin: job.salaryMin,
+            salaryMax: job.salaryMax,
+            salaryCurrency: job.salaryCurrency,
+            hiringGoal: job.hiringGoal,
+            interviewCount: job.interviewCount,
+          }}
           hasInterviewers={job.interviewers.length > 0}
           hasScorecardTemplate={!!job.scorecardTemplate}
           isOpen={job.status === 'OPEN'}
