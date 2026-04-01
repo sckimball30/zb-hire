@@ -22,6 +22,9 @@ interface Offer {
   sentAt: string | null
   respondedAt: string | null
   createdAt: string
+  signedPdfUrl: string | null
+  employmentType: string | null
+  bonus: string | null
 }
 
 interface Props {
@@ -218,6 +221,19 @@ export function OfferPanel({ offer, applicationId, jobTitle }: Props) {
                     Responded on {formatDate(offer.respondedAt)}
                   </div>
                 )}
+                {offer.signedPdfUrl && (
+                  <div className="mt-3 ml-6">
+                    <a
+                      href={offer.signedPdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      Download Signed Offer
+                    </a>
+                  </div>
+                )}
               </div>
             )}
 
@@ -285,6 +301,8 @@ export function OfferPanel({ offer, applicationId, jobTitle }: Props) {
             startDate: offer.startDate,
             expiresAt: offer.expiresAt,
             notes: offer.notes,
+            employmentType: offer.employmentType,
+            bonus: offer.bonus,
           }}
         />
       )}

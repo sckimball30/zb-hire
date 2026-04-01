@@ -19,6 +19,8 @@ interface Props {
     startDate: string | null
     expiresAt: string | null
     notes: string | null
+    employmentType: string | null
+    bonus: string | null
   }
 }
 
@@ -33,12 +35,14 @@ export function CreateOfferModal({ applicationId, jobTitle, onClose, existingOff
 
   const [form, setForm] = useState({
     jobTitle: existingOffer?.jobTitle || jobTitle,
+    employmentType: existingOffer?.employmentType || '',
     salary: existingOffer?.salary?.toString() || '',
     salaryType: existingOffer?.salaryType || 'ANNUAL',
     currency: existingOffer?.currency || 'USD',
     startDate: toInputDate(existingOffer?.startDate),
     expiresAt: toInputDate(existingOffer?.expiresAt),
     notes: existingOffer?.notes || '',
+    bonus: existingOffer?.bonus || '',
   })
   const [loading, setLoading] = useState(false)
 
@@ -53,12 +57,14 @@ export function CreateOfferModal({ applicationId, jobTitle, onClose, existingOff
     try {
       const payload = {
         jobTitle: form.jobTitle.trim(),
+        employmentType: form.employmentType || null,
         salary: form.salary ? Number(form.salary) : null,
         salaryType: form.salaryType,
         currency: form.currency,
         startDate: form.startDate || null,
         expiresAt: form.expiresAt || null,
         notes: form.notes.trim() || null,
+        bonus: form.bonus.trim() || null,
       }
 
       let res: Response
@@ -128,6 +134,20 @@ export function CreateOfferModal({ applicationId, jobTitle, onClose, existingOff
               placeholder="e.g. Senior Frontend Engineer"
               required
             />
+          </div>
+
+          {/* Employment Type */}
+          <div>
+            <label className="label">Employment Type <span className="text-gray-400 font-normal">(optional)</span></label>
+            <select
+              className="input"
+              value={form.employmentType}
+              onChange={e => setForm(p => ({ ...p, employmentType: e.target.value }))}
+            >
+              <option value="">— Select —</option>
+              <option value="FULL_TIME">Full-time</option>
+              <option value="PART_TIME">Part-time</option>
+            </select>
           </div>
 
           {/* Salary + Type */}
@@ -202,6 +222,18 @@ export function CreateOfferModal({ applicationId, jobTitle, onClose, existingOff
               placeholder="e.g. Benefits package, equity, signing bonus details..."
               value={form.notes}
               onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
+            />
+          </div>
+
+          {/* Bonus Structure */}
+          <div>
+            <label className="label">Bonus Structure <span className="text-gray-400 font-normal">(optional)</span></label>
+            <textarea
+              className="input resize-none"
+              rows={3}
+              placeholder="e.g. Annual performance bonus up to 10% of base salary"
+              value={form.bonus}
+              onChange={e => setForm(p => ({ ...p, bonus: e.target.value }))}
             />
           </div>
 

@@ -11,7 +11,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json()
-    const { applicationId, jobTitle, salary, salaryType, currency, startDate, expiresAt, notes } = body
+    const { applicationId, jobTitle, salary, salaryType, currency, startDate, expiresAt, notes, employmentType, bonus } = body
 
     if (!applicationId || !jobTitle) {
       return NextResponse.json({ error: 'applicationId and jobTitle are required' }, { status: 400 })
@@ -45,6 +45,8 @@ export async function POST(request: Request) {
         startDate: startDate ? new Date(startDate) : null,
         expiresAt: expiresAt ? new Date(expiresAt) : null,
         notes: notes || null,
+        employmentType: employmentType || null,
+        bonus: bonus || null,
         status: 'DRAFT',
       },
     })

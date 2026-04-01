@@ -47,7 +47,7 @@ export async function PATCH(
 
   try {
     const body = await request.json()
-    const { jobTitle, salary, salaryType, currency, startDate, expiresAt, notes, status } = body
+    const { jobTitle, salary, salaryType, currency, startDate, expiresAt, notes, status, employmentType, bonus } = body
 
     const existing = await prisma.offer.findUnique({
       where: { id: params.offerId },
@@ -66,6 +66,8 @@ export async function PATCH(
     if (expiresAt !== undefined) updateData.expiresAt = expiresAt ? new Date(expiresAt) : null
     if (notes !== undefined) updateData.notes = notes
     if (status !== undefined) updateData.status = status
+    if (employmentType !== undefined) updateData.employmentType = employmentType
+    if (bonus !== undefined) updateData.bonus = bonus
 
     const offer = await prisma.offer.update({
       where: { id: params.offerId },

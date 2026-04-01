@@ -147,6 +147,15 @@ export default async function OfferLetterPage({
                   <div className="text-sm font-semibold text-gray-900">{offer.jobTitle}</div>
                 </div>
 
+                {offer.employmentType && (
+                  <div>
+                    <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Employment Type</div>
+                    <div className="text-sm font-semibold text-gray-900">
+                      {offer.employmentType === 'FULL_TIME' ? 'Full-time' : 'Part-time'}
+                    </div>
+                  </div>
+                )}
+
                 {job.department && (
                   <div>
                     <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Department</div>
@@ -185,6 +194,15 @@ export default async function OfferLetterPage({
                 )}
               </div>
             </div>
+
+            {offer.bonus && (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">Bonus Structure</h3>
+                <div className="text-sm text-gray-600 leading-relaxed bg-amber-50 border border-amber-100 rounded-lg p-4 whitespace-pre-wrap">
+                  {offer.bonus}
+                </div>
+              </div>
+            )}
 
             {offer.notes && (
               <div className="mb-6">
