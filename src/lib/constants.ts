@@ -37,6 +37,11 @@ export const STAGE_COLUMN_COLORS: Record<string, string> = {
 }
 
 export const RATING_LABELS: Record<string, string> = {
+  // A/B/C player ratings (current)
+  A: 'A Player',
+  B: 'B Player',
+  C: 'C Player',
+  // Legacy full-scale ratings
   STRONG_NO: 'Strong No',
   NO: 'No',
   NEUTRAL: 'Neutral',
@@ -45,6 +50,11 @@ export const RATING_LABELS: Record<string, string> = {
 }
 
 export const RATING_COLORS: Record<string, string> = {
+  // A/B/C player ratings (current)
+  A: 'bg-green-600 text-white',
+  B: 'bg-amber-400 text-white',
+  C: 'bg-red-600 text-white',
+  // Legacy full-scale ratings
   STRONG_NO: 'bg-red-600 text-white',
   NO: 'bg-red-200 text-red-800',
   NEUTRAL: 'bg-gray-200 text-gray-800',
