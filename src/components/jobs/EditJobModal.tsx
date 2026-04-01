@@ -33,10 +33,22 @@ const STATUSES = [
   { value: 'ARCHIVED', label: 'Archived', color: 'bg-slate-100 text-slate-600' },
 ]
 
+// Strip $, commas, spaces so users can type "$37,440" or "37,440"
+function parseMoney(val: string): number | null {
+  const clean = val.replace(/[$,\s]/g, '')
+  const n = parseInt(clean, 10)
+  return isNaN(n) ? null : n
+}
+
 export function EditJobModal({ job, onClose }: EditJobModalProps) {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState(false)
+
+  // Detect whether saved values are a fixed amount (min === max) or a range
+  const savedIsFixed = job.salaryMin !== null && job.salaryMax !== null && job.salaryMin === job.salaryMax
+  const [compMode, setCompMode] = useState<'fixed' | 'range'>(savedIsFixed ? 'fixed' : 'range')
+
   const [form, setForm] = useState({
     title: job.title,
     department: job.department ?? '',
@@ -45,8 +57,9 @@ export function EditJobModal({ job, onClose }: EditJobModalProps) {
     status: job.status,
     employmentType: job.employmentType ?? '',
     payType: job.payType ?? 'SALARY',
-    salaryMin: job.salaryMin?.toString() ?? '',
-    salaryMax: job.salaryMax?.toString() ?? '',
+    salaryFixed: savedIsFixed ? (job.salaryMin?.toString() ?? '') : '',
+    salaryMin: !savedIsFixed ? (job.salaryMin?.toString() ?? '') : '',
+    salaryMax: !savedIsFixed ? (job.salaryMax?.toString() ?? '') : '',
     salaryCurrency: job.salaryCurrency ?? 'USD',
     hiringGoal: job.hiringGoal?.toString() ?? '',
     interviewCount: job.interviewCount?.toString() ?? '3',
@@ -74,8 +87,8 @@ export function EditJobModal({ job, onClose }: EditJobModalProps) {
         status: form.status,
         employmentType: form.employmentType || null,
         payType: form.payType || null,
-        salaryMin: form.salaryMin ? parseInt(form.salaryMin) : null,
-        salaryMax: form.salaryMax ? parseInt(form.salaryMax) : null,
+        salaryMin: compMode === 'fixed' ? parseMoney(form.salaryFixed) : parseMoney(form.salaryMin),
+        salaryMax: compMode === 'fixed' ? parseMoney(form.salaryFixed) : parseMoney(form.salaryMax),
         salaryCurrency: form.salaryCurrency,
         hiringGoal: form.hiringGoal ? parseInt(form.hiringGoal) : null,
         interviewCount: form.interviewCount ? parseInt(form.interviewCount) : 3,
@@ -190,9 +203,29 @@ export function EditJobModal({ job, onClose }: EditJobModalProps) {
 
           {/* Compensation */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {form.payType === 'HOURLY' ? 'Hourly Rate Range' : 'Salary Range'}
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                {form.payType === 'HOURLY' ? 'Hourly Rate' : 'Salary'}
+              </label>
+              {/* Fixed vs Range toggle */}
+              <div className="flex rounded-lg border border-gray-200 overflow-hidden text-xs">
+                <button
+                  type="button"
+                  onClick={() => setCompMode('fixed')}
+                  className={`px-3 py-1 font-medium transition-colors ${compMode === 'fixed' ? 'bg-[#111] text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+                >
+                  Fixed
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCompMode('range')}
+                  className={`px-3 py-1 font-medium transition-colors ${compMode === 'range' ? 'bg-[#111] text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+                >
+                  Range
+                </button>
+              </div>
+            </div>
+
             <div className="flex items-center gap-2">
               <select value={form.salaryCurrency} onChange={e => set('salaryCurrency', e.target.value)}
                 className="input w-20 flex-shrink-0">
@@ -202,15 +235,36 @@ export function EditJobModal({ job, onClose }: EditJobModalProps) {
                 <option value="CAD">CAD</option>
                 <option value="AUD">AUD</option>
               </select>
-              <input type="number" min="0" value={form.salaryMin} onChange={e => set('salaryMin', e.target.value)}
-                className="input flex-1"
-                placeholder={form.payType === 'HOURLY' ? 'Min (e.g. 20)' : 'Min (e.g. 80000)'} />
-              <span className="text-gray-400 text-sm flex-shrink-0">to</span>
-              <input type="number" min="0" value={form.salaryMax} onChange={e => set('salaryMax', e.target.value)}
-                className="input flex-1"
-                placeholder={form.payType === 'HOURLY' ? 'Max (e.g. 35)' : 'Max (e.g. 120000)'} />
+
+              {compMode === 'fixed' ? (
+                <input
+                  type="text"
+                  value={form.salaryFixed}
+                  onChange={e => set('salaryFixed', e.target.value)}
+                  className="input flex-1"
+                  placeholder={form.payType === 'HOURLY' ? 'e.g. 18 or $18.50' : 'e.g. 37,440 or $95,000'}
+                />
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    value={form.salaryMin}
+                    onChange={e => set('salaryMin', e.target.value)}
+                    className="input flex-1"
+                    placeholder={form.payType === 'HOURLY' ? 'Min (e.g. 15)' : 'Min (e.g. 80,000)'}
+                  />
+                  <span className="text-gray-400 text-sm flex-shrink-0">to</span>
+                  <input
+                    type="text"
+                    value={form.salaryMax}
+                    onChange={e => set('salaryMax', e.target.value)}
+                    className="input flex-1"
+                    placeholder={form.payType === 'HOURLY' ? 'Max (e.g. 25)' : 'Max (e.g. 120,000)'}
+                  />
+                </>
+              )}
             </div>
-            <p className="text-xs text-gray-400 mt-1">Visible internally only</p>
+            <p className="text-xs text-gray-400 mt-1">Commas and $ signs are fine — visible internally only</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

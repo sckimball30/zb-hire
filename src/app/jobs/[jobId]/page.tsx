@@ -3,9 +3,10 @@ export const dynamic = 'force-dynamic'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { Edit2, Calendar, Target, Users, Clock } from 'lucide-react'
+import { Calendar, Target, Users, Clock } from 'lucide-react'
 import { JOB_STATUS_LABELS, JOB_STATUS_COLORS, EMPLOYMENT_TYPE_LABELS } from '@/lib/constants'
 import { CopyApplyLink } from '@/components/jobs/CopyApplyLink'
+import { EditJobButton } from '@/components/jobs/EditJobButton'
 import { OutcomesEditor } from '@/components/jobs/OutcomesEditor'
 import { ResponsibilitiesEditor } from '@/components/jobs/ResponsibilitiesEditor'
 import { ScorecardMeta } from '@/components/jobs/ScorecardMeta'
@@ -69,10 +70,21 @@ export default async function JobOverviewPage({ params }: { params: { jobId: str
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${JOB_STATUS_COLORS[job.status]}`}>
           {JOB_STATUS_LABELS[job.status] ?? job.status}
         </span>
-        <Link href={`/jobs/${job.id}/edit`} className="btn-outline flex items-center gap-2">
-          <Edit2 className="w-4 h-4" />
-          Edit Job
-        </Link>
+        <EditJobButton job={{
+          id: job.id,
+          title: job.title,
+          department: job.department,
+          location: job.location,
+          description: job.description,
+          status: job.status,
+          employmentType: job.employmentType,
+          payType: job.payType,
+          salaryMin: job.salaryMin,
+          salaryMax: job.salaryMax,
+          salaryCurrency: job.salaryCurrency,
+          hiringGoal: job.hiringGoal,
+          interviewCount: job.interviewCount,
+        }} />
       </div>
 
       {/* Setup checklist — hidden once everything is done */}
