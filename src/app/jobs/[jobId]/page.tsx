@@ -10,6 +10,7 @@ import { OutcomesEditor } from '@/components/jobs/OutcomesEditor'
 import { ResponsibilitiesEditor } from '@/components/jobs/ResponsibilitiesEditor'
 import { ScorecardMeta } from '@/components/jobs/ScorecardMeta'
 import { ScorecardTemplateBuilder } from '@/components/jobs/ScorecardTemplateBuilder'
+import { JobSetupChecklist } from '@/components/jobs/JobSetupChecklist'
 
 function formatSalary(amount: number, currency = 'USD') {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount)
@@ -29,6 +30,7 @@ export default async function JobOverviewPage({ params }: { params: { jobId: str
       applications: { select: { stage: true } },
       outcomes: { orderBy: { priority: 'asc' } },
       responsibilities: { orderBy: { number: 'asc' } },
+      interviewers: { select: { id: true } },
       scorecardTemplate: {
         include: {
           sections: {
@@ -71,6 +73,17 @@ export default async function JobOverviewPage({ params }: { params: { jobId: str
           <Edit2 className="w-4 h-4" />
           Edit Job
         </Link>
+      </div>
+
+      {/* Setup checklist — hidden once everything is done */}
+      <div className="mb-6">
+        <JobSetupChecklist
+          jobId={job.id}
+          hasInterviewers={job.interviewers.length > 0}
+          hasScorecardTemplate={!!job.scorecardTemplate}
+          isOpen={job.status === 'OPEN'}
+          hasDescription={!!job.description?.trim()}
+        />
       </div>
 
       {/* Stats row */}

@@ -1,10 +1,12 @@
+export const dynamic = 'force-dynamic'
+
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { ArrowLeft } from 'lucide-react'
-import { ScorecardForm } from '@/components/scorecards/ScorecardForm'
+import { EvaluationForm } from '@/components/applications/EvaluationForm'
 
-export default async function NewScorecardPage({
+export default async function NewEvaluationPage({
   params,
 }: {
   params: { applicationId: string }
@@ -39,7 +41,7 @@ export default async function NewScorecardPage({
   if (!application) notFound()
 
   const { candidate, job } = application
-  const interviewers = job.interviewers.map((ji) => ji.interviewer)
+  const interviewers = job.interviewers.map(ji => ji.interviewer)
 
   return (
     <div className="p-8 max-w-3xl">
@@ -51,26 +53,17 @@ export default async function NewScorecardPage({
           <ArrowLeft className="w-4 h-4" />
           Back to Application
         </Link>
-        <h1 className="page-title">Submit Scorecard</h1>
+        <h1 className="page-title">Submit Evaluation</h1>
         <p className="text-sm text-gray-500 mt-1">
           {candidate.firstName} {candidate.lastName} — {job.title}
         </p>
       </div>
 
-      {!job.scorecardTemplate ? (
-        <div className="card p-8 text-center">
-          <p className="text-gray-600 mb-2">No scorecard template configured for this job.</p>
-          <p className="text-sm text-gray-500">
-            Contact your admin to set up a scorecard template.
-          </p>
-        </div>
-      ) : (
-        <ScorecardForm
-          applicationId={application.id}
-          template={job.scorecardTemplate}
-          interviewers={interviewers}
-        />
-      )}
+      <EvaluationForm
+        applicationId={application.id}
+        interviewers={interviewers}
+        template={job.scorecardTemplate as any}
+      />
     </div>
   )
 }

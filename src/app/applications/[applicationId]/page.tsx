@@ -3,14 +3,13 @@ export const dynamic = 'force-dynamic'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { ArrowLeft, Plus, Calendar, Star, Clock, FileText, Download } from 'lucide-react'
+import { ArrowLeft, Plus, Calendar, Clock, FileText, Download, ClipboardCheck } from 'lucide-react'
 import { STAGE_LABELS, STAGE_COLORS, RATING_LABELS, RATING_COLORS, INTERVIEW_TYPE_LABELS } from '@/lib/constants'
 import { formatDate, formatDateTime, timeAgo } from '@/lib/utils'
 import { StageSelector } from '@/components/applications/StageSelector'
 import { ScheduleInterviewButton } from '@/components/applications/ScheduleInterviewButton'
 import { SendMessageButton } from '@/components/candidates/SendMessageButton'
 import { OfferPanel } from '@/components/offers/OfferPanel'
-import { HireDecisionPanel } from '@/components/applications/HireDecisionPanel'
 
 export default async function ApplicationPage({
   params,
@@ -110,8 +109,8 @@ export default async function ApplicationPage({
                 href={`/applications/${application.id}/scorecard/new`}
                 className="btn-outline text-xs"
               >
-                <Plus className="w-3 h-3" />
-                Add Scorecard
+                <ClipboardCheck className="w-3 h-3" />
+                Add Evaluation
               </Link>
             </div>
           </div>
@@ -221,76 +220,80 @@ export default async function ApplicationPage({
             />
           )}
 
-          {/* Scorecards */}
+          {/* Evaluations */}
           <div className="card overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-gray-900">
-                Scorecards ({submittedScorecards.length} submitted)
-              </h2>
+              <div>
+                <h2 className="text-base font-semibold text-gray-900">
+                  Evaluations ({submittedScorecards.length})
+                </h2>
+                <p className="text-xs text-gray-400 mt-0.5">Interview feedback and hire recommendations</p>
+              </div>
               <Link
                 href={`/applications/${application.id}/scorecard/new`}
-                className="btn-outline text-xs"
+                className="btn-primary text-xs"
               >
                 <Plus className="w-3 h-3" />
-                Add
+                Add Evaluation
               </Link>
             </div>
 
             {application.scorecards.length === 0 ? (
-              <div className="px-6 py-8 text-center text-sm text-gray-500">
-                No scorecards yet.{' '}
-                <Link href={`/applications/${application.id}/scorecard/new`} className="text-blue-600 hover:underline">
-                  Add the first one.
+              <div className="px-6 py-10 text-center">
+                <ClipboardCheck className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">No evaluations yet.</p>
+                <Link
+                  href={`/applications/${application.id}/scorecard/new`}
+                  className="text-sm text-blue-600 hover:underline mt-1 inline-block"
+                >
+                  Submit the first one →
                 </Link>
               </div>
             ) : (
               <ul className="divide-y divide-gray-100">
-                {application.scorecards.map((sc) => (
-                  <li key={sc.id} className="px-6 py-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Star className="w-4 h-4 text-gray-400" />
-                          <span className="font-medium text-gray-900">{sc.interviewer.name}</span>
-                          {sc.overallRating && (
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${RATING_COLORS[sc.overallRating]}`}>
-                              {RATING_LABELS[sc.overallRating]}
-                            </span>
+                {application.scorecards.map((sc) => {
+                  const isHire = sc.recommendation === 'HIRE'
+                  const isNoHire = sc.recommendation === 'NO HIRE'
+                  return (
+                    <li key={sc.id} className="px-6 py-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-medium text-gray-900">{sc.interviewer.name}</span>
+                            {sc.interviewer.title && (
+                              <span className="text-xs text-gray-400">{sc.interviewer.title}</span>
+                            )}
+                            {sc.overallRating && (
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${RATING_COLORS[sc.overallRating]}`}>
+                                {sc.overallRating} Player
+                              </span>
+                            )}
+                            {(isHire || isNoHire) && (
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${isHire ? 'bg-green-700 text-white' : 'bg-red-700 text-white'}`}>
+                                {sc.recommendation}
+                              </span>
+                            )}
+                            {!sc.submittedAt && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-yellow-100 text-yellow-700">
+                                Draft
+                              </span>
+                            )}
+                          </div>
+                          {sc.summary && (
+                            <p className="mt-1.5 text-sm text-gray-600 italic">"{sc.summary}"</p>
                           )}
-                          {!sc.submittedAt && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-yellow-100 text-yellow-700">
-                              Draft
-                            </span>
-                          )}
-                        </div>
-                        {sc.interviewer.title && (
-                          <p className="text-sm text-gray-500 mt-0.5">{sc.interviewer.title}</p>
-                        )}
-                        {sc.summary && (
-                          <p className="mt-2 text-sm text-gray-700">{sc.summary}</p>
-                        )}
-                        {sc.recommendation && (
-                          <p className="mt-1 text-sm text-gray-600">
-                            <strong>Recommendation:</strong> {sc.recommendation}
+                          <p className="mt-1 text-xs text-gray-400">
+                            {sc.responses.length} question{sc.responses.length !== 1 ? 's' : ''} answered
+                            {sc.submittedAt && ` · ${timeAgo(sc.submittedAt)}`}
                           </p>
-                        )}
-                        <div className="mt-2 text-xs text-gray-400">
-                          {sc.responses.length} response{sc.responses.length !== 1 ? 's' : ''}
-                          {sc.submittedAt && ` · Submitted ${timeAgo(sc.submittedAt)}`}
                         </div>
                       </div>
-                    </div>
-                  </li>
-                ))}
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>
-
-          {/* Hire Decision Panel */}
-          <HireDecisionPanel
-            applicationId={application.id}
-            decisions={application.hireDecisions}
-          />
         </div>
 
         {/* Sidebar - right 1/3 */}
@@ -304,12 +307,8 @@ export default async function ApplicationPage({
                 <span className="font-medium">{application.events.length}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Scorecards</span>
+                <span className="text-gray-500">Evaluations</span>
                 <span className="font-medium">{submittedScorecards.length}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Hire Evaluations</span>
-                <span className="font-medium">{application.hireDecisions.length}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Days in pipeline</span>
