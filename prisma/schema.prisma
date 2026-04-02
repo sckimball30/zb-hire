@@ -241,23 +241,26 @@ model JobInterviewer {
 }
 
 model Application {
-  id           String           @id @default(cuid())
-  candidateId  String
-  jobId        String
-  stage        String           @default("APPLIED")
-  stageOrder   Int              @default(0)
-  starRating   Int?
-  rejectedAt   DateTime?
-  hiredAt      DateTime?
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  candidate    Candidate        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  job          Job              @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  events       InterviewEvent[]
-  scorecards   Scorecard[]
-  activityLog  ActivityLog[]
-  offer        Offer?
-  hireDecisions HireDecision[]
+  id                String           @id @default(cuid())
+  candidateId       String
+  jobId             String
+  stage             String           @default("APPLIED")
+  stageOrder        Int              @default(0)
+  starRating        Int?
+  rejectedAt        DateTime?
+  hiredAt           DateTime?
+  availableStart    String?
+  salaryExpectation String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  candidate         Candidate        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  job               Job              @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  events            InterviewEvent[]
+  scorecards        Scorecard[]
+  activityLog       ActivityLog[]
+  offer             Offer?
+  hireDecisions     HireDecision[]
+  scorecardEntries  ScorecardEntry[]
 
   @@unique([candidateId, jobId])
 }
@@ -359,6 +362,20 @@ model ScorecardResponse {
   question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@unique([scorecardId, questionId])
+}
+
+model ScorecardEntry {
+  id              String      @id @default(cuid())
+  applicationId   String
+  sectionTitle    String
+  interviewerName String
+  interviewerId   String?
+  responses       String      @default("{}")
+  status          String      @default("DRAFT")
+  submittedAt     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  application     Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
 
 model Question {

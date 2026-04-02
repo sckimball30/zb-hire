@@ -40,8 +40,13 @@ export default async function NewEvaluationPage({
 
   if (!application) notFound()
 
+  const entries = await prisma.scorecardEntry.findMany({
+    where: { applicationId: params.applicationId },
+    orderBy: { createdAt: 'asc' },
+  })
+
   const { candidate, job } = application
-  const interviewers = job.interviewers.map(ji => ji.interviewer)
+  const interviewers = job.interviewers.map((ji) => ji.interviewer)
 
   return (
     <div className="p-8 max-w-3xl">
@@ -63,6 +68,9 @@ export default async function NewEvaluationPage({
         applicationId={application.id}
         interviewers={interviewers}
         template={job.scorecardTemplate as any}
+        initialEntries={entries as any}
+        availableStart={(application as any).availableStart ?? null}
+        salaryExpectation={(application as any).salaryExpectation ?? null}
       />
     </div>
   )

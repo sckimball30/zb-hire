@@ -45,7 +45,7 @@ export async function PATCH(
 ) {
   try {
     const body = await request.json()
-    const { stage, notes, stageOrder, starRating } = body
+    const { stage, notes, stageOrder, starRating, availableStart, salaryExpectation } = body
 
     const current = await prisma.application.findUnique({
       where: { id: params.applicationId },
@@ -72,6 +72,14 @@ export async function PATCH(
 
     if (starRating !== undefined) {
       updateData.starRating = starRating === null ? null : Math.min(5, Math.max(1, Number(starRating)))
+    }
+
+    if (availableStart !== undefined) {
+      updateData.availableStart = availableStart || null
+    }
+
+    if (salaryExpectation !== undefined) {
+      updateData.salaryExpectation = salaryExpectation || null
     }
 
     const application = await prisma.application.update({

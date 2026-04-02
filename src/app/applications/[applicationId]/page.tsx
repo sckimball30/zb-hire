@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { ArrowLeft, Plus, Calendar, Clock, FileText, Download, ClipboardCheck } from 'lucide-react'
-import { STAGE_LABELS, STAGE_COLORS, RATING_LABELS, RATING_COLORS, INTERVIEW_TYPE_LABELS } from '@/lib/constants'
+import { STAGE_LABELS, STAGE_COLORS, INTERVIEW_TYPE_LABELS } from '@/lib/constants'
 import { formatDate, formatDateTime, timeAgo } from '@/lib/utils'
 import { StageSelector } from '@/components/applications/StageSelector'
 import { ScheduleInterviewButton } from '@/components/applications/ScheduleInterviewButton'
@@ -38,6 +38,9 @@ export default async function ApplicationPage({
         },
         orderBy: { createdAt: 'desc' },
       },
+      scorecardEntries: {
+        orderBy: { createdAt: 'asc' },
+      },
       activityLog: {
         orderBy: { createdAt: 'desc' },
       },
@@ -53,6 +56,16 @@ export default async function ApplicationPage({
   const { candidate, job } = application
   const submittedScorecards = application.scorecards.filter((s) => s.submittedAt)
   const jobInterviewers = job.interviewers.map(ji => ji.interviewer)
+
+  // Group scorecard entries by section
+  const scorecardEntries = (application as any).scorecardEntries ?? []
+  const submittedEntries = scorecardEntries.filter((e: any) => e.status === 'SUBMITTED')
+  const entriesBySection = submittedEntries.reduce((acc: Record<string, any[]>, entry: any) => {
+    if (!acc[entry.sectionTitle]) acc[entry.sectionTitle] = []
+    acc[entry.sectionTitle].push(entry)
+    return acc
+  }, {} as Record<string, any[]>)
+  const sectionGroups = Object.entries(entriesBySection) as [string, any[]][]
 
   return (
     <div className="p-8 max-w-5xl">
@@ -230,9 +243,9 @@ export default async function ApplicationPage({
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
               <div>
                 <h2 className="text-base font-semibold text-gray-900">
-                  Evaluations ({submittedScorecards.length})
+                  Evaluations ({submittedEntries.length})
                 </h2>
-                <p className="text-xs text-gray-400 mt-0.5">Interview feedback and hire recommendations</p>
+                <p className="text-xs text-gray-400 mt-0.5">Interview feedback by section</p>
               </div>
               <Link
                 href={`/applications/${application.id}/scorecard/new`}
@@ -243,7 +256,7 @@ export default async function ApplicationPage({
               </Link>
             </div>
 
-            {application.scorecards.length === 0 ? (
+            {sectionGroups.length === 0 ? (
               <div className="px-6 py-10 text-center">
                 <ClipboardCheck className="w-8 h-8 text-gray-200 mx-auto mb-2" />
                 <p className="text-sm text-gray-500">No evaluations yet.</p>
@@ -255,48 +268,57 @@ export default async function ApplicationPage({
                 </Link>
               </div>
             ) : (
-              <ul className="divide-y divide-gray-100">
-                {application.scorecards.map((sc) => {
-                  const isHire = sc.recommendation === 'HIRE'
-                  const isNoHire = sc.recommendation === 'NO HIRE'
-                  return (
-                    <li key={sc.id} className="px-6 py-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-medium text-gray-900">{sc.interviewer.name}</span>
-                            {sc.interviewer.title && (
-                              <span className="text-xs text-gray-400">{sc.interviewer.title}</span>
-                            )}
-                            {sc.overallRating && (
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${RATING_COLORS[sc.overallRating]}`}>
-                                {sc.overallRating} Player
+              <div className="divide-y divide-gray-100">
+                {sectionGroups.map(([sectionTitle, sectionEntries]) => (
+                  <div key={sectionTitle} className="px-6 py-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      {sectionTitle}
+                    </p>
+                    <ul className="space-y-1.5">
+                      {sectionEntries.map((entry: any) => {
+                        // Compute most common rating
+                        let dominantRating: string | null = null
+                        try {
+                          const parsed = JSON.parse(entry.responses) as Record<string, { rating?: string | null }>
+                          const ratings = Object.values(parsed).map((r) => r?.rating).filter(Boolean) as string[]
+                          if (ratings.length) {
+                            const counts: Record<string, number> = {}
+                            for (const r of ratings) counts[r] = (counts[r] || 0) + 1
+                            dominantRating = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0]
+                          }
+                        } catch {}
+                        const ratingColor =
+                          dominantRating === 'A'
+                            ? 'bg-green-100 text-green-700'
+                            : dominantRating === 'B'
+                            ? 'bg-amber-100 text-amber-700'
+                            : dominantRating === 'C'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-gray-100 text-gray-500'
+
+                        return (
+                          <li key={entry.id} className="flex items-center gap-2 text-sm">
+                            <span className="font-medium text-gray-800">{entry.interviewerName}</span>
+                            {dominantRating && (
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${ratingColor}`}>
+                                {dominantRating} Player
                               </span>
                             )}
-                            {(isHire || isNoHire) && (
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${isHire ? 'bg-green-700 text-white' : 'bg-red-700 text-white'}`}>
-                                {sc.recommendation}
-                              </span>
-                            )}
-                            {!sc.submittedAt && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-yellow-100 text-yellow-700">
-                                Draft
-                              </span>
-                            )}
-                          </div>
-                          {sc.summary && (
-                            <p className="mt-1.5 text-sm text-gray-600 italic">"{sc.summary}"</p>
-                          )}
-                          <p className="mt-1 text-xs text-gray-400">
-                            {sc.responses.length} question{sc.responses.length !== 1 ? 's' : ''} answered
-                            {sc.submittedAt && ` · ${timeAgo(sc.submittedAt)}`}
-                          </p>
-                        </div>
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
+                            <span className="text-xs text-gray-400 ml-auto">
+                              {entry.submittedAt
+                                ? new Date(entry.submittedAt).toLocaleDateString(undefined, {
+                                    month: 'short',
+                                    day: 'numeric',
+                                  })
+                                : ''}
+                            </span>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>
