@@ -1,34 +1,18 @@
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 
-// Configure via env vars. Falls back to Ethereal (test) if not set.
-let transporter: nodemailer.Transporter | null = null
+// Lazily instantiated so missing key doesn't crash the import
+let resend: Resend | null = null
 
-export async function getTransporter() {
-  if (transporter) return transporter
-
-  if (process.env.SMTP_HOST) {
-    transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT ?? 587),
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    })
-  } else {
-    // Ethereal catch-all for dev/testing — logs preview URL to console
-    const testAccount = await nodemailer.createTestAccount()
-    transporter = nodemailer.createTransport({
-      host: 'smtp.ethereal.email',
-      port: 587,
-      auth: { user: testAccount.user, pass: testAccount.pass },
-    })
-    console.log('[email] Using Ethereal test account:', testAccount.user)
+function getResend(): Resend {
+  if (!resend) {
+    const key = process.env.RESEND_API_KEY
+    if (!key) throw new Error('RESEND_API_KEY is not set. Add it in Vercel → Settings → Environment Variables.')
+    resend = new Resend(key)
   }
-
-  return transporter
+  return resend
 }
+
+const FROM = process.env.EMAIL_FROM ?? 'Wigglitz Hiring <hiring@wigglitz.com>'
 
 export async function sendEmail({
   to,
@@ -41,20 +25,22 @@ export async function sendEmail({
   html: string
   text?: string
 }) {
-  const t = await getTransporter()
-  const info = await t.sendMail({
-    from: process.env.EMAIL_FROM ?? '"ATS" <noreply@ats.local>',
+  const r = getResend()
+  const { data, error } = await r.emails.send({
+    from: FROM,
     to,
     subject,
     html,
     text: text ?? html.replace(/<[^>]*>/g, ''),
   })
 
-  // Log preview URL in dev (Ethereal only)
-  const preview = nodemailer.getTestMessageUrl(info)
-  if (preview) console.log('[email] Preview URL:', preview)
+  if (error) {
+    console.error('[resend] Send error:', error)
+    throw new Error(error.message)
+  }
 
-  return info
+  console.log('[resend] Sent:', data?.id)
+  return data
 }
 
 export async function sendNewApplicationEmail({
