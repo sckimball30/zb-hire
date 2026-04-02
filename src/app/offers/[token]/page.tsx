@@ -60,11 +60,12 @@ export default async function OfferLetterPage({
         {/* Letter container */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           {/* Company header */}
-          <div className="bg-[#111111] px-8 py-8 flex items-center justify-between">
-            <div>
-              <div className="text-2xl font-bold text-white tracking-tight">ZB Designs</div>
-              <div className="text-sm text-[#4AFFD2] mt-1 font-medium">Powered by Wigglitz</div>
-            </div>
+          <div className="bg-[#111111] px-8 py-6 flex items-center justify-between">
+            <img
+              src="/logos/wigglitz-logo.png"
+              alt="Wigglitz"
+              className="h-10 w-auto object-contain"
+            />
             <div className="text-right">
               <div className="text-xs text-gray-400 uppercase tracking-widest">Offer Letter</div>
               <div className="text-sm text-gray-300 mt-1">{today}</div>
@@ -219,10 +220,16 @@ export default async function OfferLetterPage({
               the possibility of you joining our team and hope you will accept.
             </p>
 
-            <p className="text-gray-700 mb-8">
-              Sincerely,<br />
-              <span className="font-semibold text-gray-900">The ZB Designs Team</span>
-            </p>
+            <div className="mb-8">
+              <p className="text-gray-700 mb-4">Sincerely,</p>
+              <img
+                src="/logos/Your Mom (1).png"
+                alt="Zachary Bailey signature"
+                className="h-16 w-auto object-contain mb-1"
+              />
+              <p className="text-sm font-semibold text-gray-900">Zachary Bailey</p>
+              <p className="text-sm text-gray-500">Founder / CEO, Wigglitz</p>
+            </div>
 
             {/* Response section */}
             {offer.status === 'SENT' && !isExpired && (
