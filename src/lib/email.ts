@@ -1,15 +1,25 @@
-import { Resend } from 'resend'
+import nodemailer from 'nodemailer'
 
-// Lazily instantiated so missing key doesn't crash the import
-let resend: Resend | null = null
+let transporter: nodemailer.Transporter | null = null
 
-function getResend(): Resend {
-  if (!resend) {
-    const key = process.env.RESEND_API_KEY
-    if (!key) throw new Error('RESEND_API_KEY is not set. Add it in Vercel → Settings → Environment Variables.')
-    resend = new Resend(key)
+function getTransporter(): nodemailer.Transporter {
+  if (transporter) return transporter
+
+  const user = process.env.SMTP_USER
+  const pass = process.env.SMTP_PASS
+
+  if (!user || !pass) {
+    throw new Error('SMTP_USER and SMTP_PASS are required. Add them in Vercel → Settings → Environment Variables.')
   }
-  return resend
+
+  transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // TLS via STARTTLS
+    auth: { user, pass },
+  })
+
+  return transporter
 }
 
 const FROM = process.env.EMAIL_FROM ?? 'Wigglitz Hiring <hiring@wigglitz.com>'
@@ -25,22 +35,16 @@ export async function sendEmail({
   html: string
   text?: string
 }) {
-  const r = getResend()
-  const { data, error } = await r.emails.send({
+  const t = getTransporter()
+  const info = await t.sendMail({
     from: FROM,
     to,
     subject,
     html,
     text: text ?? html.replace(/<[^>]*>/g, ''),
   })
-
-  if (error) {
-    console.error('[resend] Send error:', error)
-    throw new Error(error.message)
-  }
-
-  console.log('[resend] Sent:', data?.id)
-  return data
+  console.log('[email] Sent:', info.messageId)
+  return info
 }
 
 export async function sendNewApplicationEmail({
