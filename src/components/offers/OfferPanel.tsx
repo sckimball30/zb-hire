@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Copy, Check, ExternalLink, Send, Trash2, Edit2, FileText } from 'lucide-react'
+import { Copy, Check, ExternalLink, Send, Trash2, Edit2, FileText, Eye, X } from 'lucide-react'
 import { CreateOfferModal } from './CreateOfferModal'
 import { CreateOfferButton } from './CreateOfferButton'
 
@@ -62,6 +62,7 @@ function formatDate(dateStr: string | null) {
 export function OfferPanel({ offer, applicationId, jobTitle }: Props) {
   const router = useRouter()
   const [editOpen, setEditOpen] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
   const [sendLoading, setSendLoading] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
@@ -254,9 +255,16 @@ export function OfferPanel({ offer, applicationId, jobTitle }: Props) {
               </div>
             )}
 
-            {/* DRAFT: edit, send, delete */}
+            {/* DRAFT: preview, edit, send, delete */}
             {offer.status === 'DRAFT' && (
-              <div className="flex items-center gap-2 pt-2">
+              <div className="flex items-center gap-2 pt-2 flex-wrap">
+                <button
+                  onClick={() => setPreviewOpen(true)}
+                  className="btn-outline text-xs"
+                >
+                  <Eye className="w-3 h-3" />
+                  Preview
+                </button>
                 <button
                   onClick={() => setEditOpen(true)}
                   className="btn-outline text-xs"
@@ -285,6 +293,44 @@ export function OfferPanel({ offer, applicationId, jobTitle }: Props) {
           </div>
         )}
       </div>
+
+      {/* Preview modal */}
+      {previewOpen && offer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <Eye className="w-4 h-4 text-gray-400" />
+                <span className="text-sm font-semibold text-gray-900">Offer Letter Preview</span>
+                <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">What the candidate will see</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { setPreviewOpen(false); handleSend() }}
+                  disabled={sendLoading}
+                  className="btn-primary text-xs"
+                >
+                  <Send className="w-3 h-3" />
+                  {sendLoading ? 'Sending...' : 'Looks good — Send'}
+                </button>
+                <button onClick={() => setPreviewOpen(false)} className="text-gray-400 hover:text-gray-600 p-1">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            {/* Iframe showing the real offer letter page */}
+            <div className="flex-1 overflow-hidden">
+              <iframe
+                src={`/offers/${offer.token}`}
+                className="w-full h-full border-0"
+                style={{ minHeight: '600px' }}
+                title="Offer Letter Preview"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit modal */}
       {editOpen && offer && (
