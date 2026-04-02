@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
+import { Plus, Trash2, ChevronDown, ChevronUp, Briefcase } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -251,6 +252,109 @@ function SubmittedEntryRow({
   )
 }
 
+// ─── WHO Interview job types ──────────────────────────────────────────────────
+
+interface WhoJob {
+  localId: string
+  company: string
+  title: string
+  expanded: boolean
+  responses: Record<string, { rating: ABC; notes: string }>
+}
+
+function makeBlankJob(): WhoJob {
+  return {
+    localId: Math.random().toString(36).slice(2),
+    company: '',
+    title: '',
+    expanded: true,
+    responses: {},
+  }
+}
+
+function WhoQuestionsBlock({
+  job,
+  questions,
+  onChange,
+}: {
+  job: WhoJob
+  questions: TemplateQuestion[]
+  onChange: (localId: string, updated: WhoJob) => void
+}) {
+  const [guideOpen, setGuideOpen] = useState<Record<string, boolean>>({})
+
+  const setResponse = (qId: string, field: 'rating' | 'notes', value: ABC | string) => {
+    onChange(job.localId, {
+      ...job,
+      responses: {
+        ...job.responses,
+        [qId]: { ...job.responses[qId], [field]: value as never },
+      },
+    })
+  }
+
+  return (
+    <div className="space-y-4 pt-3">
+      {questions.map((tq) => {
+        const resp = job.responses[tq.questionId] ?? { rating: null, notes: '' }
+        const q = tq.question
+        const hasGuide = !!(q.aPlayerAnswer || q.bPlayerAnswer || q.cPlayerAnswer)
+        const open = guideOpen[tq.questionId] ?? false
+        return (
+          <div key={tq.id} className="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
+            <p className="text-sm font-medium text-gray-900 mb-1">
+              {q.text}
+              {tq.required && <span className="text-red-500 ml-1">*</span>}
+            </p>
+            {q.guidance && <p className="text-xs text-gray-400 italic mb-2">{q.guidance}</p>}
+            <div className="flex items-center gap-3 mb-2">
+              <ABCButtons value={resp.rating} onChange={(v) => setResponse(tq.questionId, 'rating', v)} />
+              {hasGuide && (
+                <button
+                  type="button"
+                  className="text-xs text-gray-400 hover:text-gray-600"
+                  onClick={() => setGuideOpen((p) => ({ ...p, [tq.questionId]: !p[tq.questionId] }))}
+                >
+                  {open ? 'Hide guide ▴' : 'Show guide ▾'}
+                </button>
+              )}
+            </div>
+            {hasGuide && open && (
+              <div className="grid grid-cols-3 gap-2 mb-2">
+                {q.aPlayerAnswer && (
+                  <div className="rounded border border-green-200 bg-green-50 p-2">
+                    <p className="text-xs font-semibold text-green-700 mb-1">A Player</p>
+                    <p className="text-xs text-green-900 leading-relaxed">{q.aPlayerAnswer}</p>
+                  </div>
+                )}
+                {q.bPlayerAnswer && (
+                  <div className="rounded border border-amber-200 bg-amber-50 p-2">
+                    <p className="text-xs font-semibold text-amber-700 mb-1">B Player</p>
+                    <p className="text-xs text-amber-900 leading-relaxed">{q.bPlayerAnswer}</p>
+                  </div>
+                )}
+                {q.cPlayerAnswer && (
+                  <div className="rounded border border-red-200 bg-red-50 p-2">
+                    <p className="text-xs font-semibold text-red-700 mb-1">C Player</p>
+                    <p className="text-xs text-red-900 leading-relaxed">{q.cPlayerAnswer}</p>
+                  </div>
+                )}
+              </div>
+            )}
+            <textarea
+              className="input h-auto text-sm"
+              rows={2}
+              placeholder="Notes…"
+              value={resp.notes ?? ''}
+              onChange={(e) => setResponse(tq.questionId, 'notes', e.target.value)}
+            />
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ─── SectionCard ─────────────────────────────────────────────────────────────
 
 interface SectionCardProps {
@@ -261,6 +365,7 @@ interface SectionCardProps {
   submittedEntries: ScorecardEntry[]
   draftEntry: ScorecardEntry | null
   onEntrySaved: (entry: ScorecardEntry) => void
+  isWho?: boolean
   // Screening extras
   isScreening?: boolean
   availableStart: string | null
@@ -277,6 +382,7 @@ function SectionCard({
   draftEntry,
   onEntrySaved,
   isScreening = false,
+  isWho = false,
   availableStart,
   salaryExpectation,
   onScreeningFieldsChange,
@@ -292,9 +398,50 @@ function SectionCard({
     draftEntry && !draftEntry.interviewerId ? draftEntry.interviewerName : ''
   )
 
+  // ── WHO Interview job list ──────────────────────────────────────────────────
+  const initWhoJobs = useCallback((): WhoJob[] => {
+    if (!draftEntry) return [makeBlankJob()]
+    try {
+      const parsed = JSON.parse(draftEntry.responses) as {
+        type?: string
+        jobs?: Array<{ localId: string; company: string; title: string; responses: Record<string, { rating: string | null; notes: string }> }>
+      }
+      if (parsed.type === 'who' && Array.isArray(parsed.jobs) && parsed.jobs.length > 0) {
+        return parsed.jobs.map((j) => ({
+          localId: j.localId ?? Math.random().toString(36).slice(2),
+          company: j.company ?? '',
+          title: j.title ?? '',
+          expanded: false,
+          responses: Object.fromEntries(
+            Object.entries(j.responses ?? {}).map(([k, v]) => [
+              k,
+              { rating: (v?.rating as ABC) ?? null, notes: v?.notes ?? '' },
+            ])
+          ),
+        }))
+      }
+    } catch { /* ignore */ }
+    return [makeBlankJob()]
+  }, [draftEntry])
+
+  const [whoJobs, setWhoJobs] = useState<WhoJob[]>(initWhoJobs)
+
+  const updateJob = (localId: string, updated: WhoJob) =>
+    setWhoJobs((prev) => prev.map((j) => (j.localId === localId ? updated : j)))
+
+  const addJob = () =>
+    setWhoJobs((prev) => [...prev, makeBlankJob()])
+
+  const removeJob = (localId: string) =>
+    setWhoJobs((prev) => (prev.length > 1 ? prev.filter((j) => j.localId !== localId) : prev))
+
+  const toggleJobExpanded = (localId: string) =>
+    setWhoJobs((prev) => prev.map((j) => j.localId === localId ? { ...j, expanded: !j.expanded } : j))
+
+  // ── Standard (non-WHO) responses ───────────────────────────────────────────
   // Responses: { [questionId]: { rating, notes } }
   const initResponses = useCallback(() => {
-    if (!draftEntry) return {} as Record<string, { rating: ABC; notes: string }>
+    if (!draftEntry || isWho) return {} as Record<string, { rating: ABC; notes: string }>
     try {
       const parsed = JSON.parse(draftEntry.responses) as Record<
         string,
@@ -308,7 +455,7 @@ function SectionCard({
     } catch {
       return {}
     }
-  }, [draftEntry])
+  }, [draftEntry, isWho])
 
   const [responses, setResponses] = useState<
     Record<string, { rating: ABC; notes: string }>
@@ -346,6 +493,22 @@ function SectionCard({
   }
 
   const buildResponsesPayload = () => {
+    if (isWho) {
+      return {
+        type: 'who',
+        jobs: whoJobs.map((j) => ({
+          localId: j.localId,
+          company: j.company,
+          title: j.title,
+          responses: Object.fromEntries(
+            questions.map((tq) => [
+              tq.questionId,
+              j.responses[tq.questionId] ?? { rating: null, notes: '' },
+            ])
+          ),
+        })),
+      }
+    }
     const out: Record<string, { rating: ABC; notes: string }> = {}
     for (const tq of questions) {
       out[tq.questionId] = responses[tq.questionId] ?? { rating: null, notes: '' }
@@ -536,91 +699,150 @@ function SectionCard({
           </div>
         )}
 
-        {/* Questions */}
-        <div className="space-y-5 mb-4">
-          {questions.map((tq) => {
-            const response = responses[tq.questionId] ?? { rating: null, notes: '' }
-            const q = tq.question
-            const hasGuide = !!(q.aPlayerAnswer || q.bPlayerAnswer || q.cPlayerAnswer)
-            const isGuideOpen = guideOpen[tq.questionId] ?? false
-
-            return (
-              <div key={tq.id} className="border-b border-gray-50 pb-4 last:border-0 last:pb-0">
-                <p className="text-sm font-medium text-gray-900 mb-1">
-                  {q.text}
-                  {tq.required && <span className="text-red-500 ml-1">*</span>}
-                </p>
-                {q.guidance && (
-                  <p className="text-xs text-gray-400 italic mb-2">{q.guidance}</p>
-                )}
-
-                <div className="flex items-center gap-3 mb-2">
-                  <ABCButtons
-                    value={response.rating}
-                    onChange={(v) => setResponse(tq.questionId, 'rating', v)}
+        {/* Questions — WHO Interview renders per-job, standard renders flat */}
+        {isWho ? (
+          <div className="space-y-3 mb-4">
+            {whoJobs.map((job, idx) => (
+              <div key={job.localId} className="border border-gray-200 rounded-lg overflow-hidden">
+                {/* Job header row */}
+                <div className="flex items-center gap-2 px-4 py-3 bg-gray-50">
+                  <Briefcase className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <input
+                    type="text"
+                    className="input flex-1 text-sm py-1"
+                    placeholder="Company name"
+                    value={job.company}
+                    onChange={(e) => updateJob(job.localId, { ...job, company: e.target.value })}
                   />
-                  {hasGuide && (
+                  <input
+                    type="text"
+                    className="input flex-1 text-sm py-1"
+                    placeholder="Title held"
+                    value={job.title}
+                    onChange={(e) => updateJob(job.localId, { ...job, title: e.target.value })}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => toggleJobExpanded(job.localId)}
+                    className="text-gray-400 hover:text-gray-600 p-1"
+                    title={job.expanded ? 'Collapse' : 'Expand'}
+                  >
+                    {job.expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
+                  {whoJobs.length > 1 && (
                     <button
                       type="button"
-                      className="text-xs text-gray-400 hover:text-gray-600"
-                      onClick={() =>
-                        setGuideOpen((prev) => ({
-                          ...prev,
-                          [tq.questionId]: !prev[tq.questionId],
-                        }))
-                      }
+                      onClick={() => removeJob(job.localId)}
+                      className="text-red-400 hover:text-red-600 p-1"
+                      title="Remove this job"
                     >
-                      {isGuideOpen ? 'Hide guide ▴' : 'Show guide ▾'}
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   )}
                 </div>
 
-                {hasGuide && isGuideOpen && (
-                  <div className="grid grid-cols-3 gap-2 mb-2">
-                    {q.aPlayerAnswer && (
-                      <div className="rounded border border-green-200 bg-green-50 p-2">
-                        <p className="text-xs font-semibold text-green-700 mb-1">
-                          A Player
-                        </p>
-                        <p className="text-xs text-green-900 leading-relaxed">
-                          {q.aPlayerAnswer}
-                        </p>
-                      </div>
+                {/* Questions for this job — collapsible */}
+                {job.expanded && (
+                  <div className="px-4 py-3">
+                    {(!job.company && !job.title) && (
+                      <p className="text-xs text-amber-600 mb-3 italic">Fill in the company and title above, then answer the questions below for that role.</p>
                     )}
-                    {q.bPlayerAnswer && (
-                      <div className="rounded border border-amber-200 bg-amber-50 p-2">
-                        <p className="text-xs font-semibold text-amber-700 mb-1">
-                          B Player
-                        </p>
-                        <p className="text-xs text-amber-900 leading-relaxed">
-                          {q.bPlayerAnswer}
-                        </p>
-                      </div>
-                    )}
-                    {q.cPlayerAnswer && (
-                      <div className="rounded border border-red-200 bg-red-50 p-2">
-                        <p className="text-xs font-semibold text-red-700 mb-1">
-                          C Player
-                        </p>
-                        <p className="text-xs text-red-900 leading-relaxed">
-                          {q.cPlayerAnswer}
-                        </p>
-                      </div>
-                    )}
+                    <WhoQuestionsBlock job={job} questions={questions} onChange={updateJob} />
                   </div>
                 )}
 
-                <textarea
-                  className="input h-auto text-sm"
-                  rows={2}
-                  placeholder="Notes on this question…"
-                  value={response.notes ?? ''}
-                  onChange={(e) => setResponse(tq.questionId, 'notes', e.target.value)}
-                />
+                {!job.expanded && (job.company || job.title) && (
+                  <div className="px-4 py-2 text-xs text-gray-400 italic">
+                    {[job.title, job.company].filter(Boolean).join(' at ')} — click to expand
+                  </div>
+                )}
               </div>
-            )
-          })}
-        </div>
+            ))}
+
+            {/* Add job button */}
+            <button
+              type="button"
+              onClick={addJob}
+              className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 border border-dashed border-gray-300 hover:border-gray-400 rounded-lg px-4 py-2.5 w-full transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add another job
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-5 mb-4">
+            {questions.map((tq) => {
+              const response = responses[tq.questionId] ?? { rating: null, notes: '' }
+              const q = tq.question
+              const hasGuide = !!(q.aPlayerAnswer || q.bPlayerAnswer || q.cPlayerAnswer)
+              const isGuideOpen = guideOpen[tq.questionId] ?? false
+
+              return (
+                <div key={tq.id} className="border-b border-gray-50 pb-4 last:border-0 last:pb-0">
+                  <p className="text-sm font-medium text-gray-900 mb-1">
+                    {q.text}
+                    {tq.required && <span className="text-red-500 ml-1">*</span>}
+                  </p>
+                  {q.guidance && (
+                    <p className="text-xs text-gray-400 italic mb-2">{q.guidance}</p>
+                  )}
+
+                  <div className="flex items-center gap-3 mb-2">
+                    <ABCButtons
+                      value={response.rating}
+                      onChange={(v) => setResponse(tq.questionId, 'rating', v)}
+                    />
+                    {hasGuide && (
+                      <button
+                        type="button"
+                        className="text-xs text-gray-400 hover:text-gray-600"
+                        onClick={() =>
+                          setGuideOpen((prev) => ({
+                            ...prev,
+                            [tq.questionId]: !prev[tq.questionId],
+                          }))
+                        }
+                      >
+                        {isGuideOpen ? 'Hide guide ▴' : 'Show guide ▾'}
+                      </button>
+                    )}
+                  </div>
+
+                  {hasGuide && isGuideOpen && (
+                    <div className="grid grid-cols-3 gap-2 mb-2">
+                      {q.aPlayerAnswer && (
+                        <div className="rounded border border-green-200 bg-green-50 p-2">
+                          <p className="text-xs font-semibold text-green-700 mb-1">A Player</p>
+                          <p className="text-xs text-green-900 leading-relaxed">{q.aPlayerAnswer}</p>
+                        </div>
+                      )}
+                      {q.bPlayerAnswer && (
+                        <div className="rounded border border-amber-200 bg-amber-50 p-2">
+                          <p className="text-xs font-semibold text-amber-700 mb-1">B Player</p>
+                          <p className="text-xs text-amber-900 leading-relaxed">{q.bPlayerAnswer}</p>
+                        </div>
+                      )}
+                      {q.cPlayerAnswer && (
+                        <div className="rounded border border-red-200 bg-red-50 p-2">
+                          <p className="text-xs font-semibold text-red-700 mb-1">C Player</p>
+                          <p className="text-xs text-red-900 leading-relaxed">{q.cPlayerAnswer}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <textarea
+                    className="input h-auto text-sm"
+                    rows={2}
+                    placeholder="Notes on this question…"
+                    value={response.notes ?? ''}
+                    onChange={(e) => setResponse(tq.questionId, 'notes', e.target.value)}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        )}
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 pt-1">
@@ -1027,6 +1249,7 @@ export function EvaluationForm({
       {sections.length > 0 ? (
         sections.map((section) => {
           const isScreening = section.title.toLowerCase().includes('screen')
+          const isWho = section.title.toLowerCase().includes('who')
           return (
             <SectionCard
               key={section.id}
@@ -1038,6 +1261,7 @@ export function EvaluationForm({
               draftEntry={getDraftForSection(section.title)}
               onEntrySaved={handleEntrySaved}
               isScreening={isScreening}
+              isWho={isWho}
               availableStart={availableStart}
               salaryExpectation={salaryExpectation}
             />
