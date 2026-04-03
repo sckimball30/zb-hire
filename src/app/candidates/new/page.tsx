@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Upload, FileText, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 function NewCandidateForm() {
@@ -11,12 +11,20 @@ function NewCandidateForm() {
   const searchParams = useSearchParams()
   const jobId = searchParams.get('jobId')
   const [loading, setLoading] = useState(false)
+  const [resumeFile, setResumeFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [form, setForm] = useState({
     firstName: '', lastName: '', email: '', phone: '', linkedInUrl: '', source: '', notes: '',
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+  }
+
+  const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    const file = e.dataTransfer.files[0]
+    if (file) setResumeFile(file)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,6 +46,18 @@ function NewCandidateForm() {
       })
       if (!res.ok) { const data = await res.json(); throw new Error(data.error || 'Failed to create candidate') }
       const candidate = await res.json()
+
+      // Upload resume if provided
+      if (resumeFile) {
+        try {
+          const fd = new FormData()
+          fd.append('resume', resumeFile)
+          await fetch(`/api/candidates/${candidate.id}/resume`, { method: 'POST', body: fd })
+        } catch {
+          toast.error('Candidate created but resume upload failed — you can upload from their profile')
+        }
+      }
+
       if (jobId) {
         const appRes = await fetch('/api/applications', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -98,6 +118,45 @@ function NewCandidateForm() {
             <label htmlFor="linkedInUrl" className="label">LinkedIn URL</label>
             <input id="linkedInUrl" name="linkedInUrl" type="url" className="input" placeholder="https://linkedin.com/in/..." value={form.linkedInUrl} onChange={handleChange} />
           </div>
+          {/* Resume upload */}
+          <div>
+            <label className="label">Resume <span className="text-gray-400 font-normal">(optional)</span></label>
+            {resumeFile ? (
+              <div className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 bg-gray-50">
+                <FileText className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                <span className="text-sm text-gray-700 flex-1 truncate">{resumeFile.name}</span>
+                <span className="text-xs text-gray-400">{(resumeFile.size / 1024).toFixed(0)} KB</span>
+                <button
+                  type="button"
+                  onClick={() => { setResumeFile(null); if (fileInputRef.current) fileInputRef.current.value = '' }}
+                  className="text-gray-400 hover:text-red-500 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div
+                onDragOver={e => e.preventDefault()}
+                onDrop={handleFileDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors"
+              >
+                <Upload className="w-6 h-6 text-gray-300" />
+                <div className="text-center">
+                  <p className="text-sm font-medium text-gray-600">Drop resume here or click to upload</p>
+                  <p className="text-xs text-gray-400 mt-0.5">PDF or Word document</p>
+                </div>
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx"
+              className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f) setResumeFile(f) }}
+            />
+          </div>
+
           <div>
             <label htmlFor="notes" className="label">Notes</label>
             <textarea id="notes" name="notes" rows={3} className="input h-auto" placeholder="Any notes about this candidate..." value={form.notes} onChange={handleChange} />
