@@ -66,6 +66,13 @@ export function OfferPanel({ offer, applicationId, jobTitle }: Props) {
   const [copiedLink, setCopiedLink] = useState(false)
   const [sendLoading, setSendLoading] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const [reissueLoading, setReissueLoading] = useState(false)
+
+  const isExpired = !!(
+    offer?.expiresAt &&
+    new Date(offer.expiresAt) < new Date() &&
+    offer.status === 'SENT'
+  )
 
   const offerLink = offer ? `https://zb-hires.vercel.app/offers/${offer.token}` : ''
 
@@ -93,6 +100,24 @@ export function OfferPanel({ offer, applicationId, jobTitle }: Props) {
       toast.error(err instanceof Error ? err.message : 'Failed to send offer')
     } finally {
       setSendLoading(false)
+    }
+  }
+
+  const handleReissue = async () => {
+    if (!offer) return
+    setReissueLoading(true)
+    try {
+      const res = await fetch(`/api/offers/${offer.id}/reissue`, { method: 'POST' })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to reissue offer')
+      }
+      toast.success('Offer reset to draft — edit and resend when ready.')
+      router.refresh()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to reissue offer')
+    } finally {
+      setReissueLoading(false)
     }
   }
 
@@ -177,8 +202,30 @@ export function OfferPanel({ offer, applicationId, jobTitle }: Props) {
               )}
             </div>
 
+            {/* EXPIRED: reissue banner */}
+            {isExpired && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-amber-800">Offer Expired</p>
+                    <p className="text-xs text-amber-600 mt-0.5">
+                      This offer expired on {formatDate(offer.expiresAt)}. Reset it to draft to update the terms and resend.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleReissue}
+                    disabled={reissueLoading}
+                    className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition-colors disabled:opacity-50"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    {reissueLoading ? 'Resetting...' : 'Reissue Offer'}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* SENT: show offer link */}
-            {offer.status === 'SENT' && (
+            {offer.status === 'SENT' && !isExpired && (
               <div className="rounded-xl border border-[#4AFFD2]/30 bg-[#4AFFD2]/5 p-4">
                 <div className="text-xs text-gray-500 mb-2 font-medium">Candidate Link</div>
                 <div className="text-xs text-gray-600 break-all mb-3 font-mono bg-white border border-gray-100 rounded-lg px-3 py-2">
