@@ -3,13 +3,14 @@ export const dynamic = 'force-dynamic'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { ArrowLeft, Plus, Calendar, Clock, FileText, Download, ClipboardCheck } from 'lucide-react'
+import { ArrowLeft, Plus, Calendar, Clock, FileText, Download, ClipboardCheck, Linkedin, ExternalLink, MapPin, User } from 'lucide-react'
 import { STAGE_LABELS, STAGE_COLORS, INTERVIEW_TYPE_LABELS } from '@/lib/constants'
 import { formatDate, formatDateTime, timeAgo } from '@/lib/utils'
 import { StageSelector } from '@/components/applications/StageSelector'
 import { ScheduleInterviewButton } from '@/components/applications/ScheduleInterviewButton'
 import { SendMessageButton } from '@/components/candidates/SendMessageButton'
 import { OfferPanel } from '@/components/offers/OfferPanel'
+import { CandidateTags } from '@/components/candidates/CandidateTags'
 
 export default async function ApplicationPage({
   params,
@@ -19,7 +20,9 @@ export default async function ApplicationPage({
   const application = await prisma.application.findUnique({
     where: { id: params.applicationId },
     include: {
-      candidate: true,
+      candidate: {
+        include: { tags: { include: { tag: true } } },
+      },
       job: {
         include: {
           interviewers: {
@@ -88,7 +91,7 @@ export default async function ApplicationPage({
               {candidate.firstName[0]}{candidate.lastName[0]}
             </div>
             <div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="text-2xl font-bold text-gray-900">
                   {candidate.firstName} {candidate.lastName}
                 </h1>
@@ -96,9 +99,31 @@ export default async function ApplicationPage({
                   {STAGE_LABELS[application.stage]}
                 </span>
               </div>
+
+              {/* Contact */}
               <p className="text-sm text-gray-600 mt-1">{candidate.email}</p>
               {candidate.phone && <p className="text-sm text-gray-600">{candidate.phone}</p>}
-              <div className="flex items-center gap-4 mt-2">
+
+              {/* LinkedIn / Address / Source */}
+              <div className="flex flex-wrap items-center gap-4 mt-1">
+                {candidate.linkedInUrl && (
+                  <a href={candidate.linkedInUrl} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-sm text-gray-500 hover:text-blue-600 transition-colors">
+                    <Linkedin className="w-3.5 h-3.5" /> LinkedIn <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+                {(candidate as any).address && (
+                  <span className="flex items-center gap-1 text-sm text-gray-500">
+                    <MapPin className="w-3.5 h-3.5" />{(candidate as any).address}
+                  </span>
+                )}
+                {candidate.source && (
+                  <span className="text-sm text-gray-500">Source: {candidate.source}</span>
+                )}
+              </div>
+
+              {/* Job / Dept / Applied */}
+              <div className="flex items-center gap-4 mt-2 flex-wrap">
                 <span className="text-sm text-gray-500">
                   <strong>Job:</strong> {job.title}
                 </span>
@@ -110,6 +135,20 @@ export default async function ApplicationPage({
                 <span className="text-sm text-gray-500">
                   Applied {formatDate(application.createdAt)}
                 </span>
+                <Link
+                  href={`/candidates/${candidate.id}`}
+                  className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <User className="w-3.5 h-3.5" /> Full Profile
+                </Link>
+              </div>
+
+              {/* Tags */}
+              <div className="mt-2">
+                <CandidateTags
+                  candidateId={candidate.id}
+                  initialTags={(candidate as any).tags?.map((ct: any) => ct.tag) ?? []}
+                />
               </div>
             </div>
           </div>
