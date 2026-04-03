@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { sendApplicationConfirmation } from '@/lib/automations'
 
 export async function POST(request: Request) {
   try {
@@ -31,6 +32,15 @@ export async function POST(request: Request) {
         action: 'Application created',
         actorName: 'System',
       },
+    })
+
+    // Send confirmation email to candidate (if automation is enabled)
+    await sendApplicationConfirmation({
+      candidateEmail: application.candidate.email,
+      firstName: application.candidate.firstName,
+      fullName: `${application.candidate.firstName} ${application.candidate.lastName}`,
+      jobTitle: application.job.title,
+      department: application.job.department,
     })
 
     return NextResponse.json(application, { status: 201 })
