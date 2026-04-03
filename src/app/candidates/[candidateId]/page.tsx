@@ -14,6 +14,7 @@ import { NotesPanel } from '@/components/candidates/NotesPanel'
 import { SendMessageButton } from '@/components/candidates/SendMessageButton'
 import { CandidateTags } from '@/components/candidates/CandidateTags'
 import { ScheduledMessagesList } from '@/components/candidates/ScheduledMessagesList'
+import { ResumeUploadButton } from '@/components/candidates/ResumeUploadButton'
 
 const RATING_COLORS: Record<string, string> = {
   STRONG_YES: 'bg-green-100 text-green-700',
@@ -184,16 +185,17 @@ export default async function CandidatePage({ params }: { params: { candidateId:
                 <FileText className="w-4 h-4 text-gray-400" />
                 <h2 className="text-base font-semibold text-gray-900">Resume</h2>
               </div>
-              {candidate.resumeUrl && (
-                <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                {candidate.resumeUrl && (
                   <a
                     href={`/api/resume/${candidate.id}?download=1`}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
                   >
                     <Download className="w-3.5 h-3.5" /> Download
                   </a>
-                </div>
-              )}
+                )}
+                <ResumeUploadButton candidateId={candidate.id} />
+              </div>
             </div>
             {candidate.resumeUrl ? (
               <div className="w-full bg-gray-50" style={{ height: 700 }}>
@@ -207,7 +209,7 @@ export default async function CandidatePage({ params }: { params: { candidateId:
               <div className="px-6 py-12 text-center">
                 <FileText className="w-10 h-10 text-gray-200 mx-auto mb-3" />
                 <p className="text-sm font-medium text-gray-400">No resume on file</p>
-                <p className="text-xs text-gray-300 mt-1">Resume will appear here once the candidate submits via the apply form</p>
+                <p className="text-xs text-gray-300 mt-1 mb-4">Upload one using the button above</p>
               </div>
             )}
           </div>
