@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { ChevronLeft, ChevronRight, Plus, Calendar, Clock, FileText, Download, ClipboardCheck, Linkedin, ExternalLink, MapPin, User } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Calendar, Clock, FileText, Download, ClipboardCheck, Linkedin, ExternalLink, MapPin, User, Video, Phone, Users } from 'lucide-react'
 import { STAGE_LABELS, STAGE_COLORS, INTERVIEW_TYPE_LABELS } from '@/lib/constants'
 import { formatDate, formatDateTime, timeAgo } from '@/lib/utils'
 import { StageSelector } from '@/components/applications/StageSelector'
@@ -209,12 +209,20 @@ export default async function ApplicationPage({
               candidateFirstName={candidate.firstName}
               jobTitle={job.title}
             />
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap justify-end">
               <SendMessageButton
                 candidateId={candidate.id}
                 candidateEmail={candidate.email}
                 candidateFirstName={candidate.firstName}
                 jobTitle={application.job.title}
+              />
+              <ScheduleInterviewButton
+                applicationId={application.id}
+                interviewers={jobInterviewers}
+                candidateId={candidate.id}
+                candidateEmail={candidate.email}
+                candidateFirstName={candidate.firstName}
+                jobTitle={job.title}
               />
               <Link
                 href={`/applications/${application.id}/scorecard/new`}
@@ -261,68 +269,6 @@ export default async function ApplicationPage({
                 <FileText className="w-8 h-8 text-gray-200 mx-auto mb-2" />
                 <p className="text-sm text-gray-400">No resume on file</p>
               </div>
-            )}
-          </div>
-
-          {/* Interview Events */}
-          <div className="card overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-gray-900">Interviews ({application.events.length})</h2>
-              <ScheduleInterviewButton
-                applicationId={application.id}
-                interviewers={jobInterviewers}
-                candidateId={candidate.id}
-                candidateEmail={candidate.email}
-                candidateFirstName={candidate.firstName}
-                jobTitle={job.title}
-              />
-            </div>
-            {application.events.length === 0 ? (
-              <div className="px-6 py-8 text-center text-sm text-gray-500">
-                No interviews scheduled yet.
-              </div>
-            ) : (
-              <ul className="divide-y divide-gray-100">
-                {application.events.map((event) => (
-                  <li key={event.id} className="px-6 py-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-gray-400" />
-                          <span className="font-medium text-gray-900">{INTERVIEW_TYPE_LABELS[event.type]}</span>
-                          {event.scorecard && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-green-100 text-green-700">
-                              Scored
-                            </span>
-                          )}
-                        </div>
-                        <div className="mt-1 text-sm text-gray-600">
-                          with <strong>{event.interviewer.name}</strong>
-                          {event.location && <span> · {event.location}</span>}
-                        </div>
-                        {event.scheduledAt && (
-                          <div className="mt-1 text-sm text-gray-500">
-                            {formatDateTime(event.scheduledAt)} · {event.durationMins} min
-                          </div>
-                        )}
-                        {event.notes && (
-                          <p className="mt-2 text-sm text-gray-600 bg-gray-50 rounded p-2">{event.notes}</p>
-                        )}
-                        {(event as any).calendlyEventUrl && (
-                          <a
-                            href={(event as any).calendlyEventUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-2 inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
-                          >
-                            View Calendly Event ↗
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
             )}
           </div>
 
@@ -441,6 +387,56 @@ export default async function ApplicationPage({
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Scheduled Interviews */}
+          <div className="card overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-gray-400" />
+                <h3 className="text-sm font-semibold text-gray-700">Interviews</h3>
+              </div>
+            </div>
+            {application.events.length === 0 ? (
+              <div className="px-4 py-4 text-xs text-gray-400 text-center">No interviews scheduled yet.</div>
+            ) : (
+              <ul className="divide-y divide-gray-50">
+                {application.events.map((event) => {
+                  const typeIcon = event.type === 'PHONE_SCREEN' ? <Phone className="w-3 h-3" />
+                    : event.type === 'VIDEO_CALL' ? <Video className="w-3 h-3" />
+                    : event.type === 'PANEL' ? <Users className="w-3 h-3" />
+                    : <Calendar className="w-3 h-3" />
+                  return (
+                    <li key={event.id} className="px-4 py-3">
+                      <div className="flex items-start gap-2">
+                        <span className="text-gray-400 mt-0.5 flex-shrink-0">{typeIcon}</span>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-gray-800">
+                            {INTERVIEW_TYPE_LABELS[event.type] ?? event.type}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            with <span className="font-medium">{event.interviewer.name}</span>
+                          </p>
+                          {event.scheduledAt ? (
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              {formatDateTime(event.scheduledAt)} · {event.durationMins}min
+                            </p>
+                          ) : (
+                            <p className="text-xs text-amber-500 mt-0.5">Awaiting confirmation</p>
+                          )}
+                          {event.location && (
+                            <p className="text-xs text-gray-400 truncate mt-0.5">{event.location}</p>
+                          )}
+                        </div>
+                        {event.scorecard && (
+                          <span className="ml-auto flex-shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-green-100 text-green-700 font-medium">✓</span>
+                        )}
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
           </div>
 
           {/* Activity Log */}
