@@ -42,7 +42,7 @@ export type {
 }
 
 // String-literal union types (replaces Prisma enums for SQLite)
-export type CandidateStage = 'APPLIED' | 'PHONE_SCREEN' | 'ONSITE' | 'OFFER' | 'HIRED' | 'REJECTED'
+export type CandidateStage = 'APPLIED' | 'PHONE_SCREEN' | 'INTERVIEWING' | 'ONSITE' | 'OFFER' | 'HIRED' | 'REJECTED'
 export type JobStatus = 'DRAFT' | 'OPEN' | 'CLOSED' | 'ARCHIVED'
 export type InterviewType = 'PHONE_SCREEN' | 'TECHNICAL' | 'BEHAVIORAL' | 'ONSITE' | 'PANEL' | 'HIRING_MANAGER'
 export type Rating = 'STRONG_NO' | 'NO' | 'NEUTRAL' | 'YES' | 'STRONG_YES'

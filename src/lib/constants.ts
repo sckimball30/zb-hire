@@ -3,15 +3,17 @@ import type { CandidateStage, Rating, CompetencyCategory, InterviewType, JobStat
 export const STAGE_ORDER: Record<string, number> = {
   APPLIED: 0,
   PHONE_SCREEN: 1,
-  ONSITE: 2,
-  OFFER: 3,
-  HIRED: 4,
-  REJECTED: 5,
+  INTERVIEWING: 2,
+  ONSITE: 3,
+  OFFER: 4,
+  HIRED: 5,
+  REJECTED: 6,
 }
 
 export const STAGE_LABELS: Record<string, string> = {
   APPLIED: 'Applied',
   PHONE_SCREEN: 'Phone Screen',
+  INTERVIEWING: 'Interviewing',
   ONSITE: 'Onsite',
   OFFER: 'Offer',
   HIRED: 'Hired',
@@ -21,6 +23,7 @@ export const STAGE_LABELS: Record<string, string> = {
 export const STAGE_COLORS: Record<string, string> = {
   APPLIED: 'bg-slate-100 text-slate-700',
   PHONE_SCREEN: 'bg-blue-100 text-blue-700',
+  INTERVIEWING: 'bg-indigo-100 text-indigo-700',
   ONSITE: 'bg-purple-100 text-purple-700',
   OFFER: 'bg-yellow-100 text-yellow-700',
   HIRED: 'bg-green-100 text-green-700',
@@ -30,6 +33,7 @@ export const STAGE_COLORS: Record<string, string> = {
 export const STAGE_COLUMN_COLORS: Record<string, string> = {
   APPLIED: 'border-t-slate-400',
   PHONE_SCREEN: 'border-t-blue-400',
+  INTERVIEWING: 'border-t-indigo-400',
   ONSITE: 'border-t-purple-400',
   OFFER: 'border-t-yellow-400',
   HIRED: 'border-t-green-400',
@@ -116,6 +120,7 @@ export const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
 export const ALL_STAGES: CandidateStage[] = [
   'APPLIED',
   'PHONE_SCREEN',
+  'INTERVIEWING',
   'ONSITE',
   'OFFER',
   'HIRED',
