@@ -15,6 +15,7 @@ export default function MessageTemplatesPage() {
   const [form, setForm] = useState(EMPTY)
   const [saving, setSaving] = useState(false)
   const [preview, setPreview] = useState<Template | null>(null)
+  const [seeding, setSeeding] = useState(false)
 
   useEffect(() => { load() }, [])
 
@@ -61,6 +62,15 @@ export default function MessageTemplatesPage() {
     setSaving(false)
   }
 
+  async function seedDefaults() {
+    if (!confirm('This will add or update the 6 default Wigglitz templates. Continue?')) return
+    setSeeding(true)
+    const res = await fetch('/api/admin/seed-templates', { method: 'POST' })
+    setSeeding(false)
+    if (res.ok) { toast.success('Default templates loaded!'); await load() }
+    else toast.error('Failed to load templates.')
+  }
+
   async function remove(id: string) {
     if (!confirm('Delete this template?')) return
     const res = await fetch(`/api/messages/templates/${id}`, { method: 'DELETE' })
@@ -75,10 +85,15 @@ export default function MessageTemplatesPage() {
           <h1 className="text-2xl font-bold text-gray-900">Message Templates</h1>
           <p className="text-sm text-gray-500 mt-1">Reusable email templates for candidate outreach</p>
         </div>
-        <button onClick={openCreate} className="btn-primary flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          New Template
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={seedDefaults} disabled={seeding} className="btn-outline flex items-center gap-2 text-sm">
+            {seeding ? 'Loading…' : '↓ Load Default Templates'}
+          </button>
+          <button onClick={openCreate} className="btn-primary flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            New Template
+          </button>
+        </div>
       </div>
 
       {loading ? (
