@@ -472,7 +472,20 @@ model MessageLog {
   sentAt      DateTime         @default(now())
   sentById    String?
   sentByName  String?
+  direction       String  @default("OUTBOUND")
+  gmailThreadId   String?
+  gmailMessageId  String?
   candidate   Candidate        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
   template    MessageTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
   sentBy      User?            @relation(fields: [sentById], references: [id], onDelete: SetNull)
+}
+
+model GmailConnection {
+  id           String   @id @default(cuid())
+  email        String
+  accessToken  String
+  refreshToken String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

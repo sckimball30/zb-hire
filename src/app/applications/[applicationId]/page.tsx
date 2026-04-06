@@ -3,7 +3,8 @@ export const dynamic = 'force-dynamic'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { ChevronLeft, ChevronRight, Plus, Calendar, Clock, FileText, Download, ClipboardCheck, Linkedin, ExternalLink, MapPin, User, Video, Phone, Users, Mail, Send } from 'lucide-react'
+import { getGmailStatus } from '@/lib/gmail'
+import { ChevronLeft, ChevronRight, Plus, Calendar, Clock, FileText, Download, ClipboardCheck, Linkedin, ExternalLink, MapPin, User, Video, Phone, Users } from 'lucide-react'
 import { STAGE_LABELS, STAGE_COLORS, INTERVIEW_TYPE_LABELS } from '@/lib/constants'
 import { formatDate, formatDateTime, timeAgo } from '@/lib/utils'
 import { StageSelector } from '@/components/applications/StageSelector'
@@ -11,6 +12,7 @@ import { ScheduleInterviewButton } from '@/components/applications/ScheduleInter
 import { SendMessageButton } from '@/components/candidates/SendMessageButton'
 import { OfferPanel } from '@/components/offers/OfferPanel'
 import { CandidateTags } from '@/components/candidates/CandidateTags'
+import { MessagesCard } from '@/components/candidates/MessagesCard'
 
 export default async function ApplicationPage({
   params,
@@ -80,6 +82,8 @@ export default async function ApplicationPage({
   const siblingIdx = siblings.findIndex(s => s.id === application.id)
   const prevApp = siblingIdx > 0 ? siblings[siblingIdx - 1] : null
   const nextApp = siblingIdx < siblings.length - 1 ? siblings[siblingIdx + 1] : null
+  const { connected: gmailConnected } = await getGmailStatus()
+
   const submittedScorecards = application.scorecards.filter((s) => s.submittedAt)
   const jobInterviewers = job.interviewers.map(ji => ji.interviewer)
 
@@ -475,72 +479,13 @@ export default async function ApplicationPage({
               </ul>
             )}
           </div>
-
           {/* Messages */}
-          {(() => {
-            const messageLogs: any[] = (candidate as any).messageLogs ?? []
-            const scheduledMessages: any[] = (candidate as any).scheduledMessages ?? []
-            const allMessages = [
-              ...messageLogs.map((m: any) => ({ ...m, kind: 'sent' as const })),
-              ...scheduledMessages.map((m: any) => ({ ...m, kind: 'scheduled' as const })),
-            ].sort((a, b) => {
-              const aDate = new Date(a.kind === 'sent' ? a.sentAt : a.scheduledFor).getTime()
-              const bDate = new Date(b.kind === 'sent' ? b.sentAt : b.scheduledFor).getTime()
-              return bDate - aDate
-            })
-            return (
-              <div className="card overflow-hidden">
-                <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-gray-400" />
-                  <h3 className="text-sm font-semibold text-gray-700">Messages</h3>
-                  {allMessages.length > 0 && (
-                    <span className="ml-auto text-xs text-gray-400">{allMessages.length}</span>
-                  )}
-                </div>
-                {allMessages.length === 0 ? (
-                  <div className="px-4 py-4 text-xs text-gray-400 text-center">No messages sent yet.</div>
-                ) : (
-                  <ul className="divide-y divide-gray-50">
-                    {allMessages.map((msg: any) => (
-                      <li key={msg.id} className="px-4 py-3">
-                        <details className="group">
-                          <summary className="list-none cursor-pointer">
-                            <div className="flex items-start gap-2">
-                              {msg.kind === 'scheduled' ? (
-                                <Clock className="w-3 h-3 text-amber-400 mt-0.5 flex-shrink-0" />
-                              ) : (
-                                <Send className="w-3 h-3 text-blue-400 mt-0.5 flex-shrink-0" />
-                              )}
-                              <div className="min-w-0 flex-1">
-                                <p className="text-xs font-medium text-gray-800 truncate">{msg.subject}</p>
-                                <p className="text-xs text-gray-400 mt-0.5">
-                                  {msg.kind === 'scheduled' ? (
-                                    <span className="text-amber-500">
-                                      Scheduled · {new Date(msg.scheduledFor).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                                    </span>
-                                  ) : (
-                                    <>
-                                      {msg.sentByName && <span>{msg.sentByName} · </span>}
-                                      {new Date(msg.sentAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                                    </>
-                                  )}
-                                </p>
-                              </div>
-                              <span className="text-xs text-gray-300 group-open:hidden flex-shrink-0 mt-0.5">▸</span>
-                              <span className="text-xs text-gray-300 hidden group-open:inline flex-shrink-0 mt-0.5">▾</span>
-                            </div>
-                          </summary>
-                          <div className="mt-2 ml-5 text-xs text-gray-600 bg-gray-50 rounded p-2 whitespace-pre-wrap leading-relaxed border border-gray-100">
-                            {msg.body}
-                          </div>
-                        </details>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )
-          })()}
+          <MessagesCard
+            candidateId={candidate.id}
+            initialMessages={(candidate as any).messageLogs ?? []}
+            scheduledMessages={(candidate as any).scheduledMessages ?? []}
+            gmailConnected={gmailConnected}
+          />
         </div>
       </div>
     </div>
