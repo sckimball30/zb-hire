@@ -32,6 +32,20 @@ export default async function JobPipelinePage({ params }: { params: { jobId: str
     {} as Record<CandidateStage, ApplicationWithRelations[]>
   )
 
+  // Candidates who have received at least one non-rejection message
+  const candidateIds = job.applications.map(a => (a as any).candidate?.id as string).filter(Boolean)
+  const contactedLogs = candidateIds.length > 0
+    ? await prisma.messageLog.findMany({
+        where: {
+          candidateId: { in: candidateIds },
+          NOT: { subject: { contains: 'rejection', mode: 'insensitive' } },
+        },
+        select: { candidateId: true },
+        distinct: ['candidateId'],
+      })
+    : []
+  const contactedCandidateIds = contactedLogs.map(l => l.candidateId)
+
   return (
     <div className="flex flex-col h-full">
       {/* Pipeline action bar */}
@@ -60,7 +74,7 @@ export default async function JobPipelinePage({ params }: { params: { jobId: str
 
       {/* Kanban board */}
       <div className="flex-1 overflow-auto px-8 py-6">
-        <KanbanBoard groupedApplications={grouped} jobId={job.id} />
+        <KanbanBoard groupedApplications={grouped} jobId={job.id} contactedCandidateIds={contactedCandidateIds} />
       </div>
     </div>
   )

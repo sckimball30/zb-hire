@@ -24,6 +24,7 @@ import type { ApplicationWithRelations } from '@/types'
 interface KanbanBoardProps {
   groupedApplications: Record<CandidateStage, ApplicationWithRelations[]>
   jobId: string
+  contactedCandidateIds?: string[]
 }
 
 interface PendingRejection {
@@ -35,10 +36,11 @@ interface PendingRejection {
   currentStage: CandidateStage
 }
 
-export function KanbanBoard({ groupedApplications, jobId }: KanbanBoardProps) {
+export function KanbanBoard({ groupedApplications, jobId, contactedCandidateIds = [] }: KanbanBoardProps) {
   const [groups, setGroups] = useState(groupedApplications)
   const [activeApp, setActiveApp] = useState<ApplicationWithRelations | null>(null)
   const [pendingRejection, setPendingRejection] = useState<PendingRejection | null>(null)
+  const contactedSet = new Set(contactedCandidateIds)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -189,6 +191,7 @@ export function KanbanBoard({ groupedApplications, jobId }: KanbanBoardProps) {
               key={stage}
               stage={stage}
               applications={groups[stage]}
+              contactedSet={contactedSet}
             />
           ))}
         </div>
@@ -219,9 +222,11 @@ export function KanbanBoard({ groupedApplications, jobId }: KanbanBoardProps) {
 function KanbanColumn({
   stage,
   applications,
+  contactedSet,
 }: {
   stage: CandidateStage
   applications: ApplicationWithRelations[]
+  contactedSet: Set<string>
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage })
   const ids = applications.map((a) => a.id)
@@ -248,8 +253,12 @@ function KanbanColumn({
         }`}
       >
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-          {applications.map((app) => (
-            <CandidateCard key={app.id} application={app} />
+{applications.map((app) => (
+            <CandidateCard
+              key={app.id}
+              application={app}
+              contacted={contactedSet.has((app as any).candidate?.id ?? '')}
+            />
           ))}
         </SortableContext>
 

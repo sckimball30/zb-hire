@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, FileText } from 'lucide-react'
+import { GripVertical, FileText, Mail } from 'lucide-react'
 import { cn, initials } from '@/lib/utils'
 import { StarRating } from '@/components/shared/StarRating'
 import { useState } from 'react'
@@ -13,9 +13,10 @@ import type { ApplicationWithRelations } from '@/types'
 interface CandidateCardProps {
   application: ApplicationWithRelations
   isDragging?: boolean
+  contacted?: boolean
 }
 
-export function CandidateCard({ application, isDragging = false }: CandidateCardProps) {
+export function CandidateCard({ application, isDragging = false, contacted = false }: CandidateCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging: isSortableDragging } =
     useSortable({ id: application.id })
 
@@ -78,16 +79,24 @@ export function CandidateCard({ application, isDragging = false }: CandidateCard
 
           <StarRating value={starRating} onChange={handleStarChange} size="sm" />
 
-          <div className="flex items-center justify-between mt-1.5">
+          <div className="flex items-center justify-between mt-1.5 gap-1 flex-wrap">
             <span className="text-xs text-gray-400">
               {daysInStage === 0 ? 'Today' : `${daysInStage}d`}
             </span>
-            {scorecardCount > 0 && (
-              <span className="flex items-center gap-0.5 text-xs text-gray-500">
-                <FileText className="w-3 h-3" />
-                {scorecardCount}
-              </span>
-            )}
+            <div className="flex items-center gap-1">
+              {contacted && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                  <Mail className="w-2.5 h-2.5" />
+                  Contacted
+                </span>
+              )}
+              {scorecardCount > 0 && (
+                <span className="flex items-center gap-0.5 text-xs text-gray-500">
+                  <FileText className="w-3 h-3" />
+                  {scorecardCount}
+                </span>
+              )}
+            </div>
           </div>
 
           {candidate.source && (
