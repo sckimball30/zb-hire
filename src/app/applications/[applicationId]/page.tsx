@@ -201,7 +201,14 @@ export default async function ApplicationPage({
           </div>
 
           <div className="flex flex-col items-end gap-3">
-            <StageSelector applicationId={application.id} currentStage={application.stage as any} />
+            <StageSelector
+              applicationId={application.id}
+              currentStage={application.stage as any}
+              candidateId={candidate.id}
+              candidateEmail={candidate.email}
+              candidateFirstName={candidate.firstName}
+              jobTitle={job.title}
+            />
             <div className="flex items-center gap-2">
               <SendMessageButton
                 candidateId={candidate.id}
