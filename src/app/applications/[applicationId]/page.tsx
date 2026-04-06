@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { ArrowLeft, Plus, Calendar, Clock, FileText, Download, ClipboardCheck, Linkedin, ExternalLink, MapPin, User } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Calendar, Clock, FileText, Download, ClipboardCheck, Linkedin, ExternalLink, MapPin, User } from 'lucide-react'
 import { STAGE_LABELS, STAGE_COLORS, INTERVIEW_TYPE_LABELS } from '@/lib/constants'
 import { formatDate, formatDateTime, timeAgo } from '@/lib/utils'
 import { StageSelector } from '@/components/applications/StageSelector'
@@ -14,8 +14,10 @@ import { CandidateTags } from '@/components/candidates/CandidateTags'
 
 export default async function ApplicationPage({
   params,
+  searchParams,
 }: {
   params: { applicationId: string }
+  searchParams: { jobId?: string }
 }) {
   const application = await prisma.application.findUnique({
     where: { id: params.applicationId },
@@ -57,6 +59,17 @@ export default async function ApplicationPage({
   if (!application) notFound()
 
   const { candidate, job } = application
+
+  // Prev/next navigation within the same job pipeline
+  const pipelineJobId = searchParams.jobId ?? application.jobId
+  const siblings = await prisma.application.findMany({
+    where: { jobId: pipelineJobId },
+    select: { id: true },
+    orderBy: { stageOrder: 'asc' },
+  })
+  const siblingIdx = siblings.findIndex(s => s.id === application.id)
+  const prevApp = siblingIdx > 0 ? siblings[siblingIdx - 1] : null
+  const nextApp = siblingIdx < siblings.length - 1 ? siblings[siblingIdx + 1] : null
   const submittedScorecards = application.scorecards.filter((s) => s.submittedAt)
   const jobInterviewers = job.interviewers.map(ji => ji.interviewer)
 
@@ -72,15 +85,49 @@ export default async function ApplicationPage({
 
   return (
     <div className="p-8 max-w-5xl">
-      {/* Breadcrumb */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+      {/* Breadcrumb + prev/next nav */}
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm text-gray-500">
           <Link href="/jobs" className="hover:text-gray-700">Jobs</Link>
           <span>/</span>
-          <Link href={`/jobs/${job.id}`} className="hover:text-gray-700">{job.title}</Link>
+          <Link href={`/jobs/${job.id}/pipeline`} className="hover:text-gray-700">{job.title}</Link>
           <span>/</span>
           <span className="text-gray-700">{candidate.firstName} {candidate.lastName}</span>
         </div>
+
+        {siblings.length > 1 && (
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-gray-400 mr-2">
+              {siblingIdx + 1} / {siblings.length}
+            </span>
+            {prevApp ? (
+              <Link
+                href={`/applications/${prevApp.id}?jobId=${pipelineJobId}`}
+                className="p-1.5 rounded-md border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-gray-700 transition-colors"
+                title="Previous applicant"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Link>
+            ) : (
+              <span className="p-1.5 rounded-md border border-gray-100 text-gray-200 cursor-not-allowed">
+                <ChevronLeft className="w-4 h-4" />
+              </span>
+            )}
+            {nextApp ? (
+              <Link
+                href={`/applications/${nextApp.id}?jobId=${pipelineJobId}`}
+                className="p-1.5 rounded-md border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-gray-700 transition-colors"
+                title="Next applicant"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            ) : (
+              <span className="p-1.5 rounded-md border border-gray-100 text-gray-200 cursor-not-allowed">
+                <ChevronRight className="w-4 h-4" />
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Candidate Header */}

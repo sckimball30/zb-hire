@@ -68,7 +68,7 @@ export function CandidateCard({ application, isDragging = false }: CandidateCard
               {initials(candidate.firstName, candidate.lastName)}
             </div>
             <Link
-              href={`/applications/${application.id}`}
+              href={`/applications/${application.id}?jobId=${(application as any).jobId ?? ''}`}
               className="text-sm font-medium text-gray-900 hover:text-blue-600 truncate leading-tight"
               onClick={e => e.stopPropagation()}
             >
