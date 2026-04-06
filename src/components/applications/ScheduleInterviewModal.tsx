@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Calendar, Copy, ExternalLink, Check, Link2 } from 'lucide-react'
+import { X, Calendar, Copy, ExternalLink, Check, Link2, Send } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
@@ -26,10 +26,22 @@ interface Interviewer {
 interface Props {
   applicationId: string
   interviewers: Interviewer[]
+  candidateId?: string
+  candidateEmail?: string
+  candidateFirstName?: string
+  jobTitle?: string
   onClose: () => void
 }
 
-export function ScheduleInterviewModal({ applicationId, interviewers, onClose }: Props) {
+export function ScheduleInterviewModal({
+  applicationId,
+  interviewers,
+  candidateId,
+  candidateEmail,
+  candidateFirstName,
+  jobTitle,
+  onClose,
+}: Props) {
   const router = useRouter()
   const [form, setForm] = useState({
     interviewerId: interviewers[0]?.id ?? '',
@@ -40,13 +52,17 @@ export function ScheduleInterviewModal({ applicationId, interviewers, onClose }:
     notes: '',
   })
   const [loading, setLoading] = useState(false)
+  const [sending, setSending] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [linkSent, setLinkSent] = useState(false)
 
   const selectedInterviewer = interviewers.find(i => i.id === form.interviewerId)
   const calendlyUrl = selectedInterviewer?.calendlyUrl ?? null
+  const interviewLabel = INTERVIEW_TYPES.find(t => t.value === form.type)?.label ?? form.type
 
   useEffect(() => {
     setCopied(false)
+    setLinkSent(false)
   }, [form.interviewerId])
 
   const copyCalendlyLink = async () => {
@@ -55,6 +71,36 @@ export function ScheduleInterviewModal({ applicationId, interviewers, onClose }:
     setCopied(true)
     toast.success('Calendly link copied!')
     setTimeout(() => setCopied(false), 2500)
+  }
+
+  const sendLinkToCandidate = async () => {
+    if (!calendlyUrl || !candidateId) return
+    setSending(true)
+    try {
+      const firstName = candidateFirstName ?? 'there'
+      const interviewerName = selectedInterviewer?.name ?? 'one of our team members'
+      const subject = `Schedule Your ${interviewLabel}${jobTitle ? ` — ${jobTitle}` : ''}`
+      const body = `Hi ${firstName},\n\nWe'd love to move forward with scheduling your ${interviewLabel.toLowerCase()}${jobTitle ? ` for the ${jobTitle} position` : ''}.\n\nPlease use the link below to find a time that works for you — it connects directly to ${interviewerName}'s calendar:\n\n${calendlyUrl}\n\nOnce you've selected a time, you'll receive a confirmation email with all the details.\n\nLooking forward to connecting!\n\nBest,\nThe Wigglitz Hiring Team`
+
+      const res = await fetch('/api/messages/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          candidateId,
+          subject,
+          body,
+        }),
+      })
+
+      if (!res.ok) throw new Error('Failed to send email')
+
+      setLinkSent(true)
+      toast.success(`Scheduling link sent to ${candidateEmail}!`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to send link')
+    } finally {
+      setSending(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,7 +130,7 @@ export function ScheduleInterviewModal({ applicationId, interviewers, onClose }:
         throw new Error(data.error || 'Failed to schedule interview')
       }
 
-      toast.success('Interview scheduled!')
+      toast.success('Interview logged!')
       onClose()
       router.refresh()
     } catch (err) {
@@ -109,7 +155,7 @@ export function ScheduleInterviewModal({ applicationId, interviewers, onClose }:
             </div>
             <div>
               <h2 className="text-base font-semibold text-gray-900">Schedule Interview</h2>
-              <p className="text-xs text-gray-400">Log an interview and get the Calendly link</p>
+              <p className="text-xs text-gray-400">Send a scheduling link or log an interview manually</p>
             </div>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -147,7 +193,7 @@ export function ScheduleInterviewModal({ applicationId, interviewers, onClose }:
               >
                 {interviewers.map(i => (
                   <option key={i.id} value={i.id}>
-                    {i.name}{i.title ? ` — ${i.title}` : ''}
+                    {i.name}{i.title ? ` — ${i.title}` : ''}{i.calendlyUrl ? '' : ' (no Calendly)'}
                   </option>
                 ))}
               </select>
@@ -159,13 +205,37 @@ export function ScheduleInterviewModal({ applicationId, interviewers, onClose }:
             <div className={`rounded-xl border-2 p-4 ${calendlyUrl ? 'border-[#4AFFD2]/40 bg-[#4AFFD2]/5' : 'border-gray-100 bg-gray-50'}`}>
               <div className="flex items-center gap-2 mb-2">
                 <Link2 className={`w-4 h-4 ${calendlyUrl ? 'text-[#111]' : 'text-gray-300'}`} />
-                <span className="text-sm font-medium text-gray-700">Calendly Scheduling Link</span>
+                <span className="text-sm font-semibold text-gray-700">
+                  {selectedInterviewer.name}'s Scheduling Link
+                </span>
               </div>
 
               {calendlyUrl ? (
                 <>
                   <p className="text-xs text-gray-500 mb-3 break-all">{calendlyUrl}</p>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    {/* Send to candidate */}
+                    {candidateId && (
+                      <button
+                        type="button"
+                        onClick={sendLinkToCandidate}
+                        disabled={sending || linkSent}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                          linkSent
+                            ? 'bg-green-100 text-green-700 border border-green-200'
+                            : 'bg-[#111] text-white hover:bg-[#333]'
+                        }`}
+                      >
+                        {linkSent ? (
+                          <><Check className="w-3.5 h-3.5" /> Sent to Candidate</>
+                        ) : sending ? (
+                          'Sending…'
+                        ) : (
+                          <><Send className="w-3.5 h-3.5" /> Send to Candidate</>
+                        )}
+                      </button>
+                    )}
+                    {/* Copy */}
                     <button
                       type="button"
                       onClick={copyCalendlyLink}
@@ -174,6 +244,7 @@ export function ScheduleInterviewModal({ applicationId, interviewers, onClose }:
                       {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                       {copied ? 'Copied!' : 'Copy Link'}
                     </button>
+                    {/* Open */}
                     <a
                       href={calendlyUrl}
                       target="_blank"
@@ -181,10 +252,19 @@ export function ScheduleInterviewModal({ applicationId, interviewers, onClose }:
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-50 transition-colors"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
-                      Open Calendly
+                      Open
                     </a>
                   </div>
-                  <p className="text-xs text-gray-400 mt-2">Copy this link and send it to the candidate so they can self-schedule.</p>
+                  {candidateId && !linkSent && (
+                    <p className="text-xs text-gray-400 mt-2">
+                      "Send to Candidate" emails {candidateEmail ?? 'the candidate'} the link so they can self-schedule directly on {selectedInterviewer.name}'s calendar.
+                    </p>
+                  )}
+                  {linkSent && (
+                    <p className="text-xs text-green-600 mt-2">
+                      ✓ Email sent to {candidateEmail} with the scheduling link.
+                    </p>
+                  )}
                 </>
               ) : (
                 <p className="text-xs text-gray-400">
@@ -216,9 +296,9 @@ export function ScheduleInterviewModal({ applicationId, interviewers, onClose }:
             </div>
           </div>
 
-          {/* Date/Time (optional) */}
+          {/* Date/Time */}
           <div>
-            <label className="label">Date & Time <span className="text-gray-400 font-normal">(optional — fill in once confirmed)</span></label>
+            <label className="label">Date & Time <span className="text-gray-400 font-normal">(optional — fill in once confirmed via Calendly)</span></label>
             <input
               type="datetime-local"
               className="input"
@@ -252,14 +332,17 @@ export function ScheduleInterviewModal({ applicationId, interviewers, onClose }:
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-3 pt-1">
-            <button
-              type="submit"
-              disabled={loading || interviewers.length === 0}
-              className="btn-primary flex-1"
-            >
-              {loading ? 'Scheduling...' : 'Log Interview'}
-            </button>
+          <div className="flex items-center gap-3 pt-1 border-t border-gray-100">
+            <div>
+              <button
+                type="submit"
+                disabled={loading || interviewers.length === 0}
+                className="btn-primary"
+              >
+                {loading ? 'Saving…' : 'Log Interview'}
+              </button>
+              <p className="text-xs text-gray-400 mt-1">Saves the interview to the candidate's profile</p>
+            </div>
             <button type="button" onClick={onClose} className="btn-secondary">
               Cancel
             </button>

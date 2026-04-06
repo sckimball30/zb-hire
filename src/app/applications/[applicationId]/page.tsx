@@ -264,6 +264,10 @@ export default async function ApplicationPage({
               <ScheduleInterviewButton
                 applicationId={application.id}
                 interviewers={jobInterviewers}
+                candidateId={candidate.id}
+                candidateEmail={candidate.email}
+                candidateFirstName={candidate.firstName}
+                jobTitle={job.title}
               />
             </div>
             {application.events.length === 0 ? (

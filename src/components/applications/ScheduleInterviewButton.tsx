@@ -14,9 +14,20 @@ interface Interviewer {
 interface Props {
   applicationId: string
   interviewers: Interviewer[]
+  candidateId?: string
+  candidateEmail?: string
+  candidateFirstName?: string
+  jobTitle?: string
 }
 
-export function ScheduleInterviewButton({ applicationId, interviewers }: Props) {
+export function ScheduleInterviewButton({
+  applicationId,
+  interviewers,
+  candidateId,
+  candidateEmail,
+  candidateFirstName,
+  jobTitle,
+}: Props) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -33,6 +44,10 @@ export function ScheduleInterviewButton({ applicationId, interviewers }: Props) 
         <ScheduleInterviewModal
           applicationId={applicationId}
           interviewers={interviewers}
+          candidateId={candidateId}
+          candidateEmail={candidateEmail}
+          candidateFirstName={candidateFirstName}
+          jobTitle={jobTitle}
           onClose={() => setOpen(false)}
         />
       )}
