@@ -44,7 +44,22 @@ export default async function JobTeamPage({
   if (!job) notFound()
 
   const assignedIds = new Set(job.interviewers.map((ji) => ji.interviewerId))
-  const availableInterviewers = allInterviewers.filter((i) => !assignedIds.has(i.id))
+
+  // Merge recruiters/admins into the interviewer list (dedup by email)
+  const interviewerEmails = new Set(allInterviewers.map((i) => i.email?.toLowerCase()))
+  const recruiterAsInterviewers = allRecruiters
+    .filter((u) => u.email && !interviewerEmails.has(u.email.toLowerCase()))
+    .map((u) => ({
+      id: `user:${u.id}`,
+      name: u.name ?? u.email ?? 'Unknown',
+      email: u.email ?? '',
+      title: 'Recruiter',
+      avatarUrl: null,
+      calendlyUrl: null,
+    }))
+
+  const mergedInterviewers = [...allInterviewers, ...recruiterAsInterviewers]
+  const availableInterviewers = mergedInterviewers.filter((i) => !assignedIds.has(i.id))
 
   const initialRounds = job.rounds.map(r => ({
     id: r.id,
@@ -85,7 +100,7 @@ export default async function JobTeamPage({
         <InterviewRoundsManager
           jobId={job.id}
           initialRounds={initialRounds}
-          allInterviewers={allInterviewers}
+          allInterviewers={mergedInterviewers}
         />
       </div>
     </div>

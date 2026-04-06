@@ -24,10 +24,29 @@ export async function POST(
 ) {
   try {
     const body = await request.json()
-    const { interviewerId, role } = body
+    let { interviewerId, role } = body
 
     if (!interviewerId) {
       return NextResponse.json({ error: 'interviewerId is required' }, { status: 400 })
+    }
+
+    // If the ID is "user:{userId}", auto-create/sync an Interviewer record from the User
+    if (interviewerId.startsWith('user:')) {
+      const userId = interviewerId.slice(5)
+      const user = await prisma.user.findUnique({ where: { id: userId } })
+      if (!user || !user.email) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      }
+      const synced = await prisma.interviewer.upsert({
+        where: { email: user.email },
+        update: { name: user.name ?? user.email },
+        create: {
+          name: user.name ?? user.email,
+          email: user.email,
+          title: 'Recruiter',
+        },
+      })
+      interviewerId = synced.id
     }
 
     // Check if already assigned
