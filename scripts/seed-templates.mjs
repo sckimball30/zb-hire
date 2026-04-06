@@ -1,5 +1,4 @@
-// Seed default message templates into the database.
-// Uses the Prisma client so it works with any DB provider configured in .env
+// Seed / update message templates into the database.
 // Run: node scripts/seed-templates.mjs
 
 import { PrismaClient } from '@prisma/client'
@@ -9,88 +8,123 @@ const prisma = new PrismaClient()
 const templates = [
   {
     name: 'Phone Screen Request',
-    subject: 'Quick Chat? — {{jobTitle}} at Wigglitz',
-    body: `Hi {{firstName}},
+    subject: "We'd love to connect — {{Job Title}} at Wigglitz",
+    body: `Hi {{First Name}},
 
-Thank you for applying for the {{jobTitle}} position at Wigglitz! We've reviewed your application and would love to connect for a quick 20–30 minute phone call to learn more about your background and share more about the role.
+Thank you for applying to the {{Job Title}} role at Wigglitz — we've reviewed your application and we're excited to learn more about you!
 
-Are you available in the next few days? Please reply with a few times that work for you, or book directly using this link: [Your Calendly Link]
+We'd love to set up a quick 20–30 minute introductory call to tell you more about the role and the team, and to hear about your background and what you're looking for.
 
-Looking forward to speaking with you!
+Feel free to grab a time that works for you directly on our calendar:
 
-{{recruiterName}}
-Wigglitz Recruiting Team`,
+{{Calendly Link}}
+
+Looking forward to connecting!
+
+Hiring Team — Wigglitz`,
   },
   {
-    name: 'Interview Invitation',
-    subject: 'Interview Invitation — {{jobTitle}} at Wigglitz',
-    body: `Hi {{firstName}},
+    name: 'Interview Invitation (with Calendly)',
+    subject: 'Moving Forward — {{Job Title}} Interview',
+    body: `Hi {{First Name}},
 
-We were impressed by your background and would love to invite you to interview for the {{jobTitle}} position at Wigglitz!
+Great news — we'd love to move you forward in our process for the {{Job Title}} role!
 
-We'd like to schedule time with our team. Please use the link below to select a time that works best for you: [Interview Scheduling Link]
+Your next conversation will be with {{Interviewer Name}}, {{Interviewer Title}}. This will be a {{Duration}} interview focused on {{Focus Area}}.
 
-If you have any questions in the meantime, don't hesitate to reach out.
+Go ahead and book a time that works for you using the link below:
 
-Looking forward to speaking with you!
+{{Calendly Link}}
 
-{{recruiterName}}
-Wigglitz Recruiting Team`,
+Excited to keep the momentum going — let us know if you have any questions!
+
+Hiring Team — Wigglitz`,
+  },
+  {
+    name: 'Interview Invitation (Request Availability)',
+    subject: 'Moving Forward — {{Job Title}} Interview',
+    body: `Hi {{First Name}},
+
+Exciting news — we'd love to move you forward for the {{Job Title}} role!
+
+Your next conversation will be with {{Interviewer Name}}, {{Interviewer Title}}. This will be a {{Duration}} interview focused on {{Focus Area}}.
+
+Could you share a few windows of availability over the next {{Timeframe}}? Please include the time zone you're in and we'll get something confirmed quickly.
+
+Can't wait to keep things moving — reach out with any questions!
+
+Hiring Team — Wigglitz`,
   },
   {
     name: 'On-Site Interview Invitation',
-    subject: 'On-Site Interview — {{jobTitle}} at Wigglitz',
-    body: `Hi {{firstName}},
+    subject: "You're Invited to an On-Site Interview — {{Job Title}}",
+    body: `Hi {{First Name}},
 
-We've really enjoyed getting to know you throughout this process and would like to invite you to our office for an on-site interview for the {{jobTitle}} position!
+We've really enjoyed getting to know you throughout this process and we're excited to invite you to an onsite interview for the {{Job Title}} role!
 
-Details:
-📍 Location: [Office Address]
-📅 Date/Time: [Date and Time]
-⏱ Duration: Approximately [X] hours
+Here's what to expect on the day:
 
-You'll meet members of our team and get a feel for our culture. Please confirm your availability by replying to this email, or let us know if you need to reschedule.
+• Location: {{Office Address}}
+• Format: {{Interview Format}}
+• Approximate duration: {{Duration}}
+• You'll meet: {{Interviewers / Teams}}
 
-We're excited to meet you in person!
+To get this scheduled, could you share your availability over the next {{Timeframe}}? Please include your time zone and any hard constraints — we'll aim to confirm within {{Confirmation Window}}.
 
-{{recruiterName}}
-Wigglitz Recruiting Team`,
+In the meantime, feel free to reach out with any questions — we want to make sure you feel fully prepared and excited for the day.
+
+Hiring Team — Wigglitz`,
   },
   {
-    name: 'Rejection',
-    subject: 'Your Application to Wigglitz — {{jobTitle}}',
-    body: `Hi {{firstName}},
+    name: 'Rejection — Post Phone Screen',
+    subject: 'Your Application to Wigglitz — {{Job Title}}',
+    body: `Hi {{First Name}},
 
-Thank you for taking the time to apply for the {{jobTitle}} position at Wigglitz and for your interest in joining our team. We appreciate the effort you put into the process.
+Thank you so much for taking the time to speak with us and for your interest in the {{Job Title}} role at Wigglitz.
 
-After careful consideration, we have decided to move forward with other candidates whose experience more closely aligns with our current needs. This was a difficult decision, and we were genuinely impressed by the candidates we spoke with.
+After careful consideration, we've decided to move forward with other candidates whose experience more closely aligns with what we're looking for at this stage. This was a genuinely difficult decision — we were impressed by {{Specific Positive}}.
 
-We encourage you to keep an eye on our openings, as we hope to have other opportunities in the future that may be a great fit. We wish you all the best in your search.
+We'd love to stay in touch. If a role opens up that feels like a stronger match, we'll be sure to reach out. Please don't hesitate to keep an eye on our openings at {{Careers Page URL}}.
 
-Thank you again for your time and interest in Wigglitz.
+Thanks again for your time and enthusiasm — we wish you all the best in your search.
 
-{{recruiterName}}
-Wigglitz Recruiting Team`,
+Hiring Team — Wigglitz`,
+  },
+  {
+    name: 'Rejection — Post On-Site',
+    subject: 'Your Application to Wigglitz — {{Job Title}}',
+    body: `Hi {{First Name}},
+
+I wanted to personally reach out and thank you for the time and energy you invested in our process for the {{Job Title}} role. Getting to the onsite stage is a real accomplishment and we don't take lightly the commitment that represents.
+
+After thoughtful discussion, we've decided to move forward with another candidate. This was a close call — the team was genuinely impressed by {{Specific Positive}}, and we want you to know this decision was not easy.
+
+We hope our paths cross again. We'll keep your information on file and reach out if we think there's a future opportunity worth exploring. You're also welcome to check our openings at {{Careers Page URL}}.
+
+Thank you again — we're rooting for you.
+
+Hiring Team — Wigglitz`,
   },
 ]
 
 async function main() {
   let inserted = 0
-  let skipped = 0
+  let updated = 0
 
   for (const t of templates) {
     const existing = await prisma.messageTemplate.findFirst({ where: { name: t.name } })
     if (existing) {
-      console.log(`[skip] "${t.name}" already exists`)
-      skipped++
+      await prisma.messageTemplate.update({ where: { id: existing.id }, data: t })
+      console.log(`[updated] "${t.name}"`)
+      updated++
     } else {
       await prisma.messageTemplate.create({ data: t })
-      console.log(`[insert] "${t.name}"`)
+      console.log(`[inserted] "${t.name}"`)
       inserted++
     }
   }
 
-  console.log(`\nDone. Inserted: ${inserted}, Skipped: ${skipped}`)
+  console.log(`\nDone. Inserted: ${inserted}, Updated: ${updated}`)
 }
 
 main()
