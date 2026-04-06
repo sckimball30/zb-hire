@@ -468,6 +468,47 @@ function SectionCard({
   const [localAvailableStart, setLocalAvailableStart] = useState(availableStart ?? '')
   const [localSalaryExpectation, setLocalSalaryExpectation] = useState(salaryExpectation ?? '')
 
+  // ── Section-level notes ─────────────────────────────────────────────────────
+  const [sectionNotes, setSectionNotes] = useState(() => {
+    if (!draftEntry) return ''
+    try { return (JSON.parse(draftEntry.responses) as any).__sectionNotes__ ?? '' } catch { return '' }
+  })
+
+  // ── Custom questions (screening only) ──────────────────────────────────────
+  const [customQuestions, setCustomQuestions] = useState<{ id: string; text: string; rating: ABC; notes: string }[]>(() => {
+    if (!draftEntry || !isScreening) return []
+    try { return (JSON.parse(draftEntry.responses) as any).__customQuestions__ ?? [] } catch { return [] }
+  })
+  const [newQuestionText, setNewQuestionText] = useState('')
+  const addCustomQuestion = () => {
+    const t = newQuestionText.trim()
+    if (!t) return
+    setCustomQuestions(prev => [...prev, { id: Math.random().toString(36).slice(2), text: t, rating: null, notes: '' }])
+    setNewQuestionText('')
+  }
+  const updateCustomQuestion = (id: string, field: 'rating' | 'notes', value: ABC | string) =>
+    setCustomQuestions(prev => prev.map(q => q.id === id ? { ...q, [field]: value } : q))
+  const removeCustomQuestion = (id: string) =>
+    setCustomQuestions(prev => prev.filter(q => q.id !== id))
+
+  // ── Per-section gut check + recommendation ──────────────────────────────────
+  const [gutCheckThrilled, setGutCheckThrilled] = useState<string | null>(() => {
+    if (!draftEntry) return null
+    try { return (JSON.parse(draftEntry.responses) as any).__gutCheck__?.thrilled ?? null } catch { return null }
+  })
+  const [gutCheckTeam, setGutCheckTeam] = useState<string | null>(() => {
+    if (!draftEntry) return null
+    try { return (JSON.parse(draftEntry.responses) as any).__gutCheck__?.team ?? null } catch { return null }
+  })
+  const [gutCheckEmbarrassed, setGutCheckEmbarrassed] = useState<string | null>(() => {
+    if (!draftEntry) return null
+    try { return (JSON.parse(draftEntry.responses) as any).__gutCheck__?.embarrassed ?? null } catch { return null }
+  })
+  const [sectionRecommendation, setSectionRecommendation] = useState<'HIRE' | 'NO HIRE' | null>(() => {
+    if (!draftEntry) return null
+    try { return (JSON.parse(draftEntry.responses) as any).__recommendation__ ?? null } catch { return null }
+  })
+
   const [saving, setSaving] = useState(false)
 
   const getInterviewerName = () => {
@@ -493,6 +534,7 @@ function SectionCard({
   }
 
   const buildResponsesPayload = () => {
+    const gutCheck = { thrilled: gutCheckThrilled, team: gutCheckTeam, embarrassed: gutCheckEmbarrassed }
     if (isWho) {
       return {
         type: 'who',
@@ -507,12 +549,21 @@ function SectionCard({
             ])
           ),
         })),
+        __sectionNotes__: sectionNotes,
+        __gutCheck__: gutCheck,
+        __recommendation__: sectionRecommendation,
       }
     }
-    const out: Record<string, { rating: ABC; notes: string }> = {}
+    const out: Record<string, any> = {}
     for (const tq of questions) {
       out[tq.questionId] = responses[tq.questionId] ?? { rating: null, notes: '' }
     }
+    if (isScreening && customQuestions.length > 0) {
+      out.__customQuestions__ = customQuestions
+    }
+    out.__sectionNotes__ = sectionNotes
+    out.__gutCheck__ = gutCheck
+    out.__recommendation__ = sectionRecommendation
     return out
   }
 
@@ -843,6 +894,121 @@ function SectionCard({
             })}
           </div>
         )}
+
+        {/* Custom questions — screening only */}
+        {isScreening && (
+          <div className="mb-5">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Custom Questions</p>
+            </div>
+            {customQuestions.length > 0 && (
+              <div className="space-y-4 mb-3">
+                {customQuestions.map((cq) => (
+                  <div key={cq.id} className="border-b border-gray-50 pb-4 last:border-0 last:pb-0">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <p className="text-sm font-medium text-gray-900">{cq.text}</p>
+                      <button
+                        type="button"
+                        onClick={() => removeCustomQuestion(cq.id)}
+                        className="text-gray-300 hover:text-red-400 flex-shrink-0"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div className="mb-2">
+                      <ABCButtons value={cq.rating} onChange={(v) => updateCustomQuestion(cq.id, 'rating', v)} />
+                    </div>
+                    <textarea
+                      className="input h-auto text-sm"
+                      rows={2}
+                      placeholder="Notes…"
+                      value={cq.notes}
+                      onChange={(e) => updateCustomQuestion(cq.id, 'notes', e.target.value)}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                className="input flex-1 text-sm"
+                placeholder="Type a custom question and press Add…"
+                value={newQuestionText}
+                onChange={(e) => setNewQuestionText(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomQuestion() } }}
+              />
+              <button
+                type="button"
+                onClick={addCustomQuestion}
+                disabled={!newQuestionText.trim()}
+                className="btn-outline text-xs flex items-center gap-1 flex-shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Section notes */}
+        <div className="mb-5">
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">
+            Section Notes
+          </label>
+          <textarea
+            className="input h-auto text-sm"
+            rows={3}
+            placeholder="Overall notes for this section…"
+            value={sectionNotes}
+            onChange={(e) => setSectionNotes(e.target.value)}
+          />
+        </div>
+
+        {/* Gut Check */}
+        <div className="mb-5 p-4 rounded-lg bg-gray-50 border border-gray-100">
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Gut Check</h3>
+          <div className="space-y-2">
+            {[
+              { label: 'Would you be thrilled to work with this person every day?', value: gutCheckThrilled, set: setGutCheckThrilled },
+              { label: 'Would this person make the team better?', value: gutCheckTeam, set: setGutCheckTeam },
+              { label: 'Would you be embarrassed if they joined and underperformed?', value: gutCheckEmbarrassed, set: setGutCheckEmbarrassed },
+            ].map(({ label, value, set }) => (
+              <div key={label} className="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0">
+                <span className="text-sm text-gray-700 pr-4">{label}</span>
+                <YesNoButtons value={value} onChange={set} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Hire / No Hire */}
+        <div className="mb-5">
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Recommendation</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setSectionRecommendation(sectionRecommendation === 'HIRE' ? null : 'HIRE')}
+              className={`py-3 text-sm font-bold rounded-xl border-2 transition-all ${
+                sectionRecommendation === 'HIRE'
+                  ? 'bg-green-700 text-white border-green-700 shadow-md'
+                  : 'bg-white text-green-700 border-green-300 hover:bg-green-50'
+              }`}
+            >
+              HIRE
+            </button>
+            <button
+              type="button"
+              onClick={() => setSectionRecommendation(sectionRecommendation === 'NO HIRE' ? null : 'NO HIRE')}
+              className={`py-3 text-sm font-bold rounded-xl border-2 transition-all ${
+                sectionRecommendation === 'NO HIRE'
+                  ? 'bg-red-700 text-white border-red-700 shadow-md'
+                  : 'bg-white text-red-700 border-red-300 hover:bg-red-50'
+              }`}
+            >
+              NO HIRE
+            </button>
+          </div>
+        </div>
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 pt-1">
@@ -1241,7 +1407,14 @@ export function EvaluationForm({
   const getDraftForSection = (title: string) =>
     getEntriesForSection(title).find((e) => e.status === 'DRAFT') ?? null
 
-  const sections = template?.sections ?? []
+  // Sort so Screening always appears first
+  const sections = [...(template?.sections ?? [])].sort((a, b) => {
+    const aScreen = a.title.toLowerCase().includes('screen')
+    const bScreen = b.title.toLowerCase().includes('screen')
+    if (aScreen && !bScreen) return -1
+    if (!aScreen && bScreen) return 1
+    return 0
+  })
 
   return (
     <div className="space-y-6">
