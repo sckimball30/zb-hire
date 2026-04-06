@@ -16,6 +16,7 @@ import {
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { toast } from 'sonner'
 import { CandidateCard } from './CandidateCard'
+import { RejectionModal } from '@/components/applications/RejectionModal'
 import { STAGE_LABELS, STAGE_COLORS, STAGE_COLUMN_COLORS, ALL_STAGES } from '@/lib/constants'
 import type { CandidateStage } from '@/types'
 import type { ApplicationWithRelations } from '@/types'
@@ -25,20 +26,26 @@ interface KanbanBoardProps {
   jobId: string
 }
 
+interface PendingRejection {
+  applicationId: string
+  fromStage: CandidateStage
+  candidateId: string
+  candidateFirstName: string
+  jobTitle: string
+  currentStage: CandidateStage
+}
+
 export function KanbanBoard({ groupedApplications, jobId }: KanbanBoardProps) {
   const [groups, setGroups] = useState(groupedApplications)
   const [activeApp, setActiveApp] = useState<ApplicationWithRelations | null>(null)
+  const [pendingRejection, setPendingRejection] = useState<PendingRejection | null>(null)
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   )
 
-  // Find which stage column contains a given card id
   const findStage = useCallback(
     (id: string): CandidateStage | null => {
-      // id might itself be a stage name (droppable column)
       if (ALL_STAGES.includes(id as CandidateStage)) return id as CandidateStage
       for (const stage of ALL_STAGES) {
         if (groups[stage].some((a) => a.id === id)) return stage
@@ -59,17 +66,16 @@ export function KanbanBoard({ groupedApplications, jobId }: KanbanBoardProps) {
     [findStage, groups]
   )
 
-  // Live visual feedback while dragging over a different column
   const handleDragOver = useCallback(
     (event: DragOverEvent) => {
       const { active, over } = event
       if (!over) return
 
       const activeId = active.id as string
-      const overId = over.id as string
+      const overId   = over.id  as string
 
       const fromStage = findStage(activeId)
-      const toStage = findStage(overId)
+      const toStage   = findStage(overId)
 
       if (!fromStage || !toStage || fromStage === toStage) return
 
@@ -79,29 +85,33 @@ export function KanbanBoard({ groupedApplications, jobId }: KanbanBoardProps) {
         return {
           ...prev,
           [fromStage]: prev[fromStage].filter((a) => a.id !== activeId),
-          [toStage]: [...prev[toStage], { ...movedApp, stage: toStage }],
+          [toStage]:   [...prev[toStage], { ...movedApp, stage: toStage }],
         }
       })
     },
     [findStage]
   )
 
+  const commitStageChange = async (applicationId: string, newStage: CandidateStage) => {
+    const res = await fetch(`/api/applications/${applicationId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stage: newStage }),
+    })
+    if (!res.ok) throw new Error('Failed to update stage')
+    toast.success(`Moved to ${STAGE_LABELS[newStage]}`)
+  }
+
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
       const { active, over } = event
       setActiveApp(null)
 
-      if (!over) {
-        // No valid drop target — revert to server state
-        setGroups(groupedApplications)
-        return
-      }
+      if (!over) { setGroups(groupedApplications); return }
 
       const activeId = active.id as string
-      const overId = over.id as string
+      const overId   = over.id  as string
 
-      // After handleDragOver has already moved the card visually,
-      // figure out the original stage from the server snapshot
       const originalStage = (() => {
         for (const stage of ALL_STAGES) {
           if (groupedApplications[stage].some((a) => a.id === activeId)) return stage
@@ -110,22 +120,31 @@ export function KanbanBoard({ groupedApplications, jobId }: KanbanBoardProps) {
       })()
 
       const toStage = findStage(overId)
-
       if (!originalStage || !toStage || originalStage === toStage) return
 
-      // Persist to API
+      // Intercept drops onto REJECTED — revert visual + show confirmation
+      if (toStage === 'REJECTED') {
+        setGroups(groupedApplications) // revert card to original column
+
+        // Find the application to get candidate info
+        const app = groupedApplications[originalStage].find(a => a.id === activeId)
+        if (app) {
+          setPendingRejection({
+            applicationId: activeId,
+            fromStage: originalStage,
+            candidateId: (app.candidate as any).id,
+            candidateFirstName: (app.candidate as any).firstName ?? '',
+            jobTitle: (app as any).job?.title ?? '',
+            currentStage: originalStage,
+          })
+        }
+        return
+      }
+
+      // All other stage changes — commit immediately
       try {
-        const res = await fetch(`/api/applications/${activeId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ stage: toStage }),
-        })
-
-        if (!res.ok) throw new Error('Failed to update stage')
-
-        toast.success(`Moved to ${STAGE_LABELS[toStage]}`)
+        await commitStageChange(activeId, toStage)
       } catch {
-        // Revert on API failure
         setGroups(groupedApplications)
         toast.error('Failed to move candidate — please try again.')
       }
@@ -133,32 +152,67 @@ export function KanbanBoard({ groupedApplications, jobId }: KanbanBoardProps) {
     [findStage, groupedApplications]
   )
 
-  return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="flex gap-4 h-full">
-        {ALL_STAGES.map((stage) => (
-          <KanbanColumn
-            key={stage}
-            stage={stage}
-            applications={groups[stage]}
-          />
-        ))}
-      </div>
+  const handleRejectionConfirmed = async () => {
+    if (!pendingRejection) return
+    await commitStageChange(pendingRejection.applicationId, 'REJECTED')
+    // Update local state to show them in REJECTED
+    setGroups(prev => {
+      const app = prev[pendingRejection.fromStage]?.find(a => a.id === pendingRejection.applicationId)
+        ?? groupedApplications[pendingRejection.fromStage]?.find(a => a.id === pendingRejection.applicationId)
+      if (!app) return prev
+      return {
+        ...prev,
+        [pendingRejection.fromStage]: prev[pendingRejection.fromStage].filter(a => a.id !== pendingRejection.applicationId),
+        REJECTED: [...prev.REJECTED, { ...app, stage: 'REJECTED' as CandidateStage }],
+      }
+    })
+    setPendingRejection(null)
+  }
 
-      <DragOverlay dropAnimation={{ duration: 150, easing: 'ease' }}>
-        {activeApp && (
-          <div className="opacity-90 rotate-1 scale-105">
-            <CandidateCard application={activeApp} isDragging />
-          </div>
-        )}
-      </DragOverlay>
-    </DndContext>
+  const handleRejectionCancelled = () => {
+    setGroups(groupedApplications)
+    setPendingRejection(null)
+  }
+
+  return (
+    <>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="flex gap-4 h-full">
+          {ALL_STAGES.map((stage) => (
+            <KanbanColumn
+              key={stage}
+              stage={stage}
+              applications={groups[stage]}
+            />
+          ))}
+        </div>
+
+        <DragOverlay dropAnimation={{ duration: 150, easing: 'ease' }}>
+          {activeApp && (
+            <div className="opacity-90 rotate-1 scale-105">
+              <CandidateCard application={activeApp} isDragging />
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
+
+      {pendingRejection && (
+        <RejectionModal
+          candidateFirstName={pendingRejection.candidateFirstName}
+          candidateId={pendingRejection.candidateId}
+          jobTitle={pendingRejection.jobTitle}
+          currentStage={pendingRejection.currentStage}
+          onConfirm={handleRejectionConfirmed}
+          onCancel={handleRejectionCancelled}
+        />
+      )}
+    </>
   )
 }
 
@@ -169,7 +223,6 @@ function KanbanColumn({
   stage: CandidateStage
   applications: ApplicationWithRelations[]
 }) {
-  // Register this column as a droppable zone — this is the key fix
   const { setNodeRef, isOver } = useDroppable({ id: stage })
   const ids = applications.map((a) => a.id)
 
@@ -179,7 +232,6 @@ function KanbanColumn({
         isOver ? 'bg-blue-50' : 'bg-gray-50'
       }`}
     >
-      {/* Column header */}
       <div className="px-3 py-3 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-gray-700">{STAGE_LABELS[stage]}</span>
@@ -189,7 +241,6 @@ function KanbanColumn({
         </div>
       </div>
 
-      {/* Cards area — ref makes the whole area droppable */}
       <div
         ref={setNodeRef}
         className={`flex-1 overflow-y-auto p-2 space-y-2 min-h-24 rounded-b-xl transition-colors ${
