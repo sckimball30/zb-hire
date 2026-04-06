@@ -283,7 +283,7 @@ export default async function ApplicationPage({
           </div>
 
           {/* Offer — only shown when candidate is at Offer stage or beyond */}
-          {['OFFER', 'HIRED'].includes(application.stage) && (
+          {(application.offer || ['OFFER', 'HIRED'].includes(application.stage)) && (
             <OfferPanel
               offer={application.offer as any}
               applicationId={application.id}

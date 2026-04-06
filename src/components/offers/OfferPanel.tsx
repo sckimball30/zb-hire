@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Copy, Check, ExternalLink, Send, Trash2, Edit2, FileText, Eye, X } from 'lucide-react'
+import { Copy, Check, ExternalLink, Send, Trash2, Edit2, FileText, Eye, X, Download } from 'lucide-react'
 import { CreateOfferModal } from './CreateOfferModal'
 import { CreateOfferButton } from './CreateOfferButton'
 
@@ -67,6 +67,7 @@ export function OfferPanel({ offer, applicationId, jobTitle }: Props) {
   const [sendLoading, setSendLoading] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [reissueLoading, setReissueLoading] = useState(false)
+  const [signedPreviewOpen, setSignedPreviewOpen] = useState(false)
 
   const isExpired = !!(
     offer?.expiresAt &&
@@ -255,32 +256,42 @@ export function OfferPanel({ offer, applicationId, jobTitle }: Props) {
               </div>
             )}
 
-            {/* ACCEPTED: show confirmation */}
+            {/* ACCEPTED: show signed PDF viewer */}
             {offer.status === 'ACCEPTED' && (
               <div className="rounded-xl border border-green-200 bg-green-50 p-4">
-                <div className="flex items-center gap-2 text-green-700">
+                <div className="flex items-center gap-2 text-green-700 mb-2">
                   <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                   <span className="text-sm font-semibold">Offer Accepted</span>
                 </div>
                 {offer.respondedAt && (
-                  <div className="text-xs text-green-600 mt-1 ml-6">
-                    Responded on {formatDate(offer.respondedAt)}
+                  <div className="text-xs text-green-600 mb-3 ml-6">
+                    Signed on {formatDate(offer.respondedAt)}
                   </div>
                 )}
-                {offer.signedPdfUrl && (
-                  <div className="mt-3 ml-6">
+                {offer.signedPdfUrl ? (
+                  <div className="ml-6 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setSignedPreviewOpen(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      View Signed Letter
+                    </button>
                     <a
                       href={offer.signedPdfUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors"
+                      download
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-green-200 text-green-700 text-xs font-medium hover:bg-green-50 transition-colors"
                     >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      Download Signed Offer
+                      <Download className="w-3.5 h-3.5" />
+                      Download PDF
                     </a>
                   </div>
+                ) : (
+                  <p className="text-xs text-green-600 ml-6">Signed letter PDF is being generated&hellip;</p>
                 )}
               </div>
             )}
@@ -373,6 +384,50 @@ export function OfferPanel({ offer, applicationId, jobTitle }: Props) {
                 className="w-full h-full border-0"
                 style={{ minHeight: '600px' }}
                 title="Offer Letter Preview"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+
+      {/* Signed offer PDF viewer modal */}
+      {signedPreviewOpen && offer?.signedPdfUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-green-500" />
+                <span className="text-sm font-semibold text-gray-900">Signed Offer Letter</span>
+                <span className="inline-flex items-center gap-1 text-xs font-medium bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Accepted
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={offer.signedPdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Download
+                </a>
+                <button onClick={() => setSignedPreviewOpen(false)} className="text-gray-400 hover:text-gray-600 p-1">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-hidden bg-gray-100">
+              <iframe
+                src={offer.signedPdfUrl}
+                className="w-full h-full border-0"
+                style={{ minHeight: '700px' }}
+                title="Signed Offer Letter"
               />
             </div>
           </div>
