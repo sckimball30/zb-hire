@@ -72,6 +72,36 @@ In the meantime, feel free to reach out with any questions — we want to make s
 Hiring Team — Wigglitz`,
   },
   {
+  {
+    name: 'Rejection — Pre-Screening (Resume Review)',
+    subject: 'Your Application to Wigglitz — {{Job Title}}',
+    body: `Hi {{First Name}},
+
+Thank you for your interest in the {{Job Title}} role at Wigglitz and for taking the time to apply.
+
+After reviewing your application, we've decided to move forward with candidates whose background more closely matches what we're looking for at this time. We know this isn't the news you were hoping for, and we genuinely appreciate you thinking of us.
+
+We encourage you to keep an eye on future openings at {{Careers Page URL}} — we're always growing and the right opportunity may come along.
+
+Thanks again, and we wish you the very best in your search.
+
+Hiring Team — Wigglitz`,
+  },
+  {
+    name: 'Rejection — Post-Screening (Pre On-Site)',
+    subject: 'Your Application to Wigglitz — {{Job Title}}',
+    body: `Hi {{First Name}},
+
+Thank you so much for the time you've invested in our process for the {{Job Title}} role — it has been a pleasure getting to know you.
+
+After careful consideration, we've decided not to move forward to the next stage at this time. This was not an easy decision — {{Specific Positive}}, and that genuinely stood out to us.
+
+We'd love to stay connected. We'll keep your information on file and will reach out if we think a future role could be a strong match. In the meantime, feel free to check our openings at {{Careers Page URL}}.
+
+Thank you again for your time and energy — we're rooting for you.
+
+Hiring Team — Wigglitz`,
+  },
     name: 'Rejection — Post Phone Screen',
     subject: 'Your Application to Wigglitz — {{Job Title}}',
     body: `Hi {{First Name}},
