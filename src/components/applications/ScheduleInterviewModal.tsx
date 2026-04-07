@@ -6,12 +6,13 @@ import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
 const INTERVIEW_TYPES = [
-  { value: 'PHONE_SCREEN', label: 'Phone Screen' },
-  { value: 'VIDEO_CALL',   label: 'Video Call'   },
-  { value: 'TECHNICAL',   label: 'Technical'     },
-  { value: 'ONSITE',      label: 'On-Site'       },
-  { value: 'PANEL',       label: 'Panel'         },
-  { value: 'FINAL',       label: 'Final Round'   },
+  { value: 'PHONE_SCREEN',      label: 'Phone Screen'      },
+  { value: 'VIDEO_CALL',        label: 'Video Call'        },
+  { value: 'TECHNICAL',        label: 'Technical'          },
+  { value: 'ONSITE',           label: 'On-Site'            },
+  { value: 'PANEL',            label: 'Panel'              },
+  { value: 'FINAL',            label: 'Final Round'        },
+  { value: 'WORKING_INTERVIEW', label: 'Working Interview' },
 ]
 
 const LOCATION_PRESETS = [
@@ -56,9 +57,11 @@ export function ScheduleInterviewModal({
 
   const effectiveLocation = location === '__custom__' ? customLocation : location
 
+  const isWorkingInterview = type === 'WORKING_INTERVIEW'
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!interviewerId) { toast.error('Please select an interviewer'); return }
+    if (!isWorkingInterview && !interviewerId) { toast.error('Please select an interviewer'); return }
 
     setLoading(true)
     try {
@@ -112,29 +115,39 @@ export function ScheduleInterviewModal({
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
 
-          {/* Interviewer */}
-          <div>
-            <label className="label">Interviewer</label>
-            {interviewers.length === 0 ? (
-              <p className="text-sm text-gray-500 bg-gray-50 rounded-lg p-3">
-                No interviewers assigned to this job yet. Add them on the job's Team tab first.
-              </p>
-            ) : (
-              <select
-                className="input"
-                value={interviewerId}
-                onChange={e => setInterviewerId(e.target.value)}
-                required
-              >
-                <option value="">Select interviewer…</option>
-                {interviewers.map(i => (
-                  <option key={i.id} value={i.id}>
-                    {i.name}{i.title ? ` — ${i.title}` : ''}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
+          {/* Interviewer — hidden for working interviews */}
+          {!isWorkingInterview && (
+            <div>
+              <label className="label">Interviewer</label>
+              {interviewers.length === 0 ? (
+                <p className="text-sm text-gray-500 bg-gray-50 rounded-lg p-3">
+                  No interviewers assigned to this job yet. Add them on the job's Team tab first.
+                </p>
+              ) : (
+                <select
+                  className="input"
+                  value={interviewerId}
+                  onChange={e => setInterviewerId(e.target.value)}
+                  required
+                >
+                  <option value="">Select interviewer…</option>
+                  {interviewers.map(i => (
+                    <option key={i.id} value={i.id}>
+                      {i.name}{i.title ? ` — ${i.title}` : ''}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )}
+
+          {/* Working interview note */}
+          {isWorkingInterview && (
+            <div className="bg-amber-50 border border-amber-100 rounded-lg px-4 py-3 text-sm text-amber-800">
+              <p className="font-medium mb-0.5">Working Interview</p>
+              <p className="text-xs text-amber-700">The candidate performs real work — no specific interviewer needed. Log the date and any notes below.</p>
+            </div>
+          )}
 
           {/* Interview Type */}
           <div>
@@ -246,7 +259,7 @@ export function ScheduleInterviewModal({
           <div className="flex items-center gap-3 pt-1 border-t border-gray-100">
             <button
               type="submit"
-              disabled={loading || interviewers.length === 0}
+              disabled={loading || (!isWorkingInterview && interviewers.length === 0)}
               className="btn-primary flex-1"
             >
               {loading ? 'Saving…' : 'Log Interview'}

@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { getGmailStatus } from '@/lib/gmail'
-import { ChevronLeft, ChevronRight, Plus, Calendar, Clock, FileText, Download, ClipboardCheck, Linkedin, ExternalLink, MapPin, User, Video, Phone, Users } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Calendar, Clock, FileText, Download, ClipboardCheck, Linkedin, ExternalLink, MapPin, User, Video, Phone, Users, Briefcase } from 'lucide-react'
 import { STAGE_LABELS, STAGE_COLORS, INTERVIEW_TYPE_LABELS } from '@/lib/constants'
 import { formatDate, formatDateTime, timeAgo } from '@/lib/utils'
 import { StageSelector } from '@/components/applications/StageSelector'
@@ -419,18 +419,21 @@ export default async function ApplicationPage({
                   const typeIcon = event.type === 'PHONE_SCREEN' ? <Phone className="w-3 h-3" />
                     : event.type === 'VIDEO_CALL' ? <Video className="w-3 h-3" />
                     : event.type === 'PANEL' ? <Users className="w-3 h-3" />
+                    : event.type === 'WORKING_INTERVIEW' ? <Briefcase className="w-3 h-3" />
                     : <Calendar className="w-3 h-3" />
                   return (
                     <li key={event.id} className="px-4 py-3">
                       <div className="flex items-start gap-2">
-                        <span className="text-gray-400 mt-0.5 flex-shrink-0">{typeIcon}</span>
+                        <span className={`mt-0.5 flex-shrink-0 ${event.type === 'WORKING_INTERVIEW' ? 'text-amber-500' : 'text-gray-400'}`}>{typeIcon}</span>
                         <div className="min-w-0">
                           <p className="text-xs font-semibold text-gray-800">
                             {INTERVIEW_TYPE_LABELS[event.type] ?? event.type}
                           </p>
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            with <span className="font-medium">{event.interviewer.name}</span>
-                          </p>
+                          {event.interviewer && (
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              with <span className="font-medium">{event.interviewer.name}</span>
+                            </p>
+                          )}
                           {event.scheduledAt ? (
                             <p className="text-xs text-gray-400 mt-0.5">
                               {formatDateTime(event.scheduledAt)} · {event.durationMins}min

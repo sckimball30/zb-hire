@@ -88,11 +88,14 @@ export const CATEGORY_COLORS: Record<string, string> = {
 
 export const INTERVIEW_TYPE_LABELS: Record<string, string> = {
   PHONE_SCREEN: 'Phone Screen',
+  VIDEO_CALL: 'Video Call',
   TECHNICAL: 'Technical',
   BEHAVIORAL: 'Behavioral',
-  ONSITE: 'Onsite',
+  ONSITE: 'On-Site',
   PANEL: 'Panel',
   HIRING_MANAGER: 'Hiring Manager',
+  FINAL: 'Final Round',
+  WORKING_INTERVIEW: 'Working Interview',
 }
 
 export const JOB_STATUS_LABELS: Record<string, string> = {

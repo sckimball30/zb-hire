@@ -14,20 +14,29 @@ export async function POST(
   const body = await req.json()
   const { interviewerId, type, scheduledAt, durationMins, location, notes, calendlyEventUrl } = body
 
-  if (!interviewerId || !type) {
-    return NextResponse.json({ error: 'interviewerId and type are required' }, { status: 400 })
+  if (!type) {
+    return NextResponse.json({ error: 'type is required' }, { status: 400 })
+  }
+
+  const isWorkingInterview = type === 'WORKING_INTERVIEW'
+
+  if (!isWorkingInterview && !interviewerId) {
+    return NextResponse.json({ error: 'interviewerId is required for this interview type' }, { status: 400 })
   }
 
   const application = await prisma.application.findUnique({ where: { id: applicationId } })
   if (!application) return NextResponse.json({ error: 'Application not found' }, { status: 404 })
 
-  const interviewer = await prisma.interviewer.findUnique({ where: { id: interviewerId } })
-  if (!interviewer) return NextResponse.json({ error: 'Interviewer not found' }, { status: 404 })
+  let interviewer = null
+  if (!isWorkingInterview && interviewerId) {
+    interviewer = await prisma.interviewer.findUnique({ where: { id: interviewerId } })
+    if (!interviewer) return NextResponse.json({ error: 'Interviewer not found' }, { status: 404 })
+  }
 
   const event = await prisma.interviewEvent.create({
     data: {
       applicationId,
-      interviewerId,
+      interviewerId: isWorkingInterview ? null : interviewerId,
       type,
       scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
       durationMins: durationMins ?? 60,
@@ -41,7 +50,9 @@ export async function POST(
   await prisma.activityLog.create({
     data: {
       applicationId,
-      action: `Interview scheduled: ${type.replace('_', ' ')} with ${interviewer.name}`,
+      action: isWorkingInterview
+        ? 'Working Interview logged'
+        : `Interview scheduled: ${type.replace('_', ' ')} with ${interviewer?.name}`,
       actorName: session.user?.name ?? session.user?.email ?? 'Unknown',
     },
   })
