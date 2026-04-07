@@ -66,7 +66,7 @@ export default function PublicApplyPage() {
       .catch(() => setNotFound(true))
   }, [jobId])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [e.target.name]: e.target.value }))
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -108,6 +108,7 @@ export default function PublicApplyPage() {
     setSubmitting(false)
     if (res.ok) {
       setSubmitted(true)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     } else {
       const d = await res.json().catch(() => ({}))
       setError(d.error || 'Something went wrong. Please try again.')
@@ -176,10 +177,10 @@ export default function PublicApplyPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Branded header banner */}
-      <div className="bg-white py-8 px-4">
-        <div className="max-w-2xl mx-auto flex flex-col items-center gap-4">
+      <div className="bg-white py-6 px-4">
+        <div className="max-w-xl mx-auto flex flex-col items-center gap-3">
           <WigglitzLogo />
-          <p className="text-gray-400 text-sm font-medium tracking-wide uppercase">Careers</p>
+          <p className="text-gray-400 text-xs font-medium tracking-widest uppercase">Careers</p>
         </div>
       </div>
 
@@ -192,10 +193,10 @@ export default function PublicApplyPage() {
         <div className="flex-1 bg-[#4AFFD2]" />
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-10">
+      <div className="max-w-xl mx-auto px-4 py-6 sm:py-10">
         {/* Job info */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900">{job.title}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">{job.title}</h1>
           <div className="flex flex-wrap items-center justify-center gap-3 mt-3">
             {job.department && <span className="text-gray-500 text-sm">{job.department}</span>}
             {job.location && (
@@ -218,14 +219,14 @@ export default function PublicApplyPage() {
 
         {/* Description */}
         {job.description && (
-          <div className="card p-6 mb-6">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-4">
             <h2 className="text-base font-semibold text-gray-900 mb-3">About this role</h2>
             <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{job.description}</p>
           </div>
         )}
 
         {/* Application Form */}
-        <div className="card p-6">
+        <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-1">Apply for this position</h2>
           <p className="text-xs text-gray-400 mb-5">Fields marked <span className="text-red-500">*</span> are required</p>
 
@@ -236,58 +237,64 @@ export default function PublicApplyPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Name */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Name — stacked on mobile */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   First name <span className="text-red-500">*</span>
                 </label>
                 <input name="firstName" value={form.firstName} onChange={handleChange}
-                  required className="input w-full" placeholder="Jane" />
+                  autoComplete="given-name" inputMode="text"
+                  className="input w-full !text-base" placeholder="Jane" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Last name <span className="text-red-500">*</span>
                 </label>
                 <input name="lastName" value={form.lastName} onChange={handleChange}
-                  required className="input w-full" placeholder="Smith" />
+                  autoComplete="family-name" inputMode="text"
+                  className="input w-full !text-base" placeholder="Smith" />
               </div>
             </div>
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Email address <span className="text-red-500">*</span>
               </label>
               <input type="email" name="email" value={form.email} onChange={handleChange}
-                required className="input w-full" placeholder="jane@example.com" />
+                autoComplete="email" inputMode="email"
+                className="input w-full !text-base" placeholder="jane@example.com" />
             </div>
 
             {/* Phone */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Phone number <span className="text-red-500">*</span>
               </label>
               <input type="tel" name="phone" value={form.phone} onChange={handleChange}
-                required className="input w-full" placeholder="+1 (555) 000-0000" />
+                autoComplete="tel" inputMode="tel"
+                className="input w-full !text-base" placeholder="+1 (555) 000-0000" />
             </div>
 
             {/* Address */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Address <span className="text-red-500">*</span>
               </label>
               <input name="address" value={form.address} onChange={handleChange}
-                required className="input w-full" placeholder="123 Main St, City, State, ZIP" />
+                autoComplete="street-address" inputMode="text"
+                className="input w-full !text-base" placeholder="123 Main St, City, State, ZIP" />
             </div>
 
             {/* LinkedIn */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 LinkedIn profile URL <span className="text-red-500">*</span>
               </label>
               <input type="url" name="linkedInUrl" value={form.linkedInUrl} onChange={handleChange}
-                required className="input w-full" placeholder="https://linkedin.com/in/yourname" />
+                autoComplete="url" inputMode="url"
+                className="input w-full !text-base" placeholder="https://linkedin.com/in/yourname" />
             </div>
 
             {/* Resume upload */}
@@ -324,7 +331,7 @@ export default function PublicApplyPage() {
                   className="w-full border-2 border-dashed border-gray-200 rounded-lg p-6 text-center hover:border-[#4AFFD2] hover:bg-[#4AFFD2]/5 transition-colors group"
                 >
                   <Upload className="w-6 h-6 text-gray-400 group-hover:text-[#1a9e82] mx-auto mb-2" />
-                  <p className="text-sm font-medium text-gray-600 group-hover:text-[#1a9e82]">Click to upload resume</p>
+                  <p className="text-sm font-medium text-gray-600 group-hover:text-[#1a9e82]">Tap to upload resume</p>
                   <p className="text-xs text-gray-400 mt-1">PDF, DOC, DOCX · Max 10 MB</p>
                 </button>
               )}
@@ -339,8 +346,8 @@ export default function PublicApplyPage() {
               <select
                 name="source"
                 value={form.source}
-                onChange={e => setForm(f => ({ ...f, source: e.target.value }))}
-                className="input w-full text-sm"
+                onChange={handleChange}
+                className="input w-full !text-base"
               >
                 <option value="">Select an option</option>
                 <option value="LinkedIn">LinkedIn</option>
@@ -362,16 +369,21 @@ export default function PublicApplyPage() {
                 <span className="text-gray-400 font-normal ml-1">(optional)</span>
               </label>
               <textarea name="coverLetter" value={form.coverLetter} onChange={handleChange}
-                rows={5} className="input w-full resize-none text-sm"
+                rows={5} className="input w-full resize-none !text-base"
                 placeholder="Tell us why you're a great fit for this role…" />
             </div>
 
             <button
               type="submit"
               disabled={submitting}
-              className="w-full flex items-center justify-center px-4 py-3 rounded-lg bg-[#111111] text-white text-base font-semibold hover:bg-[#2a2a2a] transition-colors disabled:opacity-50 disabled:pointer-events-none"
+              className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl bg-[#111111] text-white text-base font-semibold hover:bg-[#2a2a2a] active:bg-[#333] transition-colors disabled:opacity-50 disabled:pointer-events-none"
             >
-              {submitting ? 'Submitting…' : 'Submit Application'}
+              {submitting ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Submitting…
+                </>
+              ) : 'Submit Application'}
             </button>
 
             <p className="text-xs text-gray-400 text-center">
@@ -381,7 +393,7 @@ export default function PublicApplyPage() {
         </div>
 
         {/* Footer */}
-        <div className="mt-8 text-center">
+        <div className="mt-8 pb-6 text-center">
           <p className="text-xs text-gray-400">
             Powered by <span className="font-semibold text-gray-500">ZB Designs</span>
           </p>
@@ -398,7 +410,7 @@ function WigglitzLogo() {
       <img
         src="/logos/wigglitz-logo.png"
         alt="The Original Wigglitz"
-        className="h-20 w-auto object-contain"
+        className="h-16 sm:h-20 w-auto object-contain"
       />
     </div>
   )
