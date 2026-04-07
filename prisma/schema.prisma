@@ -474,7 +474,8 @@ model MessageLog {
   sentByName  String?
   direction       String  @default("OUTBOUND")
   gmailThreadId   String?
-  gmailMessageId  String?
+    gmailMessageId  String?
+  read            Boolean @default(false)
   candidate   Candidate        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
   template    MessageTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
   sentBy      User?            @relation(fields: [sentById], references: [id], onDelete: SetNull)

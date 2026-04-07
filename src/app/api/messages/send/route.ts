@@ -67,6 +67,7 @@ export async function POST(req: NextRequest) {
       sentById: (session?.user as any)?.id ?? null,
       sentByName: session?.user?.name ?? session?.user?.email ?? null,
       direction: 'OUTBOUND',
+      read: true,
       gmailThreadId,
       gmailMessageId,
     },

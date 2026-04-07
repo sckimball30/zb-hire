@@ -215,7 +215,8 @@ export async function syncThreadReplies(candidateId: string): Promise<number> {
             subject,
             body: body.trim() || '(no body)',
             sentAt,
-            direction: 'INBOUND',
+
+            read: false,
             gmailThreadId: log.gmailThreadId,
             gmailMessageId: msgId,
             sentByName: from,

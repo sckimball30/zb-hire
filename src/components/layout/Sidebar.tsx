@@ -10,12 +10,13 @@ import {
   UserCheck,
   LayoutDashboard,
   Mail,
+  Inbox,
   Settings,
   LogOut,
   ChevronDown,
   BarChart2,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -24,13 +25,23 @@ const navItems = [
   { href: '/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/questions', label: 'Questions', icon: HelpCircle },
   { href: '/interviewers', label: 'Interviewers', icon: UserCheck },
-  { href: '/messages/templates', label: 'Messages', icon: Mail },
+  { href: '/inbox', label: 'Inbox', icon: Inbox },
+  { href: '/messages/templates', label: 'Templates', icon: Mail },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    fetch('/api/inbox/unread').then(r => r.json()).then(d => setUnreadCount(d.count ?? 0)).catch(() => {})
+    const interval = setInterval(() => {
+      fetch('/api/inbox/unread').then(r => r.json()).then(d => setUnreadCount(d.count ?? 0)).catch(() => {})
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   const isAuthPage = pathname?.startsWith('/auth')
   const isPublicPage = pathname?.startsWith('/apply') || pathname?.startsWith('/offers')
@@ -67,6 +78,11 @@ export function Sidebar() {
                 className={`w-4 h-4 flex-shrink-0 ${active ? 'text-[#4AFFD2]' : 'text-white/40 group-hover:text-white/70'}`}
               />
               {label}
+              {href === '/inbox' && unreadCount > 0 && (
+                <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-blue-500 text-white">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </Link>
           )
         })}
