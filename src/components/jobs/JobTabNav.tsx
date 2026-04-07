@@ -9,6 +9,7 @@ export function JobTabNav({ jobId }: { jobId: string }) {
     { label: 'Overview', href: `/jobs/${jobId}` },
     { label: 'Pipeline', href: `/jobs/${jobId}/pipeline` },
     { label: 'Team', href: `/jobs/${jobId}/team` },
+    { label: 'Kick-off', href: `/jobs/${jobId}/kickoff` },
   ]
 
   return (

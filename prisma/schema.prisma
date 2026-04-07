@@ -167,6 +167,48 @@ model Job {
   rounds            InterviewRound[]
   outcomes          JobOutcome[]
   responsibilities  JobResponsibility[]
+  kickoff           JobKickoff?
+}
+
+model JobKickoff {
+  id                    String    @id @default(cuid())
+  jobId                 String    @unique
+  job                   Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  // Why this role
+  openReason            String?   // "new_headcount" | "backfill" | "expansion"
+  backfillFor           String?
+  urgency               String?   // "asap" | "1_2_months" | "3_plus_months" | "flexible"
+  targetStartDate       DateTime?
+  hardDeadlineNotes     String?
+
+  // The ideal hire
+  mustHaves             String?
+  niceToHaves           String?
+  redFlags              String?
+  idealCandidate        String?
+
+  // Team & context
+  teamSize              String?
+  teamContext           String?
+  successAt90Days       String?
+
+  // Compensation extras
+  equityOffered         Boolean   @default(false)
+  equityDetails         String?
+  bonusOffered          Boolean   @default(false)
+  bonusDetails          String?
+  additionalPerks       String?
+
+  // Interview process
+  interviewProcessNotes String?
+
+  // Misc
+  hiringManagerNotes    String?
+
+  completedAt           DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 }
 
 model JobRecruiter {
