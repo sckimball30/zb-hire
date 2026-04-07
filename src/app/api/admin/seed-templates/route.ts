@@ -72,7 +72,6 @@ In the meantime, feel free to reach out with any questions — we want to make s
 Hiring Team — Wigglitz`,
   },
   {
-  {
     name: 'Rejection — Pre-Screening (Resume Review)',
     subject: 'Your Application to Wigglitz — {{Job Title}}',
     body: `Hi {{First Name}},
@@ -102,6 +101,7 @@ Thank you again for your time and energy — we're rooting for you.
 
 Hiring Team — Wigglitz`,
   },
+  {
     name: 'Rejection — Post Phone Screen',
     subject: 'Your Application to Wigglitz — {{Job Title}}',
     body: `Hi {{First Name}},
