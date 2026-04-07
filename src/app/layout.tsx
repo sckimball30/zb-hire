@@ -7,6 +7,10 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'ZB Hire',
   description: 'ZB Designs hiring pipeline',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
