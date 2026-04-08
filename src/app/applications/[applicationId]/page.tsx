@@ -13,6 +13,7 @@ import { SendMessageButton } from '@/components/candidates/SendMessageButton'
 import { OfferPanel } from '@/components/offers/OfferPanel'
 import { CandidateTags } from '@/components/candidates/CandidateTags'
 import { MessagesCard } from '@/components/candidates/MessagesCard'
+import { TransferJobButton } from '@/components/applications/TransferJobButton'
 
 export default async function ApplicationPage({
   params,
@@ -245,6 +246,12 @@ export default async function ApplicationPage({
                 <ClipboardCheck className="w-3 h-3" />
                 Add Evaluation
               </Link>
+              <TransferJobButton
+                applicationId={application.id}
+                currentJobId={job.id}
+                currentJobTitle={job.title}
+                candidateName={`${candidate.firstName} ${candidate.lastName}`}
+              />
             </div>
           </div>
         </div>

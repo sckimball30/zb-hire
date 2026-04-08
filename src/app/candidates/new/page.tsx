@@ -1,21 +1,31 @@
 'use client'
 
-import { useState, useRef, Suspense } from 'react'
+import { useState, useRef, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Upload, FileText, X } from 'lucide-react'
 import { toast } from 'sonner'
 
+interface Job { id: string; title: string; department: string | null; status: string }
+
 function NewCandidateForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const jobId = searchParams.get('jobId')
+  const preselectedJobId = searchParams.get('jobId')
   const [loading, setLoading] = useState(false)
   const [resumeFile, setResumeFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [selectedJobId, setSelectedJobId] = useState(preselectedJobId ?? '')
   const [form, setForm] = useState({
     firstName: '', lastName: '', email: '', phone: '', linkedInUrl: '', source: '', notes: '',
   })
+
+  useEffect(() => {
+    fetch('/api/jobs')
+      .then(r => r.json())
+      .then((data: Job[]) => setJobs(data.filter((j: Job) => j.status === 'OPEN')))
+  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
@@ -58,12 +68,12 @@ function NewCandidateForm() {
         }
       }
 
-      if (jobId) {
+      if (selectedJobId) {
         const appRes = await fetch('/api/applications', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ candidateId: candidate.id, jobId }),
+          body: JSON.stringify({ candidateId: candidate.id, jobId: selectedJobId }),
         })
-        if (appRes.ok) { const app = await appRes.json(); toast.success('Candidate added to pipeline'); router.push(`/applications/${app.id}`); return }
+        if (appRes.ok) { const app = await appRes.json(); toast.success('Candidate added to pipeline!'); router.push(`/applications/${app.id}`); return }
       }
       toast.success('Candidate created successfully')
       router.push(`/candidates/${candidate.id}`)
@@ -75,8 +85,8 @@ function NewCandidateForm() {
   return (
     <div className="p-8 max-w-2xl">
       <div className="mb-6">
-        <Link href={jobId ? `/jobs/${jobId}` : '/candidates'} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-4">
-          <ArrowLeft className="w-4 h-4" />{jobId ? 'Back to Pipeline' : 'Back to Candidates'}
+        <Link href={preselectedJobId ? `/jobs/${preselectedJobId}` : '/candidates'} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-4">
+          <ArrowLeft className="w-4 h-4" />{preselectedJobId ? 'Back to Pipeline' : 'Back to Candidates'}
         </Link>
         <h1 className="page-title">Add Candidate</h1>
       </div>
@@ -117,6 +127,29 @@ function NewCandidateForm() {
           <div>
             <label htmlFor="linkedInUrl" className="label">LinkedIn URL</label>
             <input id="linkedInUrl" name="linkedInUrl" type="url" className="input" placeholder="https://linkedin.com/in/..." value={form.linkedInUrl} onChange={handleChange} />
+          </div>
+
+          {/* Job assignment */}
+          <div>
+            <label htmlFor="jobId" className="label">
+              Add to Job <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <select
+              id="jobId"
+              className="input"
+              value={selectedJobId}
+              onChange={e => setSelectedJobId(e.target.value)}
+            >
+              <option value="">Don't add to a job yet</option>
+              {jobs.map(j => (
+                <option key={j.id} value={j.id}>
+                  {j.title}{j.department ? ` — ${j.department}` : ''}
+                </option>
+              ))}
+            </select>
+            {selectedJobId && (
+              <p className="text-xs text-gray-400 mt-1">They'll be added to the pipeline at the Applied stage.</p>
+            )}
           </div>
           {/* Resume upload */}
           <div>
@@ -163,7 +196,7 @@ function NewCandidateForm() {
           </div>
           <div className="flex items-center gap-3 pt-2">
             <button type="submit" disabled={loading} className="btn-primary">{loading ? 'Adding...' : 'Add Candidate'}</button>
-            <Link href={jobId ? `/jobs/${jobId}` : '/candidates'} className="btn-secondary">Cancel</Link>
+            <Link href={preselectedJobId ? `/jobs/${preselectedJobId}` : '/candidates'} className="btn-secondary">Cancel</Link>
           </div>
         </form>
       </div>

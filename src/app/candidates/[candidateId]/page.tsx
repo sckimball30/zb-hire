@@ -15,6 +15,7 @@ import { SendMessageButton } from '@/components/candidates/SendMessageButton'
 import { CandidateTags } from '@/components/candidates/CandidateTags'
 import { ScheduledMessagesList } from '@/components/candidates/ScheduledMessagesList'
 import { ResumeUploadButton } from '@/components/candidates/ResumeUploadButton'
+import { AddToJobButton } from '@/components/candidates/AddToJobButton'
 
 export default async function CandidatePage({ params }: { params: { candidateId: string } }) {
   const candidate = await prisma.candidate.findUnique({
@@ -157,6 +158,11 @@ export default async function CandidatePage({ params }: { params: { candidateId:
           <div className="flex flex-col items-end gap-3 flex-shrink-0">
             <span className="text-xs text-gray-400">Added {formatDate(candidate.createdAt)}</span>
             <div className="flex items-center gap-2 flex-wrap justify-end">
+              <AddToJobButton
+                candidateId={candidate.id}
+                candidateName={`${candidate.firstName} ${candidate.lastName}`}
+                existingJobIds={candidate.applications.map(a => a.job.id)}
+              />
               <SendMessageButton
                 candidateId={candidate.id}
                 candidateEmail={candidate.email}
