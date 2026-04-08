@@ -21,10 +21,11 @@ model User {
   updatedAt     DateTime  @updatedAt
   accounts      Account[]
   sessions      Session[]
-  invitationsSent Invitation[] @relation("InvitedBy")
-  candidateNotes  CandidateNote[]
-  messageLogs     MessageLog[]
-  jobAssignments  JobRecruiter[]
+  invitationsSent   Invitation[]  @relation("InvitedBy")
+  candidateNotes    CandidateNote[]
+  messageLogs       MessageLog[]
+  jobAssignments    JobRecruiter[]
+  hiringManagerJobs Job[]         @relation("HiringManagerJobs")
 }
 
 model Account {
@@ -158,6 +159,7 @@ model Job {
   interviewCount    Int                @default(3)
   reportsTo         String?
   mission           String?
+  hiringManagerId   String?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   applications      Application[]
@@ -168,6 +170,7 @@ model Job {
   outcomes          JobOutcome[]
   responsibilities  JobResponsibility[]
   kickoff           JobKickoff?
+  hiringManager     User?              @relation("HiringManagerJobs", fields: [hiringManagerId], references: [id], onDelete: SetNull)
 }
 
 model JobKickoff {

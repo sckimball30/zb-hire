@@ -14,6 +14,9 @@ import { OfferPanel } from '@/components/offers/OfferPanel'
 import { CandidateTags } from '@/components/candidates/CandidateTags'
 import { MessagesCard } from '@/components/candidates/MessagesCard'
 import { TransferJobButton } from '@/components/applications/TransferJobButton'
+import { HireDecisionPanel } from '@/components/applications/HireDecisionPanel'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 export default async function ApplicationPage({
   params,
@@ -43,6 +46,7 @@ export default async function ApplicationPage({
           interviewers: {
             include: { interviewer: { select: { id: true, name: true, title: true, calendlyUrl: true } } },
           },
+          recruiters: { select: { userId: true } },
         },
       },
       events: {
@@ -84,6 +88,14 @@ export default async function ApplicationPage({
   const prevApp = siblingIdx > 0 ? siblings[siblingIdx - 1] : null
   const nextApp = siblingIdx < siblings.length - 1 ? siblings[siblingIdx + 1] : null
   const { connected: gmailConnected } = await getGmailStatus()
+  const session = await getServerSession(authOptions)
+  const currentUserId = (session?.user as any)?.id ?? null
+
+  // Only the hiring manager and assigned recruiters can see hire decisions
+  const recruiterIds = new Set(job.recruiters.map((r: any) => r.userId))
+  const canSeeDecisions =
+    currentUserId &&
+    (job.hiringManagerId === currentUserId || recruiterIds.has(currentUserId))
 
   const submittedScorecards = application.scorecards.filter((s) => s.submittedAt)
   const jobInterviewers = job.interviewers.map(ji => ji.interviewer)
@@ -299,6 +311,14 @@ export default async function ApplicationPage({
               offer={application.offer as any}
               applicationId={application.id}
               jobTitle={job.title}
+            />
+          )}
+
+          {/* Hire Decisions — visible to hiring manager + recruiters only */}
+          {canSeeDecisions && (
+            <HireDecisionPanel
+              applicationId={application.id}
+              decisions={application.hireDecisions as any}
             />
           )}
 

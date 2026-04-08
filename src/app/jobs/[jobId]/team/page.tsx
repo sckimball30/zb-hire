@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { TeamManager } from '@/components/jobs/TeamManager'
 import { InterviewRoundsManager } from '@/components/jobs/InterviewRoundsManager'
 import { RecruiterManager } from '@/components/jobs/RecruiterManager'
+import { HiringManagerPicker } from '@/components/jobs/HiringManagerPicker'
 
 export default async function JobTeamPage({
   params,
@@ -31,6 +32,7 @@ export default async function JobTeamPage({
           },
           orderBy: { roundNumber: 'asc' },
         },
+        hiringManager: { select: { id: true, name: true, email: true } },
       },
     }),
     prisma.interviewer.findMany({ orderBy: { name: 'asc' } }),
@@ -74,6 +76,17 @@ export default async function JobTeamPage({
 
   return (
     <div className="p-8 max-w-4xl space-y-8">
+
+      {/* Hiring Manager section */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Hiring Manager</h2>
+        <HiringManagerPicker
+          jobId={job.id}
+          allUsers={allRecruiters}
+          currentHiringManagerId={job.hiringManagerId ?? null}
+        />
+      </div>
+
       {/* Recruiters section */}
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Recruiters</h2>
