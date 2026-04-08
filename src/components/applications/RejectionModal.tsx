@@ -39,7 +39,7 @@ function applyVars(text: string, vars: Record<string, string>): string {
   return out
 }
 
-const AUTO_VAR_NAMES = ['First Name', 'firstName', 'Job Title', 'jobTitle']
+const AUTO_VAR_NAMES = ['First Name', 'firstName', 'Job Title', 'jobTitle', 'Careers Page URL']
 
 export function RejectionModal({
   candidateFirstName,
@@ -56,6 +56,13 @@ export function RejectionModal({
   const [delayDays, setDelayDays] = useState(2)
   const [saving, setSaving] = useState(false)
   const [manualVarValues, setManualVarValues] = useState<Record<string, string>>({})
+  const [careersPageUrl, setCareersPageUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/settings/company')
+      .then(r => r.json())
+      .then(data => setCareersPageUrl(data.careersPageUrl ?? null))
+  }, [])
 
   useEffect(() => {
     fetch('/api/messages/templates')
@@ -88,8 +95,9 @@ export function RejectionModal({
     const m: Record<string, string> = {}
     if (candidateFirstName) { m['firstName'] = candidateFirstName; m['First Name'] = candidateFirstName }
     if (jobTitle)           { m['jobTitle']  = jobTitle;           m['Job Title']  = jobTitle }
+    if (careersPageUrl)     { m['Careers Page URL'] = careersPageUrl }
     return m
-  }, [candidateFirstName, jobTitle])
+  }, [candidateFirstName, jobTitle, careersPageUrl])
 
   // Manual vars = any var that isn't auto-filled
   const manualVars = useMemo(() => {
@@ -209,7 +217,7 @@ export function RejectionModal({
               </div>
 
               {/* Auto-filled vars (read-only chips) */}
-              {selectedTemplateId && (candidateFirstName || jobTitle) && (
+              {selectedTemplateId && (candidateFirstName || jobTitle || careersPageUrl) && (
                 <div className="flex flex-wrap gap-2">
                   {candidateFirstName && (
                     <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 rounded-full px-2.5 py-1 font-medium">
@@ -219,6 +227,11 @@ export function RejectionModal({
                   {jobTitle && (
                     <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 rounded-full px-2.5 py-1 font-medium">
                       <span className="opacity-60">Job Title →</span> {jobTitle}
+                    </span>
+                  )}
+                  {careersPageUrl && (
+                    <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 rounded-full px-2.5 py-1 font-medium">
+                      <span className="opacity-60">Careers Page →</span> auto-filled
                     </span>
                   )}
                 </div>

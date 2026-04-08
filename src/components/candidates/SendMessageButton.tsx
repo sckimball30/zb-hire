@@ -40,12 +40,13 @@ function extractVars(text: string): string[] {
 
 /** Variables that are auto-populated (both camelCase and "Display Name" forms) */
 const AUTO_VAR_MAP: Record<string, string | null> = {
-  'firstName': null,       // filled from props
+  'firstName': null,
   'First Name': null,
   'jobTitle': null,
   'Job Title': null,
   'recruiterName': null,
   'Recruiter Name': null,
+  'Careers Page URL': null,
 }
 
 /** Variables driven by an interviewer dropdown (pairs — selecting interviewer fills both) */
@@ -111,23 +112,29 @@ export function SendMessageButton({
   const [delayDays, setDelayDays] = useState(1)
   const [showPreview, setShowPreview] = useState(false)
 
-  // Load templates + interviewers when modal opens
+  const [careersPageUrl, setCareersPageUrl] = useState<string>('')
+
+  // Load templates + interviewers + company settings when modal opens
   useEffect(() => {
     if (!open) return
     fetch('/api/messages/templates').then(r => r.json()).then(setTemplates)
     fetch('/api/interviewers').then(r => r.json()).then((data: InterviewerOption[]) => {
       setInterviewers(Array.isArray(data) ? data : [])
     })
+    fetch('/api/settings/company').then(r => r.json()).then(data => {
+      setCareersPageUrl(data.careersPageUrl ?? '')
+    })
   }, [open])
 
-  // ── Build auto-var map from props ──────────────────────────────────────────
+  // ── Build auto-var map from props + company settings ──────────────────────
   const autoVars: Record<string, string> = useMemo(() => {
     const m: Record<string, string> = {}
     if (candidateFirstName) { m['firstName'] = candidateFirstName; m['First Name'] = candidateFirstName }
     if (jobTitle) { m['jobTitle'] = jobTitle; m['Job Title'] = jobTitle }
     if (recruiterName) { m['recruiterName'] = recruiterName; m['Recruiter Name'] = recruiterName }
+    if (careersPageUrl) { m['Careers Page URL'] = careersPageUrl }
     return m
-  }, [candidateFirstName, jobTitle, recruiterName])
+  }, [candidateFirstName, jobTitle, recruiterName, careersPageUrl])
 
   // ── Detect variables that need user input ─────────────────────────────────
   const manualVars = useMemo(() => {

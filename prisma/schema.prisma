@@ -523,6 +523,14 @@ model MessageLog {
   sentBy      User?            @relation(fields: [sentById], references: [id], onDelete: SetNull)
 }
 
+model CompanySettings {
+  id             String   @id @default("singleton")
+  careersPageUrl String?
+  companyName    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
 model GmailConnection {
   id           String   @id @default(cuid())
   email        String
