@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { X, AlertTriangle, Send } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -26,13 +26,20 @@ function addBusinessDays(days: number): Date {
   return date
 }
 
+function extractVars(text: string): string[] {
+  const matches = [...text.matchAll(/\{\{([^}]+)\}\}/g)]
+  return [...new Set(matches.map(m => m[1].trim()))]
+}
+
 function applyVars(text: string, vars: Record<string, string>): string {
   let out = text
   for (const [k, v] of Object.entries(vars)) {
-    if (v) out = out.replaceAll(`{{${k}}}`, v).replaceAll(`{{${k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}}}`, v)
+    if (v) out = out.replaceAll(`{{${k}}}`, v)
   }
   return out
 }
+
+const AUTO_VAR_NAMES = ['First Name', 'firstName', 'Job Title', 'jobTitle']
 
 export function RejectionModal({
   candidateFirstName,
@@ -48,37 +55,66 @@ export function RejectionModal({
   const [deliveryMode, setDeliveryMode] = useState<'now' | 'schedule'>('schedule')
   const [delayDays, setDelayDays] = useState(2)
   const [saving, setSaving] = useState(false)
+  const [manualVarValues, setManualVarValues] = useState<Record<string, string>>({})
 
   useEffect(() => {
     fetch('/api/messages/templates')
       .then(r => r.json())
       .then((all: Template[]) => {
         setTemplates(all)
-        const postOnsite = all.find(t => t.name.toLowerCase().includes('post on-site') || t.name.toLowerCase().includes('onsite'))
-        const postPhone  = all.find(t => t.name.toLowerCase().includes('post phone')   || t.name.toLowerCase().includes('phone screen'))
-        const anyReject  = all.find(t => t.name.toLowerCase().includes('reject'))
-        const auto = (currentStage === 'ONSITE' ? postOnsite : postPhone) ?? anyReject
+        const preScreen   = all.find(t => t.name.toLowerCase().includes('pre-screening') || t.name.toLowerCase().includes('pre screening'))
+        const postOnsite  = all.find(t => t.name.toLowerCase().includes('post on-site') || t.name.toLowerCase().includes('post onsite'))
+        const postPhone   = all.find(t => t.name.toLowerCase().includes('post phone')   || t.name.toLowerCase().includes('phone screen'))
+        const anyReject   = all.find(t => t.name.toLowerCase().includes('reject'))
+        const auto = (
+          currentStage === 'APPLIED'  ? (preScreen ?? anyReject) :
+          currentStage === 'ONSITE'   ? (postOnsite ?? anyReject) :
+          postPhone ?? anyReject
+        )
         if (auto) setSelectedTemplateId(auto.id)
       })
   }, [currentStage])
 
+  // Reset manual vars whenever template changes
+  useEffect(() => {
+    setManualVarValues({})
+  }, [selectedTemplateId])
+
   const rejectionTemplates = templates.filter(t => t.name.toLowerCase().includes('reject'))
   const scheduledDate = deliveryMode === 'schedule' ? addBusinessDays(delayDays) : null
 
+  // Build the set of auto vars that are actually available
+  const autoVars = useMemo(() => {
+    const m: Record<string, string> = {}
+    if (candidateFirstName) { m['firstName'] = candidateFirstName; m['First Name'] = candidateFirstName }
+    if (jobTitle)           { m['jobTitle']  = jobTitle;           m['Job Title']  = jobTitle }
+    return m
+  }, [candidateFirstName, jobTitle])
+
+  // Manual vars = any var that isn't auto-filled
+  const manualVars = useMemo(() => {
+    if (!selectedTemplateId) return []
+    const t = templates.find(t => t.id === selectedTemplateId)
+    if (!t) return []
+    const allVars = [...extractVars(t.subject), ...extractVars(t.body)]
+    return [...new Set(allVars)].filter(v => !(AUTO_VAR_NAMES.includes(v) && autoVars[v]))
+  }, [selectedTemplateId, templates, autoVars])
+
+  const hasUnfilled = manualVars.some(v => !manualVarValues[v]?.trim())
+
   const handleConfirm = async () => {
+    if (sendEmail && selectedTemplateId && hasUnfilled) {
+      toast.warning('Fill in all variables before sending.')
+      return
+    }
     setSaving(true)
     try {
-      // Stage update handled by caller
       await onConfirm()
 
-      // Send email if requested
       if (sendEmail && candidateId && selectedTemplateId) {
         const template = templates.find(t => t.id === selectedTemplateId)
         if (template) {
-          const vars: Record<string, string> = {}
-          if (candidateFirstName) { vars['firstName'] = candidateFirstName; vars['First Name'] = candidateFirstName }
-          if (jobTitle)           { vars['jobTitle']  = jobTitle;            vars['Job Title']  = jobTitle }
-
+          const vars: Record<string, string> = { ...autoVars, ...manualVarValues }
           const subject = applyVars(template.subject, vars)
           const body    = applyVars(template.body,    vars)
 
@@ -110,20 +146,12 @@ export function RejectionModal({
     }
   }
 
-  // Unfilled-var warning
-  const unfilledWarning = (() => {
-    if (!selectedTemplateId) return null
-    const t = templates.find(t => t.id === selectedTemplateId)
-    const remaining = (t?.body ?? '').match(/\{\{(?!First Name|Job Title|firstName|jobTitle)[^}]+\}\}/g)
-    return remaining?.length ? remaining[0] : null
-  })()
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden max-h-[90vh] flex flex-col">
 
         {/* Header */}
-        <div className="px-6 py-5 border-b border-gray-100 flex items-start gap-3">
+        <div className="px-6 py-5 border-b border-gray-100 flex items-start gap-3 flex-shrink-0">
           <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
             <AlertTriangle className="w-5 h-5 text-red-600" />
           </div>
@@ -140,7 +168,7 @@ export function RejectionModal({
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-4">
+        <div className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
 
           {/* Send email toggle */}
           <label className="flex items-center justify-between gap-3 cursor-pointer">
@@ -180,6 +208,41 @@ export function RejectionModal({
                 )}
               </div>
 
+              {/* Auto-filled vars (read-only chips) */}
+              {selectedTemplateId && (candidateFirstName || jobTitle) && (
+                <div className="flex flex-wrap gap-2">
+                  {candidateFirstName && (
+                    <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 rounded-full px-2.5 py-1 font-medium">
+                      <span className="opacity-60">First Name →</span> {candidateFirstName}
+                    </span>
+                  )}
+                  {jobTitle && (
+                    <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 rounded-full px-2.5 py-1 font-medium">
+                      <span className="opacity-60">Job Title →</span> {jobTitle}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Manual variable inputs */}
+              {manualVars.length > 0 && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+                  <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Fill in before sending</p>
+                  {manualVars.map(varName => (
+                    <div key={varName}>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">{varName}</label>
+                      <input
+                        type="text"
+                        className="input text-sm w-full"
+                        placeholder={`Enter ${varName.toLowerCase()}…`}
+                        value={manualVarValues[varName] ?? ''}
+                        onChange={e => setManualVarValues(prev => ({ ...prev, [varName]: e.target.value }))}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Delivery timing */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">When to send</label>
@@ -208,22 +271,15 @@ export function RejectionModal({
                   </div>
                 )}
               </div>
-
-              {/* Unfilled var warning */}
-              {unfilledWarning && (
-                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-2">
-                  ⚠ This template has variables like <strong>{unfilledWarning}</strong> that won't be auto-filled. Consider sending manually for a personalized message.
-                </p>
-              )}
             </>
           )}
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-100 flex items-center gap-3">
+        <div className="px-6 py-4 border-t border-gray-100 flex items-center gap-3 flex-shrink-0">
           <button
             onClick={handleConfirm}
-            disabled={saving || (sendEmail && !selectedTemplateId && rejectionTemplates.length > 0)}
+            disabled={saving || (sendEmail && !selectedTemplateId && rejectionTemplates.length > 0) || (sendEmail && hasUnfilled)}
             className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-xl bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
           >
             {saving ? 'Processing…' : (

@@ -132,13 +132,14 @@ export function SendMessageButton({
   // ── Detect variables that need user input ─────────────────────────────────
   const manualVars = useMemo(() => {
     const allVars = [...extractVars(rawSubject), ...extractVars(rawBody)]
-    return [...new Set(allVars)].filter(v =>
-      !isAutoVar(v) &&
-      !isInterviewerNameVar(v) &&
-      !isInterviewerTitleVar(v) &&
-      !isCalendlyVar(v)
-    )
-  }, [rawSubject, rawBody])
+    return [...new Set(allVars)].filter(v => {
+      // Auto-vars with a real value are handled automatically — skip them
+      // Auto-vars WITHOUT a value (e.g. jobTitle not available) fall through to manual input
+      if (isAutoVar(v) && autoVars[v]) return false
+      if (isInterviewerNameVar(v) || isInterviewerTitleVar(v) || isCalendlyVar(v)) return false
+      return true
+    })
+  }, [rawSubject, rawBody, autoVars])
 
   const needsInterviewerDropdown = useMemo(() =>
     [...extractVars(rawSubject), ...extractVars(rawBody)].some(v => isInterviewerNameVar(v) || isInterviewerTitleVar(v)),
@@ -283,11 +284,13 @@ export function SendMessageButton({
                 <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 space-y-3">
                   <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Fill in variables</p>
 
-                  {/* Auto vars (read-only chips) */}
-                  <div className="flex flex-wrap gap-2">
-                    {candidateFirstName && <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 rounded-full px-2.5 py-1 font-medium"><span className="opacity-60">First Name →</span> {candidateFirstName}</span>}
-                    {jobTitle && <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 rounded-full px-2.5 py-1 font-medium"><span className="opacity-60">Job Title →</span> {jobTitle}</span>}
-                  </div>
+                  {/* Auto vars — only show chips for values that are actually filled */}
+                  {(candidateFirstName || jobTitle) && (
+                    <div className="flex flex-wrap gap-2">
+                      {candidateFirstName && <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 rounded-full px-2.5 py-1 font-medium"><span className="opacity-60">First Name →</span> {candidateFirstName}</span>}
+                      {jobTitle && <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 rounded-full px-2.5 py-1 font-medium"><span className="opacity-60">Job Title →</span> {jobTitle}</span>}
+                    </div>
+                  )}
 
                   {/* Interviewer Name + Title dropdown */}
                   {needsInterviewerDropdown && (
