@@ -80,7 +80,7 @@ Thank you for your interest in the {{Job Title}} role at Wigglitz and for taking
 
 After reviewing your application, we've decided to move forward with candidates whose background more closely matches what we're looking for at this time. We know this isn't the news you were hoping for, and we genuinely appreciate you thinking of us.
 
-We encourage you to keep an eye on future openings at {{Careers Page URL}} — we're always growing and the right opportunity may come along.
+We're always growing, and we'll keep your information on file in case the right opportunity comes along down the road.
 
 Thanks again, and we wish you the very best in your search.
 
@@ -95,7 +95,7 @@ Thank you so much for the time you've invested in our process for the {{Job Titl
 
 After careful consideration, we've decided not to move forward to the next stage at this time. This was not an easy decision — {{Specific Positive}}, and that genuinely stood out to us.
 
-We'd love to stay connected. We'll keep your information on file and will reach out if we think a future role could be a strong match. In the meantime, feel free to check our openings at {{Careers Page URL}}.
+We'd love to stay connected. We'll keep your information on file and will reach out if we think a future role could be a strong match.
 
 Thank you again for your time and energy — we're rooting for you.
 
@@ -110,7 +110,7 @@ Thank you so much for taking the time to speak with us and for your interest in 
 
 After careful consideration, we've decided to move forward with other candidates whose experience more closely aligns with what we're looking for at this stage. This was a genuinely difficult decision — we were impressed by {{Specific Positive}}.
 
-We'd love to stay in touch. If a role opens up that feels like a stronger match, we'll be sure to reach out. Please don't hesitate to keep an eye on our openings at {{Careers Page URL}}.
+We'd love to stay in touch. If a role opens up that feels like a stronger match, we'll be sure to reach out.
 
 Thanks again for your time and enthusiasm — we wish you all the best in your search.
 
@@ -125,7 +125,7 @@ I wanted to personally reach out and thank you for the time and energy you inves
 
 After thoughtful discussion, we've decided to move forward with another candidate. This was a close call — the team was genuinely impressed by {{Specific Positive}}, and we want you to know this decision was not easy.
 
-We hope our paths cross again. We'll keep your information on file and reach out if we think there's a future opportunity worth exploring. You're also welcome to check our openings at {{Careers Page URL}}.
+We hope our paths cross again. We'll keep your information on file and reach out if we think there's a future opportunity worth exploring.
 
 Thank you again — we're rooting for you.
 
