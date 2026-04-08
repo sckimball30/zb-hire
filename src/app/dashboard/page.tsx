@@ -2,30 +2,38 @@ export const dynamic = 'force-dynamic'
 
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
-import { Briefcase, Users, UserCheck, TrendingUp, Clock, CheckCircle } from 'lucide-react'
+import { Briefcase, Users, TrendingUp, Clock, CheckCircle } from 'lucide-react'
 import { formatDate, timeAgo } from '@/lib/utils'
 import { STAGE_COLORS, STAGE_LABELS } from '@/lib/constants'
 
 export default async function DashboardPage() {
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+
   const [
     totalJobs,
     openJobs,
-    totalCandidates,
-    totalApplications,
+    activeApplications,
     hiredThisMonth,
+    newThisMonth,
     recentApplications,
     stageBreakdown,
     recentActivity,
   ] = await Promise.all([
     prisma.job.count(),
     prisma.job.count({ where: { status: 'OPEN' } }),
-    prisma.candidate.count(),
-    prisma.application.count(),
+    // Active = anything not rejected or hired
+    prisma.application.count({
+      where: { stage: { notIn: ['REJECTED', 'HIRED'] } },
+    }),
     prisma.application.count({
       where: {
         stage: 'HIRED',
-        hiredAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
+        hiredAt: { gte: monthStart },
       },
+    }),
+    // New applications this month
+    prisma.application.count({
+      where: { createdAt: { gte: monthStart } },
     }),
     prisma.application.findMany({
       take: 5,
@@ -45,8 +53,10 @@ export default async function DashboardPage() {
 
   const stageMap = Object.fromEntries(stageBreakdown.map(s => [s.stage, s._count.stage]))
 
-  const funnelStages = ['APPLIED', 'PHONE_SCREEN', 'ONSITE', 'OFFER', 'HIRED'] as const
-  const totalTop = stageMap['APPLIED'] ?? 0
+  const funnelStages = ['APPLIED', 'PHONE_SCREEN', 'INTERVIEWING', 'ONSITE', 'OFFER', 'HIRED'] as const
+  // Use the largest stage count as the 100% baseline so bars never exceed full width
+  const funnelCounts = funnelStages.map(s => stageMap[s] ?? 0)
+  const totalTop = Math.max(...funnelCounts, 1)
 
   return (
     <div className="p-8 max-w-6xl">
@@ -59,8 +69,8 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
           { label: 'Open Roles', value: openJobs, sub: `${totalJobs} total`, icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Total Candidates', value: totalCandidates, sub: 'all time', icon: Users, color: 'text-purple-600', bg: 'bg-purple-50' },
-          { label: 'Active Applications', value: totalApplications, sub: 'across all roles', icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-50' },
+          { label: 'Active in Pipeline', value: activeApplications, sub: 'not hired or rejected', icon: Users, color: 'text-purple-600', bg: 'bg-purple-50' },
+          { label: 'New This Month', value: newThisMonth, sub: new Date().toLocaleString('default', { month: 'long' }), icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-50' },
           { label: 'Hired This Month', value: hiredThisMonth, sub: new Date().toLocaleString('default', { month: 'long' }), icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50' },
         ].map(({ label, value, sub, icon: Icon, color, bg }) => (
           <div key={label} className="card p-5">
@@ -85,9 +95,9 @@ export default async function DashboardPage() {
             <h2 className="text-base font-semibold text-gray-900">Hiring Funnel</h2>
           </div>
           <div className="p-6 space-y-3">
-            {funnelStages.map(stage => {
-              const count = stageMap[stage] ?? 0
-              const pct = totalTop > 0 ? Math.round((count / totalTop) * 100) : 0
+            {funnelStages.map((stage, i) => {
+              const count = funnelCounts[i]
+              const pct = Math.round((count / totalTop) * 100)
               return (
                 <div key={stage}>
                   <div className="flex items-center justify-between mb-1">
