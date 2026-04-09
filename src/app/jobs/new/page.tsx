@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
+import { RichTextEditor } from '@/components/ui/RichTextEditor'
 
 function parseMoney(val: string): number | undefined {
   const clean = val.replace(/[$,\s]/g, '')
@@ -220,11 +221,12 @@ export default function NewJobPage() {
 
           {/* Description */}
           <div>
-            <label htmlFor="description" className="label">Description</label>
-            <textarea
-              id="description" name="description" rows={5} className="input h-auto"
+            <label className="label">Description</label>
+            <RichTextEditor
+              value={form.description}
+              onChange={(html) => setForm(f => ({ ...f, description: html }))}
               placeholder="Describe the role, responsibilities, and requirements..."
-              value={form.description} onChange={handleChange}
+              minHeight={180}
             />
           </div>
 

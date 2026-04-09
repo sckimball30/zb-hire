@@ -59,14 +59,14 @@ export default async function DashboardPage() {
   const totalTop = Math.max(...funnelCounts, 1)
 
   return (
-    <div className="p-8 max-w-6xl">
-      <div className="mb-8">
+    <div className="p-4 md:p-8 max-w-6xl">
+      <div className="mb-6 md:mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-sm text-gray-500 mt-1">Your hiring pipeline at a glance</p>
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
         {[
           { label: 'Open Roles', value: openJobs, sub: `${totalJobs} total`, icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-50' },
           { label: 'Active in Pipeline', value: activeApplications, sub: 'not hired or rejected', icon: Users, color: 'text-purple-600', bg: 'bg-purple-50' },
@@ -88,9 +88,9 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Hiring Funnel */}
-        <div className="col-span-2 card overflow-hidden">
+        <div className="lg:col-span-2 card overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
             <h2 className="text-base font-semibold text-gray-900">Hiring Funnel</h2>
           </div>
@@ -149,7 +149,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Recent Applications */}
-      <div className="card overflow-hidden mt-6">
+      <div className="card overflow-hidden mt-4 md:mt-6">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <h2 className="text-base font-semibold text-gray-900">Recent Applications</h2>
           <Link href="/jobs" className="text-sm text-blue-600 hover:underline">View all jobs</Link>
@@ -157,13 +157,14 @@ export default async function DashboardPage() {
         {recentApplications.length === 0 ? (
           <div className="px-6 py-8 text-center text-sm text-gray-400">No applications yet.</div>
         ) : (
+          <div className="overflow-x-auto">
           <table className="table">
             <thead>
               <tr>
                 <th>Candidate</th>
-                <th>Role</th>
+                <th className="hidden sm:table-cell">Role</th>
                 <th>Stage</th>
-                <th>Applied</th>
+                <th className="hidden sm:table-cell">Applied</th>
                 <th></th>
               </tr>
             </thead>
@@ -173,13 +174,13 @@ export default async function DashboardPage() {
                   <td className="font-medium text-gray-900">
                     {app.candidate.firstName} {app.candidate.lastName}
                   </td>
-                  <td className="text-gray-600">{app.job.title}</td>
+                  <td className="hidden sm:table-cell text-gray-600">{app.job.title}</td>
                   <td>
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STAGE_COLORS[app.stage]}`}>
                       {STAGE_LABELS[app.stage]}
                     </span>
                   </td>
-                  <td className="text-gray-500 text-sm">{formatDate(app.createdAt)}</td>
+                  <td className="hidden sm:table-cell text-gray-500 text-sm">{formatDate(app.createdAt)}</td>
                   <td>
                     <Link href={`/applications/${app.id}`} className="text-blue-600 hover:underline text-sm">
                       View
@@ -189,6 +190,7 @@ export default async function DashboardPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

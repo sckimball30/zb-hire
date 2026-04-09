@@ -15,6 +15,8 @@ import { CandidateTags } from '@/components/candidates/CandidateTags'
 import { MessagesCard } from '@/components/candidates/MessagesCard'
 import { TransferJobButton } from '@/components/applications/TransferJobButton'
 import { HireDecisionPanel } from '@/components/applications/HireDecisionPanel'
+import { EditCandidateButton } from '@/components/candidates/EditCandidateButton'
+import { ResumeUploadButton } from '@/components/candidates/ResumeUploadButton'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -92,10 +94,16 @@ export default async function ApplicationPage({
   const currentUserId = (session?.user as any)?.id ?? null
 
   // Only the hiring manager and assigned recruiters can see hire decisions
+  const userRole = (session?.user as any)?.role as string | undefined
   const recruiterIds = new Set(job.recruiters.map((r: any) => r.userId))
   const canSeeDecisions =
     currentUserId &&
-    (job.hiringManagerId === currentUserId || recruiterIds.has(currentUserId))
+    (
+      userRole === 'ADMIN' ||
+      job.hiringManagerId === currentUserId ||
+      recruiterIds.has(currentUserId) ||
+      userRole === 'HIRING_MANAGER'
+    )
 
   const submittedScorecards = application.scorecards.filter((s) => s.submittedAt)
   const jobInterviewers = job.interviewers.map(ji => ji.interviewer)
@@ -111,7 +119,7 @@ export default async function ApplicationPage({
   const sectionGroups = Object.entries(entriesBySection) as [string, any[]][]
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="p-4 md:p-8 max-w-5xl">
       {/* Breadcrumb + prev/next nav */}
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -227,7 +235,7 @@ export default async function ApplicationPage({
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-3">
+          <div className="flex flex-col items-end gap-2 md:gap-3 flex-shrink-0">
             <StageSelector
               applicationId={application.id}
               currentStage={application.stage as any}
@@ -264,14 +272,26 @@ export default async function ApplicationPage({
                 currentJobTitle={job.title}
                 candidateName={`${candidate.firstName} ${candidate.lastName}`}
               />
+              <EditCandidateButton
+                candidate={{
+                  id: candidate.id,
+                  firstName: candidate.firstName,
+                  lastName: candidate.lastName,
+                  email: candidate.email ?? '',
+                  phone: candidate.phone ?? null,
+                  linkedInUrl: candidate.linkedInUrl ?? null,
+                  source: candidate.source ?? null,
+                  notes: candidate.notes ?? null,
+                }}
+              />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Main content - left 2/3 */}
-        <div className="col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 md:space-y-6">
 
           {/* Resume */}
           <div className="card overflow-hidden">
@@ -280,14 +300,17 @@ export default async function ApplicationPage({
                 <FileText className="w-4 h-4 text-gray-400" />
                 <h2 className="text-base font-semibold text-gray-900">Resume</h2>
               </div>
-              {candidate.resumeUrl && (
-                <a
-                  href={`/api/resume/${candidate.id}?download=1`}
-                  className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-800 font-medium"
-                >
-                  <Download className="w-3.5 h-3.5" /> Download
-                </a>
-              )}
+              <div className="flex items-center gap-3">
+                <ResumeUploadButton candidateId={candidate.id} />
+                {candidate.resumeUrl && (
+                  <a
+                    href={`/api/resume/${candidate.id}?download=1`}
+                    className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-800 font-medium"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Download
+                  </a>
+                )}
+              </div>
             </div>
             {candidate.resumeUrl ? (
               <div className="w-full bg-gray-50" style={{ height: 700 }}>

@@ -129,9 +129,16 @@ export default async function JobOverviewPage({ params }: { params: { jobId: str
           {job.description && (
             <div className="card p-6">
               <h3 className="text-sm font-semibold text-gray-700 mb-4">Job Description</h3>
-              <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">
-                {job.description}
-              </div>
+              {job.description.trimStart().startsWith('<') ? (
+                <div
+                  className="prose prose-sm max-w-none text-gray-700 text-sm leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: job.description }}
+                />
+              ) : (
+                <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">
+                  {job.description}
+                </div>
+              )}
             </div>
           )}
 

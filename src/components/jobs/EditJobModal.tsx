@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Save, ExternalLink, Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
+import { RichTextEditor } from '@/components/ui/RichTextEditor'
 
 type Job = {
   id: string
@@ -282,9 +283,12 @@ export function EditJobModal({ job, onClose }: EditJobModalProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea value={form.description} onChange={e => set('description', e.target.value)}
-              rows={5} className="input w-full resize-none text-sm"
-              placeholder="Describe the role, responsibilities, and requirements…" />
+            <RichTextEditor
+              value={form.description ?? ''}
+              onChange={(html) => set('description', html)}
+              placeholder="Describe the role, responsibilities, and requirements…"
+              minHeight={180}
+            />
           </div>
         </div>
 

@@ -97,3 +97,32 @@
     @apply bg-gray-50;
   }
 }
+
+/* Tiptap / ProseMirror rich text editor styles
+   Must live outside @layer so they beat Tailwind Preflight's list reset */
+.tiptap p,
+.ProseMirror p { margin-top: 0.25rem; margin-bottom: 0.25rem; }
+
+.tiptap h2,
+.ProseMirror h2 { font-size: 1rem; font-weight: 600; color: #111827; margin-top: 1rem; margin-bottom: 0.375rem; }
+
+.tiptap h3,
+.ProseMirror h3 { font-size: 0.875rem; font-weight: 600; color: #1f2937; margin-top: 0.75rem; margin-bottom: 0.25rem; }
+
+.tiptap ul,
+.ProseMirror ul { list-style-type: disc !important; padding-left: 1.25rem; margin-top: 0.375rem; margin-bottom: 0.375rem; }
+
+.tiptap ol,
+.ProseMirror ol { list-style-type: decimal !important; padding-left: 1.25rem; margin-top: 0.375rem; margin-bottom: 0.375rem; }
+
+.tiptap li,
+.ProseMirror li { font-size: 0.875rem; margin-top: 0.125rem; margin-bottom: 0.125rem; display: list-item !important; }
+
+.tiptap strong,
+.ProseMirror strong { font-weight: 600; }
+
+.tiptap em,
+.ProseMirror em { font-style: italic; }
+
+.tiptap hr,
+.ProseMirror hr { border-color: #e5e7eb; margin-top: 0.75rem; margin-bottom: 0.75rem; }

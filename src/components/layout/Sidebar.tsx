@@ -15,10 +15,12 @@ import {
   LogOut,
   ChevronDown,
   BarChart2,
+  Menu,
+  X,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
-const navItems = [
+const RECRUITER_NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/jobs', label: 'Jobs', icon: Briefcase },
   { href: '/candidates', label: 'Candidates', icon: Users },
@@ -29,11 +31,25 @@ const navItems = [
   { href: '/messages/templates', label: 'Templates', icon: Mail },
 ]
 
+const HIRING_MANAGER_NAV = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/jobs', label: 'Jobs', icon: Briefcase },
+  { href: '/candidates', label: 'Candidates', icon: Users },
+  { href: '/analytics', label: 'Analytics', icon: BarChart2 },
+  { href: '/inbox', label: 'Inbox', icon: Inbox },
+]
+
 export function Sidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+
+  const role = (session?.user as any)?.role as string | undefined
+
+  // Close mobile menu on route change
+  useEffect(() => { setMobileOpen(false) }, [pathname])
 
   useEffect(() => {
     fetch('/api/inbox/unread').then(r => r.json()).then(d => setUnreadCount(d.count ?? 0)).catch(() => {})
@@ -45,103 +61,152 @@ export function Sidebar() {
 
   const isAuthPage = pathname?.startsWith('/auth')
   const isPublicPage = pathname?.startsWith('/apply') || pathname?.startsWith('/offers')
-  if (isAuthPage || isPublicPage) return null
+  const isInterviewerHub = pathname?.startsWith('/interviewer')
+
+  if (isAuthPage || isPublicPage || isInterviewerHub || role === 'INTERVIEWER') return null
+
+  const navItems = role === 'HIRING_MANAGER' ? HIRING_MANAGER_NAV : RECRUITER_NAV
+
+  const NavLinks = () => (
+    <>
+      {navItems.map(({ href, label, icon: Icon }) => {
+        const active = pathname === href || (href !== '/dashboard' && pathname?.startsWith(href))
+        return (
+          <Link
+            key={href}
+            href={href}
+            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors group ${
+              active
+                ? 'bg-[#4AFFD2]/20 text-[#4AFFD2]'
+                : 'text-white/60 hover:bg-white/10 hover:text-white'
+            }`}
+          >
+            <Icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-[#4AFFD2]' : 'text-white/40 group-hover:text-white/70'}`} />
+            {label}
+            {href === '/inbox' && unreadCount > 0 && (
+              <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-blue-500 text-white">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </Link>
+        )
+      })}
+    </>
+  )
 
   return (
-    <aside className="flex flex-col w-60 bg-[#111111] flex-shrink-0">
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
-        <div className="flex items-center justify-center w-9 h-9 rounded-md bg-white/10 flex-shrink-0">
-          <span className="text-white font-black text-base tracking-tighter leading-none">ZB</span>
-        </div>
-        <div className="min-w-0">
-          <span className="text-white font-bold text-base leading-tight block">ZB Hire</span>
-          <span className="text-white/40 text-xs leading-tight">by ZB Designs</span>
-        </div>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {navItems.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || (href !== '/dashboard' && pathname?.startsWith(href))
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors group ${
-                active
-                  ? 'bg-[#4AFFD2]/20 text-[#4AFFD2]'
-                  : 'text-white/60 hover:bg-white/10 hover:text-white'
-              }`}
-            >
-              <Icon
-                className={`w-4 h-4 flex-shrink-0 ${active ? 'text-[#4AFFD2]' : 'text-white/40 group-hover:text-white/70'}`}
-              />
-              {label}
-              {href === '/inbox' && unreadCount > 0 && (
-                <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-blue-500 text-white">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
-            </Link>
-          )
-        })}
-      </nav>
-
-      {/* Settings link */}
-      <div className="px-3 pb-2">
-        <Link
-          href="/settings/profile"
-          className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors group ${
-            pathname?.startsWith('/settings')
-              ? 'bg-[#4AFFD2]/20 text-[#4AFFD2]'
-              : 'text-white/60 hover:bg-white/10 hover:text-white'
-          }`}
-        >
-          <Settings className={`w-4 h-4 flex-shrink-0 ${pathname?.startsWith('/settings') ? 'text-[#4AFFD2]' : 'text-white/40 group-hover:text-white/70'}`} />
-          Settings
-        </Link>
-      </div>
-
-      {/* User section */}
-      <div className="border-t border-white/10 px-3 py-3">
-        {session?.user ? (
-          <div className="relative">
-            <button
-              onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="flex items-center gap-2 w-full px-3 py-2 rounded-md hover:bg-white/10 transition-colors text-left"
-            >
-              <div className="flex items-center justify-center w-7 h-7 rounded-full bg-[#4AFFD2] text-[#111111] text-xs font-bold flex-shrink-0">
-                {session.user.name?.[0]?.toUpperCase() ?? session.user.email?.[0]?.toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-white/90 truncate">{session.user.name ?? session.user.email}</p>
-                <p className="text-xs text-white/40 truncate capitalize">{(session.user as any).role?.toLowerCase()}</p>
-              </div>
-              <ChevronDown className="w-3 h-3 text-white/40 flex-shrink-0" />
-            </button>
-
-            {userMenuOpen && (
-              <div className="absolute bottom-full left-0 right-0 mb-1 bg-[#1e1e1e] border border-white/10 rounded-md shadow-lg z-50 overflow-hidden">
-                <button
-                  onClick={() => signOut({ callbackUrl: '/auth/login' })}
-                  className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-white/70 hover:bg-white/10 hover:text-white"
-                >
-                  <LogOut className="w-4 h-4 text-white/40" />
-                  Sign out
-                </button>
-              </div>
-            )}
+    <>
+      {/* ── Mobile top bar ── */}
+      <div className="md:hidden flex items-center justify-between bg-[#111111] px-4 py-3 flex-shrink-0 z-30">
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-center w-8 h-8 rounded-md bg-white/10 flex-shrink-0">
+            <span className="text-white font-black text-sm tracking-tighter leading-none">ZB</span>
           </div>
-        ) : (
-          <Link
-            href="/auth/login"
-            className="flex items-center gap-2 px-3 py-2 text-sm text-white/60 hover:text-white"
-          >
-            Sign in
-          </Link>
-        )}
+          <span className="text-white font-bold text-sm">ZB Hire</span>
+        </div>
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="p-2 rounded-md text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+          aria-label="Open navigation"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
       </div>
-    </aside>
+
+      {/* ── Mobile backdrop ── */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* ── Sidebar panel ── */}
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-50 flex flex-col w-72 bg-[#111111] flex-shrink-0
+          transition-transform duration-300 ease-in-out
+          md:relative md:w-60 md:translate-x-0 md:z-auto
+          ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+      >
+        {/* Logo row */}
+        <div className="flex items-center justify-between px-5 py-5 border-b border-white/10 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-9 h-9 rounded-md bg-white/10 flex-shrink-0">
+              <span className="text-white font-black text-base tracking-tighter leading-none">ZB</span>
+            </div>
+            <div className="min-w-0">
+              <span className="text-white font-bold text-base leading-tight block">ZB Hire</span>
+              <span className="text-white/40 text-xs leading-tight">by ZB Designs</span>
+            </div>
+          </div>
+          {/* Close button — mobile only */}
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="md:hidden p-1.5 rounded-md text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+            aria-label="Close navigation"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+          <NavLinks />
+        </nav>
+
+        {/* Settings */}
+        <div className="px-3 pb-2 flex-shrink-0">
+          <Link
+            href="/settings/profile"
+            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors group ${
+              pathname?.startsWith('/settings')
+                ? 'bg-[#4AFFD2]/20 text-[#4AFFD2]'
+                : 'text-white/60 hover:bg-white/10 hover:text-white'
+            }`}
+          >
+            <Settings className={`w-4 h-4 flex-shrink-0 ${pathname?.startsWith('/settings') ? 'text-[#4AFFD2]' : 'text-white/40 group-hover:text-white/70'}`} />
+            Settings
+          </Link>
+        </div>
+
+        {/* User section */}
+        <div className="border-t border-white/10 px-3 py-3 flex-shrink-0">
+          {session?.user ? (
+            <div className="relative">
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2 w-full px-3 py-2 rounded-md hover:bg-white/10 transition-colors text-left"
+              >
+                <div className="flex items-center justify-center w-7 h-7 rounded-full bg-[#4AFFD2] text-[#111111] text-xs font-bold flex-shrink-0">
+                  {session.user.name?.[0]?.toUpperCase() ?? session.user.email?.[0]?.toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-white/90 truncate">{session.user.name ?? session.user.email}</p>
+                  <p className="text-xs text-white/40 truncate capitalize">{role?.toLowerCase().replace('_', ' ')}</p>
+                </div>
+                <ChevronDown className="w-3 h-3 text-white/40 flex-shrink-0" />
+              </button>
+              {userMenuOpen && (
+                <div className="absolute bottom-full left-0 right-0 mb-1 bg-[#1e1e1e] border border-white/10 rounded-md shadow-lg z-50 overflow-hidden">
+                  <button
+                    onClick={() => signOut({ callbackUrl: '/auth/login' })}
+                    className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-white/70 hover:bg-white/10 hover:text-white"
+                  >
+                    <LogOut className="w-4 h-4 text-white/40" />
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link href="/auth/login" className="flex items-center gap-2 px-3 py-2 text-sm text-white/60 hover:text-white">
+              Sign in
+            </Link>
+          )}
+        </div>
+      </aside>
+    </>
   )
 }

@@ -20,7 +20,7 @@ export default async function JobsPage() {
   })
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="page-header">
         <div>
           <h1 className="page-title">Jobs</h1>
@@ -42,17 +42,18 @@ export default async function JobsPage() {
             </Link>
           </div>
         ) : (
+          <div className="overflow-x-auto">
           <table className="table">
             <thead>
               <tr>
                 <th>Title</th>
-                <th>Department</th>
-                <th>Location</th>
-                <th>Type</th>
-                <th>Salary Range</th>
+                <th className="hidden md:table-cell">Department</th>
+                <th className="hidden lg:table-cell">Location</th>
+                <th className="hidden lg:table-cell">Type</th>
+                <th className="hidden lg:table-cell">Salary Range</th>
                 <th>Status</th>
-                <th>Applications</th>
-                <th>Team</th>
+                <th className="hidden sm:table-cell">Applications</th>
+                <th className="hidden lg:table-cell">Team</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -63,13 +64,14 @@ export default async function JobsPage() {
                     <Link href={`/jobs/${job.id}`} className="font-medium text-gray-900 hover:text-blue-600 hover:underline">
                       {job.title}
                     </Link>
+                    <p className="text-xs text-gray-400 mt-0.5 md:hidden">{job.department || job.location || ''}</p>
                   </td>
-                  <td className="text-gray-600">{job.department || '—'}</td>
-                  <td className="text-gray-600">{job.location || '—'}</td>
-                  <td className="text-gray-600 text-sm">
+                  <td className="hidden md:table-cell text-gray-600">{job.department || '—'}</td>
+                  <td className="hidden lg:table-cell text-gray-600">{job.location || '—'}</td>
+                  <td className="hidden lg:table-cell text-gray-600 text-sm">
                     {job.employmentType ? EMPLOYMENT_TYPE_LABELS[job.employmentType] ?? job.employmentType : '—'}
                   </td>
-                  <td className="text-gray-600 text-sm whitespace-nowrap">
+                  <td className="hidden lg:table-cell text-gray-600 text-sm whitespace-nowrap">
                     {job.salaryMin || job.salaryMax ? (
                       job.salaryMin && job.salaryMax
                         ? `${formatSalary(job.salaryMin, job.salaryCurrency)} – ${formatSalary(job.salaryMax, job.salaryCurrency)}`
@@ -83,8 +85,8 @@ export default async function JobsPage() {
                       {JOB_STATUS_LABELS[job.status]}
                     </span>
                   </td>
-                  <td className="text-gray-700">{job._count.applications}</td>
-                  <td className="text-gray-700">{job._count.interviewers}</td>
+                  <td className="hidden sm:table-cell text-gray-700">{job._count.applications}</td>
+                  <td className="hidden lg:table-cell text-gray-700">{job._count.interviewers}</td>
                   <td>
                     <Link
                       href={`/jobs/${job.id}/pipeline`}
@@ -97,6 +99,7 @@ export default async function JobsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

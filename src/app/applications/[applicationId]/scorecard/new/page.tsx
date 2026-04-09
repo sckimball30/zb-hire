@@ -5,12 +5,17 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { ArrowLeft } from 'lucide-react'
 import { EvaluationForm } from '@/components/applications/EvaluationForm'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 export default async function NewEvaluationPage({
   params,
 }: {
   params: { applicationId: string }
 }) {
+  const session = await getServerSession(authOptions)
+  const role = (session?.user as any)?.role as string | undefined
+  const isInterviewer = role === 'INTERVIEWER'
   const application = await prisma.application.findUnique({
     where: { id: params.applicationId },
     include: {
@@ -52,11 +57,11 @@ export default async function NewEvaluationPage({
     <div className="p-8 max-w-3xl">
       <div className="mb-6">
         <Link
-          href={`/applications/${application.id}`}
+          href={isInterviewer ? '/interviewer' : `/applications/${application.id}`}
           className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Application
+          {isInterviewer ? 'Back to my interviews' : 'Back to Application'}
         </Link>
         <h1 className="page-title">Submit Evaluation</h1>
         <p className="text-sm text-gray-500 mt-1">

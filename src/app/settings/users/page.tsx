@@ -12,7 +12,14 @@ type Invitation = {
   expiresAt: string; createdAt: string; invitedBy: { name: string | null; email: string | null }
 }
 
-const ROLES = ['ADMIN', 'RECRUITER', 'INTERVIEWER']
+const ROLES = ['ADMIN', 'RECRUITER', 'HIRING_MANAGER', 'INTERVIEWER']
+
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN: 'Admin',
+  RECRUITER: 'Recruiter',
+  HIRING_MANAGER: 'Hiring Manager',
+  INTERVIEWER: 'Interviewer',
+}
 
 export default function UsersSettingsPage() {
   const { data: session } = useSession()
@@ -152,8 +159,8 @@ export default function UsersSettingsPage() {
             onKeyDown={e => e.key === 'Enter' && invite()}
             className="input flex-1"
           />
-          <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} className="input w-36">
-            {ROLES.map(r => <option key={r} value={r}>{r.charAt(0) + r.slice(1).toLowerCase()}</option>)}
+          <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} className="input w-44">
+            {ROLES.map(r => <option key={r} value={r}>{ROLE_LABELS[r] ?? r}</option>)}
           </select>
           <button onClick={invite} disabled={inviting || !inviteEmail.trim()} className="btn-primary flex items-center gap-2">
             <UserPlus className="w-4 h-4" />
@@ -208,7 +215,7 @@ export default function UsersSettingsPage() {
                       onChange={e => changeRole(user.id, e.target.value)}
                       className="appearance-none pr-6 pl-2 py-1 text-xs font-medium rounded-full border border-gray-200 bg-gray-50 text-gray-700 cursor-pointer hover:border-blue-300 focus:outline-none"
                     >
-                      {ROLES.map(r => <option key={r} value={r}>{r.charAt(0) + r.slice(1).toLowerCase()}</option>)}
+                      {ROLES.map(r => <option key={r} value={r}>{ROLE_LABELS[r] ?? r}</option>)}
                     </select>
                     <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
                   </div>
@@ -245,7 +252,7 @@ export default function UsersSettingsPage() {
               {pendingInvites.map(inv => (
                 <tr key={inv.id}>
                   <td className="text-gray-800 font-medium">{inv.email}</td>
-                  <td className="text-gray-600 text-sm capitalize">{inv.role.toLowerCase()}</td>
+                  <td className="text-gray-600 text-sm">{ROLE_LABELS[inv.role] ?? inv.role}</td>
                   <td className="text-gray-500 text-sm">{inv.invitedBy.name ?? inv.invitedBy.email}</td>
                   <td className="text-gray-500 text-sm">{timeAgo(inv.expiresAt)}</td>
                   <td>

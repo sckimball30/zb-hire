@@ -73,7 +73,7 @@ export default async function CandidatesPage({
   const jobColorMap = new Map(allJobs.map((j, i) => [j.id, JOB_COLORS[i % JOB_COLORS.length]]))
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="page-header mb-6">
         <div>
           <h1 className="page-title">Candidates</h1>
@@ -122,16 +122,17 @@ export default async function CandidatesPage({
             )}
           </div>
         ) : (
+          <div className="overflow-x-auto">
           <table className="table">
             <thead>
               <tr>
                 <th>Name</th>
                 <th>Role(s)</th>
-                <th>Tags</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Applied</th>
-                <th>Source</th>
+                <th className="hidden md:table-cell">Tags</th>
+                <th className="hidden sm:table-cell">Email</th>
+                <th className="hidden lg:table-cell">Phone</th>
+                <th className="hidden lg:table-cell">Applied</th>
+                <th className="hidden lg:table-cell">Source</th>
                 <th></th>
               </tr>
             </thead>
@@ -170,7 +171,7 @@ export default async function CandidatesPage({
                         )}
                       </div>
                     </td>
-                    <td>
+                    <td className="hidden md:table-cell">
                       <div className="flex items-center gap-1">
                         {candidate.tags.slice(0, 3).map(ct => (
                           <span
@@ -188,12 +189,12 @@ export default async function CandidatesPage({
                         )}
                       </div>
                     </td>
-                    <td className="text-gray-600">{candidate.email}</td>
-                    <td className="text-gray-600">{candidate.phone || '—'}</td>
-                    <td className="text-gray-500 text-sm">
+                    <td className="hidden sm:table-cell text-gray-600">{candidate.email}</td>
+                    <td className="hidden lg:table-cell text-gray-600">{candidate.phone || '—'}</td>
+                    <td className="hidden lg:table-cell text-gray-500 text-sm">
                       {latestApp ? formatDate(latestApp.createdAt) : formatDate(candidate.createdAt)}
                     </td>
-                    <td className="text-gray-600">{candidate.source || '—'}</td>
+                    <td className="hidden lg:table-cell text-gray-600">{candidate.source || '—'}</td>
                     <td>
                       <Link
                         href={`/candidates/${candidate.id}`}
@@ -207,6 +208,7 @@ export default async function CandidatesPage({
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

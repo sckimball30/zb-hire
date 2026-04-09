@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   }
 
   // If a token is provided, validate the invitation
-  let role: 'ADMIN' | 'RECRUITER' | 'INTERVIEWER' = 'RECRUITER'
+  let role: 'ADMIN' | 'RECRUITER' | 'INTERVIEWER' | 'HIRING_MANAGER' = 'RECRUITER'
   if (token) {
     const invitation = await prisma.invitation.findUnique({ where: { token } })
     if (!invitation || invitation.acceptedAt || invitation.expiresAt < new Date()) {
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     if (invitation.email !== email) {
       return NextResponse.json({ error: 'Email does not match invitation.' }, { status: 400 })
     }
-    role = invitation.role as 'ADMIN' | 'RECRUITER' | 'INTERVIEWER'
+    role = invitation.role as 'ADMIN' | 'RECRUITER' | 'INTERVIEWER' | 'HIRING_MANAGER'
     await prisma.invitation.update({ where: { token }, data: { acceptedAt: new Date() } })
   } else {
     // First user ever becomes admin

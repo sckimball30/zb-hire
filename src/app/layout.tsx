@@ -16,10 +16,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="flex h-screen overflow-hidden bg-gray-50">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
+      <body className="flex flex-col md:flex-row h-screen overflow-hidden bg-gray-50">
         <SessionProvider>
           <Sidebar />
-          <main className="flex-1 overflow-auto">{children}</main>
+          <main className="flex-1 overflow-auto min-w-0">{children}</main>
           <Toaster position="bottom-right" richColors />
         </SessionProvider>
       </body>
