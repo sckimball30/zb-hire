@@ -7,8 +7,21 @@ export async function GET() {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Get all candidates who have at least one message log, with latest message + unread count
+  const userId = (session.user as any)?.id as string | undefined
+
+  // Find candidates this user has messaged
+  const myOutbound = userId
+    ? await prisma.messageLog.findMany({
+        where: { sentById: userId, direction: 'OUTBOUND' },
+        select: { candidateId: true },
+        distinct: ['candidateId'],
+      })
+    : []
+  const myCandidateIds = myOutbound.map(l => l.candidateId)
+
+  // Fetch all messages (inbound + outbound) for those candidates
   const logs = await prisma.messageLog.findMany({
+    where: myCandidateIds.length > 0 ? { candidateId: { in: myCandidateIds } } : { id: 'none' },
     orderBy: { sentAt: 'desc' },
     include: {
       candidate: { select: { id: true, firstName: true, lastName: true, email: true } },

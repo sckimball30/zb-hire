@@ -32,14 +32,36 @@ export async function GET(
     console.error('[inbox] gmail sync failed (non-fatal):', err)
   }
 
-  // Mark all inbound messages as read
+  // Mark inbound messages as read
   await prisma.messageLog.updateMany({
     where: { candidateId, direction: 'INBOUND', read: false },
     data: { read: true },
   })
 
+  const userId = (session.user as any)?.id as string | undefined
+
+  // Get gmailThreadIds started by this user for this candidate
+  const myThreadIds = userId
+    ? await prisma.messageLog.findMany({
+        where: { candidateId, sentById: userId, direction: 'OUTBOUND', gmailThreadId: { not: null } },
+        select: { gmailThreadId: true },
+        distinct: ['gmailThreadId'],
+      }).then(rows => rows.map(r => r.gmailThreadId as string))
+    : []
+
+  // Show: outbound messages from this user + inbound replies in their threads (or all inbound if no gmail)
   const messages = await prisma.messageLog.findMany({
-    where: { candidateId },
+    where: {
+      candidateId,
+      OR: [
+        // Their own sent messages
+        ...(userId ? [{ sentById: userId, direction: 'OUTBOUND' }] : []),
+        // Inbound replies — scoped to their threads when gmail is used
+        myThreadIds.length > 0
+          ? { direction: 'INBOUND', gmailThreadId: { in: myThreadIds } }
+          : { direction: 'INBOUND' },
+      ],
+    },
     orderBy: { sentAt: 'asc' },
   })
 

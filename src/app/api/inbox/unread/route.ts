@@ -7,9 +7,23 @@ export async function GET() {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ count: 0 })
 
-  const count = await prisma.messageLog.count({
-    where: { direction: 'INBOUND', read: false },
-  })
+  const userId = (session.user as any)?.id as string | undefined
+
+  // Get candidateIds this user has messaged
+  const myOutbound = userId
+    ? await prisma.messageLog.findMany({
+        where: { sentById: userId, direction: 'OUTBOUND' },
+        select: { candidateId: true },
+        distinct: ['candidateId'],
+      })
+    : []
+  const myCandidateIds = myOutbound.map(l => l.candidateId)
+
+  const count = myCandidateIds.length > 0
+    ? await prisma.messageLog.count({
+        where: { direction: 'INBOUND', read: false, candidateId: { in: myCandidateIds } },
+      })
+    : 0
 
   return NextResponse.json({ count })
 }
