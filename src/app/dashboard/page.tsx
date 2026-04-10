@@ -73,15 +73,15 @@ export default async function DashboardPage() {
           { label: 'New This Month', value: newThisMonth, sub: new Date().toLocaleString('default', { month: 'long' }), icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-50' },
           { label: 'Hired This Month', value: hiredThisMonth, sub: new Date().toLocaleString('default', { month: 'long' }), icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50' },
         ].map(({ label, value, sub, icon: Icon, color, bg }) => (
-          <div key={label} className="card p-5">
+          <div key={label} className="card p-4 md:p-5">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">{label}</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">{value}</p>
-                <p className="text-xs text-gray-400 mt-1">{sub}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500">{label}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-1">{value}</p>
+                <p className="text-xs text-gray-400 mt-1 hidden sm:block">{sub}</p>
               </div>
-              <div className={`${bg} rounded-lg p-2`}>
-                <Icon className={`w-5 h-5 ${color}`} />
+              <div className={`${bg} rounded-lg p-1.5 sm:p-2`}>
+                <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${color}`} />
               </div>
             </div>
           </div>

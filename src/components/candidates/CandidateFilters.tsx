@@ -33,45 +33,46 @@ export function CandidateFilters({ jobs, tags, currentQ, currentJobId, currentDa
   const hasFilters = currentQ || currentJobId || currentDateFrom || currentDateTo || currentTagId
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      {/* Name search */}
-      <div className="relative">
+    <div className="space-y-2 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+      {/* Row 1: search (full width on mobile) */}
+      <div className="relative w-full sm:w-56">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
         <input
           type="text"
           placeholder="Search name or email…"
           defaultValue={currentQ}
           onChange={e => update('q', e.target.value)}
-          className="pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4AFFD2]/40 focus:border-[#4AFFD2] w-56"
+          className="pl-8 pr-3 py-2.5 sm:py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4AFFD2]/40 focus:border-[#4AFFD2] w-full"
         />
       </div>
 
-      {/* Role filter */}
-      <select
-        value={currentJobId}
-        onChange={e => update('jobId', e.target.value)}
-        className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4AFFD2]/40 focus:border-[#4AFFD2] bg-white text-gray-700"
-      >
-        <option value="">All roles</option>
-        {jobs.map(j => (
-          <option key={j.id} value={j.id}>{j.title}</option>
-        ))}
-      </select>
+      {/* Row 2 on mobile: role + tag side by side */}
+      <div className="flex gap-2 sm:contents">
+        <select
+          value={currentJobId}
+          onChange={e => update('jobId', e.target.value)}
+          className="flex-1 sm:flex-none px-3 py-2.5 sm:py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4AFFD2]/40 focus:border-[#4AFFD2] bg-white text-gray-700"
+        >
+          <option value="">All roles</option>
+          {jobs.map(j => (
+            <option key={j.id} value={j.id}>{j.title}</option>
+          ))}
+        </select>
 
-      {/* Tag filter */}
-      <select
-        value={currentTagId}
-        onChange={e => update('tagId', e.target.value)}
-        className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4AFFD2]/40 focus:border-[#4AFFD2] bg-white text-gray-700"
-      >
-        <option value="">All tags</option>
-        {tags.map(t => (
-          <option key={t.id} value={t.id}>{t.name}</option>
-        ))}
-      </select>
+        <select
+          value={currentTagId}
+          onChange={e => update('tagId', e.target.value)}
+          className="flex-1 sm:flex-none px-3 py-2.5 sm:py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4AFFD2]/40 focus:border-[#4AFFD2] bg-white text-gray-700"
+        >
+          <option value="">All tags</option>
+          {tags.map(t => (
+            <option key={t.id} value={t.id}>{t.name}</option>
+          ))}
+        </select>
+      </div>
 
-      {/* Date from */}
-      <div className="flex items-center gap-1.5">
+      {/* Date filters — desktop only */}
+      <div className="hidden sm:flex items-center gap-1.5">
         <span className="text-xs text-gray-500 whitespace-nowrap">Applied from</span>
         <input
           type="date"
@@ -80,9 +81,7 @@ export function CandidateFilters({ jobs, tags, currentQ, currentJobId, currentDa
           className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4AFFD2]/40 focus:border-[#4AFFD2]"
         />
       </div>
-
-      {/* Date to */}
-      <div className="flex items-center gap-1.5">
+      <div className="hidden sm:flex items-center gap-1.5">
         <span className="text-xs text-gray-500">to</span>
         <input
           type="date"
@@ -98,7 +97,7 @@ export function CandidateFilters({ jobs, tags, currentQ, currentJobId, currentDa
           onClick={clearAll}
           className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 px-2 py-1.5 rounded-md hover:bg-gray-100 transition-colors"
         >
-          <X className="w-3.5 h-3.5" /> Clear filters
+          <X className="w-3.5 h-3.5" /> Clear
         </button>
       )}
     </div>

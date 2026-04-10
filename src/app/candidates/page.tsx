@@ -79,8 +79,8 @@ export default async function CandidatesPage({
           <h1 className="page-title">Candidates</h1>
           <p className="text-sm text-gray-500 mt-1">{candidates.length} candidate{candidates.length !== 1 ? 's' : ''} found</p>
         </div>
-        <div className="flex items-center gap-3">
-          <a href="/api/export/candidates" className="btn-outline flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <a href="/api/export/candidates" className="btn-outline hidden sm:inline-flex items-center gap-2">
             <Download className="w-4 h-4" />
             Export CSV
           </a>
@@ -106,111 +106,158 @@ export default async function CandidatesPage({
         </Suspense>
       </div>
 
-      <div className="card overflow-hidden">
-        {candidates.length === 0 ? (
-          <div className="py-16 text-center">
-            <p className="text-gray-500">
-              {(query || jobId || dateFrom || dateTo || tagId)
-                ? 'No candidates match your filters.'
-                : 'No candidates yet. Add your first candidate.'}
-            </p>
-            {!query && !jobId && !dateFrom && !dateTo && !tagId && (
-              <Link href="/candidates/new" className="btn-primary mt-4 inline-flex">
-                <Plus className="w-4 h-4" />
-                Add Candidate
-              </Link>
-            )}
+      {candidates.length === 0 ? (
+        <div className="card py-16 text-center">
+          <p className="text-gray-500">
+            {(query || jobId || dateFrom || dateTo || tagId)
+              ? 'No candidates match your filters.'
+              : 'No candidates yet. Add your first candidate.'}
+          </p>
+          {!query && !jobId && !dateFrom && !dateTo && !tagId && (
+            <Link href="/candidates/new" className="btn-primary mt-4 inline-flex">
+              <Plus className="w-4 h-4" />
+              Add Candidate
+            </Link>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* ── Mobile card list ── */}
+          <div className="sm:hidden card divide-y divide-gray-100 overflow-hidden">
+            {candidates.map((candidate) => {
+              const latestApp = candidate.applications[0]
+              return (
+                <Link
+                  key={candidate.id}
+                  href={`/candidates/${candidate.id}`}
+                  className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#4AFFD2]/20 text-[#0e7a5c] text-sm font-semibold flex-shrink-0">
+                    {candidate.firstName[0]}{candidate.lastName[0]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 truncate">
+                      {candidate.firstName} {candidate.lastName}
+                    </p>
+                    {candidate.applications.length > 0 ? (
+                      <p className="text-xs text-gray-500 truncate mt-0.5">
+                        {candidate.applications.map(a => a.job.title).join(', ')}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-400 mt-0.5">{candidate.email}</p>
+                    )}
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Added {formatDate(latestApp?.createdAt ?? candidate.createdAt)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {candidate.tags.slice(0, 3).map(ct => (
+                      <span
+                        key={ct.tagId}
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: ct.tag.color }}
+                        title={ct.tag.name}
+                      />
+                    ))}
+                    <svg className="w-4 h-4 text-gray-300 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  </div>
+                </Link>
+              )
+            })}
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Role(s)</th>
-                <th className="hidden md:table-cell">Tags</th>
-                <th className="hidden sm:table-cell">Email</th>
-                <th className="hidden lg:table-cell">Phone</th>
-                <th className="hidden lg:table-cell">Applied</th>
-                <th className="hidden lg:table-cell">Source</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {candidates.map((candidate) => {
-                const latestApp = candidate.applications[0]
-                return (
-                  <tr key={candidate.id}>
-                    <td>
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#4AFFD2]/20 text-[#0e7a5c] text-xs font-semibold flex-shrink-0">
-                          {candidate.firstName[0]}{candidate.lastName[0]}
-                        </div>
-                        <span className="font-medium text-gray-900">
-                          {candidate.firstName} {candidate.lastName}
-                        </span>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="flex flex-wrap gap-1.5">
-                        {candidate.applications.length === 0 ? (
-                          <span className="text-gray-400 text-sm">—</span>
-                        ) : (
-                          candidate.applications.map(app => {
-                            const color = jobColorMap.get(app.job.id) ?? JOB_COLORS[0]
-                            return (
-                              <span
-                                key={app.id}
-                                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border ${color.pill}`}
-                              >
-                                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${color.dot}`} />
-                                {app.job.title}
-                              </span>
-                            )
-                          })
-                        )}
-                      </div>
-                    </td>
-                    <td className="hidden md:table-cell">
-                      <div className="flex items-center gap-1">
-                        {candidate.tags.slice(0, 3).map(ct => (
-                          <span
-                            key={ct.tagId}
-                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: ct.tag.color }}
-                            title={ct.tag.name}
-                          />
-                        ))}
-                        {candidate.tags.length > 3 && (
-                          <span className="text-xs text-gray-400">+{candidate.tags.length - 3}</span>
-                        )}
-                        {candidate.tags.length === 0 && (
-                          <span className="text-gray-300 text-sm">—</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="hidden sm:table-cell text-gray-600">{candidate.email}</td>
-                    <td className="hidden lg:table-cell text-gray-600">{candidate.phone || '—'}</td>
-                    <td className="hidden lg:table-cell text-gray-500 text-sm">
-                      {latestApp ? formatDate(latestApp.createdAt) : formatDate(candidate.createdAt)}
-                    </td>
-                    <td className="hidden lg:table-cell text-gray-600">{candidate.source || '—'}</td>
-                    <td>
-                      <Link
-                        href={`/candidates/${candidate.id}`}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                      >
-                        View
-                      </Link>
-                    </td>
+
+          {/* ── Desktop table ── */}
+          <div className="hidden sm:block card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Role(s)</th>
+                    <th className="hidden md:table-cell">Tags</th>
+                    <th className="hidden sm:table-cell">Email</th>
+                    <th className="hidden lg:table-cell">Phone</th>
+                    <th className="hidden lg:table-cell">Applied</th>
+                    <th className="hidden lg:table-cell">Source</th>
+                    <th></th>
                   </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {candidates.map((candidate) => {
+                    const latestApp = candidate.applications[0]
+                    return (
+                      <tr key={candidate.id}>
+                        <td>
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#4AFFD2]/20 text-[#0e7a5c] text-xs font-semibold flex-shrink-0">
+                              {candidate.firstName[0]}{candidate.lastName[0]}
+                            </div>
+                            <span className="font-medium text-gray-900">
+                              {candidate.firstName} {candidate.lastName}
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="flex flex-wrap gap-1.5">
+                            {candidate.applications.length === 0 ? (
+                              <span className="text-gray-400 text-sm">—</span>
+                            ) : (
+                              candidate.applications.map(app => {
+                                const color = jobColorMap.get(app.job.id) ?? JOB_COLORS[0]
+                                return (
+                                  <span
+                                    key={app.id}
+                                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border ${color.pill}`}
+                                  >
+                                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${color.dot}`} />
+                                    {app.job.title}
+                                  </span>
+                                )
+                              })
+                            )}
+                          </div>
+                        </td>
+                        <td className="hidden md:table-cell">
+                          <div className="flex items-center gap-1">
+                            {candidate.tags.slice(0, 3).map(ct => (
+                              <span
+                                key={ct.tagId}
+                                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: ct.tag.color }}
+                                title={ct.tag.name}
+                              />
+                            ))}
+                            {candidate.tags.length > 3 && (
+                              <span className="text-xs text-gray-400">+{candidate.tags.length - 3}</span>
+                            )}
+                            {candidate.tags.length === 0 && (
+                              <span className="text-gray-300 text-sm">—</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="hidden sm:table-cell text-gray-600">{candidate.email}</td>
+                        <td className="hidden lg:table-cell text-gray-600">{candidate.phone || '—'}</td>
+                        <td className="hidden lg:table-cell text-gray-500 text-sm">
+                          {latestApp ? formatDate(latestApp.createdAt) : formatDate(candidate.createdAt)}
+                        </td>
+                        <td className="hidden lg:table-cell text-gray-600">{candidate.source || '—'}</td>
+                        <td>
+                          <Link
+                            href={`/candidates/${candidate.id}`}
+                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          >
+                            View
+                          </Link>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   )
 }
