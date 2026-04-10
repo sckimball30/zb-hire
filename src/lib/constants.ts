@@ -120,6 +120,19 @@ export const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
   TEMPORARY: 'Temporary',
 }
 
+export const REJECTION_REASONS: { value: string; label: string; color: string }[] = [
+  { value: 'NOT_THE_RIGHT_FIT', label: 'Not the right fit',  color: 'bg-gray-100 text-gray-700' },
+  { value: 'LOCATION',          label: 'Location',           color: 'bg-blue-100 text-blue-700' },
+  { value: 'SALARY_MISMATCH',   label: 'Salary mismatch',    color: 'bg-orange-100 text-orange-700' },
+  { value: 'OVERQUALIFIED',     label: 'Overqualified',      color: 'bg-purple-100 text-purple-700' },
+  { value: 'SILVER_MEDALIST',   label: 'Silver medalist',    color: 'bg-yellow-100 text-yellow-700' },
+  { value: 'NO_RESPONSE',       label: 'No response',        color: 'bg-slate-100 text-slate-600' },
+  { value: 'FAILED_ASSESSMENT', label: 'Failed assessment',  color: 'bg-red-100 text-red-700' },
+  { value: 'POSITION_CLOSED',   label: 'Position closed',    color: 'bg-slate-100 text-slate-600' },
+  { value: 'WITHDREW',          label: 'Withdrew',           color: 'bg-teal-100 text-teal-700' },
+  { value: 'DO_NOT_HIRE',       label: 'Do not hire',        color: 'bg-red-200 text-red-900' },
+]
+
 export const ALL_STAGES: CandidateStage[] = [
   'APPLIED',
   'PHONE_SCREEN',

@@ -30,13 +30,13 @@ export function StageSelector({
   const [open, setOpen] = useState(false)
   const [showRejectModal, setShowRejectModal] = useState(false)
 
-  const commitStageChange = async (newStage: CandidateStage) => {
+  const commitStageChange = async (newStage: CandidateStage, rejectionReason?: string) => {
     setLoading(true)
     try {
       const res = await fetch(`/api/applications/${applicationId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stage: newStage }),
+        body: JSON.stringify({ stage: newStage, ...(rejectionReason ? { rejectionReason } : {}) }),
       })
       if (!res.ok) {
         const data = await res.json()
@@ -97,8 +97,8 @@ export function StageSelector({
           candidateId={candidateId}
           jobTitle={jobTitle}
           currentStage={stage}
-          onConfirm={async () => {
-            await commitStageChange('REJECTED')
+          onConfirm={async (reason: string) => {
+            await commitStageChange('REJECTED', reason)
             setShowRejectModal(false)
           }}
           onCancel={() => setShowRejectModal(false)}

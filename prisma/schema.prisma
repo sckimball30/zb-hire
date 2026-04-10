@@ -293,6 +293,7 @@ model Application {
   stageOrder        Int              @default(0)
   starRating        Int?
   rejectedAt        DateTime?
+  rejectionReason   String?
   hiredAt           DateTime?
   availableStart    String?
   salaryExpectation String?

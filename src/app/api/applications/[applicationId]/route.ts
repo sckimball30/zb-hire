@@ -45,7 +45,7 @@ export async function PATCH(
 ) {
   try {
     const body = await request.json()
-    const { stage, notes, stageOrder, starRating, availableStart, salaryExpectation } = body
+    const { stage, notes, stageOrder, starRating, availableStart, salaryExpectation, rejectionReason } = body
 
     const current = await prisma.application.findUnique({
       where: { id: params.applicationId },
@@ -65,6 +65,7 @@ export async function PATCH(
       // Handle special stages
       if (stage === 'REJECTED') {
         updateData.rejectedAt = new Date()
+        if (rejectionReason) updateData.rejectionReason = rejectionReason
       } else if (stage === 'HIRED') {
         updateData.hiredAt = new Date()
       }

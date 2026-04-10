@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { X, AlertTriangle, Send } from 'lucide-react'
 import { toast } from 'sonner'
+import { REJECTION_REASONS } from '@/lib/constants'
 
 type Template = { id: string; name: string; subject: string; body: string }
 
@@ -11,7 +12,7 @@ interface Props {
   candidateId?: string
   jobTitle?: string
   currentStage?: string          // used to auto-select the right rejection template
-  onConfirm: () => Promise<void> // caller handles the actual stage update
+  onConfirm: (rejectionReason: string) => Promise<void> // caller handles the actual stage update
   onCancel: () => void
 }
 
@@ -55,6 +56,7 @@ export function RejectionModal({
   const [deliveryMode, setDeliveryMode] = useState<'now' | 'schedule'>('schedule')
   const [delayDays, setDelayDays] = useState(2)
   const [saving, setSaving] = useState(false)
+  const [rejectionReason, setRejectionReason] = useState('')
   const [manualVarValues, setManualVarValues] = useState<Record<string, string>>({})
   const [careersPageUrl, setCareersPageUrl] = useState<string | null>(null)
 
@@ -111,13 +113,17 @@ export function RejectionModal({
   const hasUnfilled = manualVars.some(v => !manualVarValues[v]?.trim())
 
   const handleConfirm = async () => {
+    if (!rejectionReason) {
+      toast.warning('Please select a rejection reason.')
+      return
+    }
     if (sendEmail && selectedTemplateId && hasUnfilled) {
       toast.warning('Fill in all variables before sending.')
       return
     }
     setSaving(true)
     try {
-      await onConfirm()
+      await onConfirm(rejectionReason)
 
       if (sendEmail && candidateId && selectedTemplateId) {
         const template = templates.find(t => t.id === selectedTemplateId)
@@ -177,6 +183,31 @@ export function RejectionModal({
         </div>
 
         <div className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
+
+          {/* Disposition picker — required */}
+          <div>
+            <label className="block text-sm font-medium text-gray-900 mb-2">
+              Rejection reason <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {REJECTION_REASONS.map(r => (
+                <button
+                  key={r.value}
+                  type="button"
+                  onClick={() => setRejectionReason(r.value)}
+                  className={`text-left px-3 py-2 rounded-lg text-sm font-medium border-2 transition-colors ${
+                    rejectionReason === r.value
+                      ? 'border-red-500 bg-red-50 text-red-700'
+                      : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="border-t border-gray-100" />
 
           {/* Send email toggle */}
           <label className="flex items-center justify-between gap-3 cursor-pointer">
@@ -292,7 +323,7 @@ export function RejectionModal({
         <div className="px-6 py-4 border-t border-gray-100 flex items-center gap-3 flex-shrink-0">
           <button
             onClick={handleConfirm}
-            disabled={saving || (sendEmail && !selectedTemplateId && rejectionTemplates.length > 0) || (sendEmail && hasUnfilled)}
+            disabled={saving || !rejectionReason || (sendEmail && !selectedTemplateId && rejectionTemplates.length > 0) || (sendEmail && hasUnfilled)}
             className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-xl bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
           >
             {saving ? 'Processing…' : (
