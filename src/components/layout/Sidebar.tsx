@@ -97,8 +97,8 @@ export function Sidebar() {
   return (
     <>
       {/* ── Mobile top bar ── */}
-      <div className="md:hidden flex items-center justify-between bg-[#111111] px-4 py-3 flex-shrink-0 z-30">
-        <div className="flex items-center gap-2.5">
+      <div className="md:hidden flex items-center justify-between bg-[#111111] px-4 pb-3 flex-shrink-0 z-30 safe-top">
+        <div className="flex items-center gap-2.5 pt-3">
           <div className="flex items-center justify-center w-8 h-8 rounded-md bg-white/10 flex-shrink-0">
             <span className="text-white font-black text-sm tracking-tighter leading-none">ZB</span>
           </div>
@@ -106,7 +106,7 @@ export function Sidebar() {
         </div>
         <button
           onClick={() => setMobileOpen(true)}
-          className="p-2 rounded-md text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+          className="p-2.5 mt-3 rounded-md text-white/60 hover:text-white hover:bg-white/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           aria-label="Open navigation"
         >
           <Menu className="w-5 h-5" />
@@ -126,12 +126,16 @@ export function Sidebar() {
         className={`
           fixed inset-y-0 left-0 z-50 flex flex-col w-72 bg-[#111111] flex-shrink-0
           transition-transform duration-300 ease-in-out
-          md:relative md:w-60 md:translate-x-0 md:z-auto
+          md:relative md:w-60 md:translate-x-0 md:z-auto md:inset-y-auto md:left-auto
           ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
+        style={{ paddingLeft: 'env(safe-area-inset-left)' }}
       >
-        {/* Logo row */}
-        <div className="flex items-center justify-between px-5 py-5 border-b border-white/10 flex-shrink-0">
+        {/* Logo row — padding-top accounts for iOS notch on mobile */}
+        <div
+          className="flex items-center justify-between px-5 py-5 border-b border-white/10 flex-shrink-0"
+          style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top))' }}
+        >
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-9 h-9 rounded-md bg-white/10 flex-shrink-0">
               <span className="text-white font-black text-base tracking-tighter leading-none">ZB</span>
@@ -144,7 +148,7 @@ export function Sidebar() {
           {/* Close button — mobile only */}
           <button
             onClick={() => setMobileOpen(false)}
-            className="md:hidden p-1.5 rounded-md text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+            className="md:hidden p-2.5 rounded-md text-white/40 hover:text-white hover:bg-white/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
             aria-label="Close navigation"
           >
             <X className="w-4 h-4" />
@@ -171,8 +175,11 @@ export function Sidebar() {
           </Link>
         </div>
 
-        {/* User section */}
-        <div className="border-t border-white/10 px-3 py-3 flex-shrink-0">
+        {/* User section — padding-bottom accounts for iOS home indicator */}
+        <div
+          className="border-t border-white/10 px-3 py-3 flex-shrink-0"
+          style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+        >
           {session?.user ? (
             <div className="relative">
               <button

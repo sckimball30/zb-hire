@@ -28,13 +28,42 @@
 
   * {
     @apply border-border;
+    /* Remove iOS blue tap flash on all clickable elements */
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    /* Prevent pull-to-refresh on Android Chrome and bounce-scroll on iOS */
+    overscroll-behavior: none;
+  }
+
+  /* Speed up tap response (removes 300ms delay) on buttons and links */
+  button, a, [role="button"] {
+    touch-action: manipulation;
+  }
+
+  /* Prevent iOS from zooming in on input focus (must be >= 16px) */
+  @media (max-width: 767px) {
+    input, textarea, select {
+      font-size: 16px !important;
+    }
   }
 }
+
+/* Dynamic viewport height — respects iOS Safari browser chrome shrink/grow.
+   Falls back to 100vh for older browsers that don't support dvh. */
+.app-shell {
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Safe-area padding helpers for notched iPhones and Android cutouts */
+.safe-top    { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-left   { padding-left: env(safe-area-inset-left); }
+.safe-right  { padding-right: env(safe-area-inset-right); }
 
 @layer components {
   .btn {
