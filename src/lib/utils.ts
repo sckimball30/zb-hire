@@ -28,3 +28,32 @@ export function fullName(first: string, last: string) {
 export function initials(first: string, last: string) {
   return `${first[0]}${last[0]}`.toUpperCase()
 }
+
+/**
+ * Strip quoted email reply chains from a message body.
+ * Removes "On [date] ... wrote:" blocks and trailing "> " quoted lines
+ * so inbound replies display cleanly as chat messages.
+ */
+export function stripEmailQuote(body: string): string {
+  if (!body) return body
+
+  // Match Gmail-style quote header: "On [date] [name] <email> wrote:"
+  // Handles both \n\n and \r\n\r\n line endings
+  const quoteHeaderMatch = body.match(/(\r?\n){1,2}On .{5,300}wrote:\s*(\r?\n|$)/s)
+  if (quoteHeaderMatch?.index !== undefined) {
+    body = body.slice(0, quoteHeaderMatch.index)
+  }
+
+  // Strip any trailing lines that are quoted (start with ">") or blank
+  const lines = body.split('\n')
+  while (lines.length > 0) {
+    const last = lines[lines.length - 1].trim()
+    if (last === '' || last.startsWith('>')) {
+      lines.pop()
+    } else {
+      break
+    }
+  }
+
+  return lines.join('\n').trim()
+}

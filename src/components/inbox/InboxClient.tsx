@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Send, RefreshCw, User, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
-import { initials, timeAgo } from '@/lib/utils'
+import { initials, timeAgo, stripEmailQuote } from '@/lib/utils'
 
 interface Candidate {
   id: string
@@ -173,7 +173,7 @@ export function InboxClient({ initialConversations }: Props) {
                     </div>
                     <p className={`text-xs truncate mt-0.5 ${isUnread ? 'text-gray-800 font-medium' : 'text-gray-500'}`}>
                       {conv.lastMessage.direction === 'OUTBOUND' ? 'You: ' : ''}
-                      {conv.lastMessage.body.slice(0, 60)}
+                      {stripEmailQuote(conv.lastMessage.body).slice(0, 60)}
                     </p>
                     {isUnread && (
                       <span className="inline-flex items-center mt-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
@@ -255,7 +255,7 @@ export function InboxClient({ initialConversations }: Props) {
                       )}
                       <div className={`max-w-[75%] flex flex-col gap-1 ${isOutbound ? 'items-end' : 'items-start'}`}>
                         <div className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${isOutbound ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-white text-gray-800 border border-gray-200 rounded-bl-sm shadow-sm'}`}>
-                          {msg.body}
+                          {stripEmailQuote(msg.body)}
                         </div>
                         <p className={`text-xs text-gray-400 px-1 ${isOutbound ? 'text-right' : 'text-left'}`}>
                           {isOutbound ? (msg.sentByName ?? 'You') : (msg.sentByName ?? 'Candidate')}

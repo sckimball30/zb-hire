@@ -1,5 +1,6 @@
 import { google } from 'googleapis'
 import { prisma } from '@/lib/prisma'
+import { stripEmailQuote } from '@/lib/utils'
 
 const SCOPES = [
   'https://www.googleapis.com/auth/gmail.send',
@@ -213,7 +214,7 @@ export async function syncThreadReplies(candidateId: string): Promise<number> {
           data: {
             candidateId,
             subject,
-            body: body.trim() || '(no body)',
+            body: stripEmailQuote(body) || '(no body)',
             sentAt,
 
             read: false,

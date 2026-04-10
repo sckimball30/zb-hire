@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Mail, Send, Clock, RefreshCw, ArrowDownLeft } from 'lucide-react'
 import { toast } from 'sonner'
+import { stripEmailQuote } from '@/lib/utils'
 
 interface MessageEntry {
   id: string
@@ -163,7 +164,7 @@ export function MessagesCard({ candidateId, initialMessages, scheduledMessages, 
 
                     {isOpen && (
                       <div className="mt-2 text-xs text-gray-600 bg-white rounded border border-gray-100 p-2.5 whitespace-pre-wrap leading-relaxed">
-                        {msg.body}
+                        {stripEmailQuote(msg.body)}
                       </div>
                     )}
                   </div>
