@@ -245,7 +245,11 @@ export function InboxClient({ initialConversations }: Props) {
                 <div className="text-center py-12 text-sm text-gray-400">No messages yet</div>
               ) : (
                 thread.messages.map(msg => {
-                  const isOutbound = msg.direction === 'OUTBOUND'
+                  // Treat as inbound if direction is INBOUND, or if the sender
+                  // name/email matches the candidate (catches old mis-tagged records)
+                  const candidateEmail = thread.candidate.email.toLowerCase()
+                  const isOutbound = msg.direction === 'OUTBOUND' &&
+                    !msg.sentByName?.toLowerCase().includes(candidateEmail)
                   return (
                     <div key={msg.id} className={`flex ${isOutbound ? 'justify-end' : 'justify-start'}`}>
                       {!isOutbound && thread?.candidate && (
@@ -258,7 +262,7 @@ export function InboxClient({ initialConversations }: Props) {
                           {stripEmailQuote(msg.body)}
                         </div>
                         <p className={`text-xs text-gray-400 px-1 ${isOutbound ? 'text-right' : 'text-left'}`}>
-                          {isOutbound ? (msg.sentByName ?? 'You') : (msg.sentByName ?? 'Candidate')}
+                          {isOutbound ? (msg.sentByName ?? 'You') : thread.candidate.firstName}
                           {' · '}
                           {timeAgo(new Date(msg.sentAt))}
                         </p>
