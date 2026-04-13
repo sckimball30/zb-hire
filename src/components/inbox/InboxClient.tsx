@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Send, RefreshCw, User, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Send, RefreshCw, User, ChevronRight, Search, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { initials, timeAgo, stripEmailQuote } from '@/lib/utils'
 
@@ -43,6 +43,7 @@ interface Props {
 
 export function InboxClient({ initialConversations }: Props) {
   const [conversations, setConversations] = useState(initialConversations)
+  const [search, setSearch] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [thread, setThread] = useState<{ candidate: Candidate; messages: Message[] } | null>(null)
   const [loadingThread, setLoadingThread] = useState(false)
@@ -127,17 +128,47 @@ export function InboxClient({ initialConversations }: Props) {
   const selectedConv = conversations.find(c => c.candidateId === selectedId)
   const totalUnread = conversations.reduce((sum, c) => sum + c.unreadCount, 0)
 
+  const q = search.trim().toLowerCase()
+  const filtered = q
+    ? conversations.filter(c =>
+        `${c.candidate.firstName} ${c.candidate.lastName}`.toLowerCase().includes(q) ||
+        c.candidate.email.toLowerCase().includes(q) ||
+        c.lastMessage.subject?.toLowerCase().includes(q) ||
+        c.lastMessage.body?.toLowerCase().includes(q)
+      )
+    : conversations
+
   return (
     <div className="flex h-full overflow-hidden">
       {/* Conversation list */}
       <div className={`flex flex-col border-r border-gray-200 bg-white flex-shrink-0 w-full md:w-80 lg:w-96 ${mobileView === 'thread' ? 'hidden md:flex' : 'flex'}`}>
-        <div className="px-4 py-4 border-b border-gray-100 flex items-center gap-2 flex-shrink-0">
-          <h1 className="text-base font-semibold text-gray-900">Inbox</h1>
-          {totalUnread > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-bold bg-blue-600 text-white">
-              {totalUnread}
-            </span>
-          )}
+        <div className="px-4 pt-4 pb-3 border-b border-gray-100 flex-shrink-0 space-y-3">
+          <div className="flex items-center gap-2">
+            <h1 className="text-base font-semibold text-gray-900">Inbox</h1>
+            {totalUnread > 0 && (
+              <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-bold bg-blue-600 text-white">
+                {totalUnread}
+              </span>
+            )}
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search conversations…"
+              className="w-full pl-8 pr-8 py-2 text-sm bg-gray-100 border-0 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
@@ -149,8 +180,14 @@ export function InboxClient({ initialConversations }: Props) {
               <p className="text-sm font-medium text-gray-600">No conversations yet</p>
               <p className="text-xs text-gray-400 mt-1">Messages sent to candidates will appear here.</p>
             </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center px-6 py-12">
+              <Search className="w-8 h-8 text-gray-200 mb-3" />
+              <p className="text-sm font-medium text-gray-600">No results for "{search}"</p>
+              <button onClick={() => setSearch('')} className="text-xs text-blue-600 hover:underline mt-2">Clear search</button>
+            </div>
           ) : (
-            conversations.map(conv => {
+            filtered.map(conv => {
               const isSelected = conv.candidateId === selectedId
               const isUnread = conv.unreadCount > 0
               return (
