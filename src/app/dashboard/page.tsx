@@ -1,12 +1,16 @@
 export const dynamic = 'force-dynamic'
 
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import Link from 'next/link'
-import { Briefcase, Users, TrendingUp, Clock, CheckCircle } from 'lucide-react'
-import { formatDate, timeAgo } from '@/lib/utils'
+import { Briefcase, Users, TrendingUp, Clock, CheckCircle, Inbox } from 'lucide-react'
+import { formatDate, timeAgo, initials, stripEmailQuote } from '@/lib/utils'
 import { STAGE_COLORS, STAGE_LABELS } from '@/lib/constants'
 
 export default async function DashboardPage() {
+  const session = await getServerSession(authOptions)
+  const userId = (session?.user as any)?.id as string | undefined
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
 
   const [
@@ -18,6 +22,7 @@ export default async function DashboardPage() {
     recentApplications,
     stageBreakdown,
     recentActivity,
+    myOutboundCandidateIds,
   ] = await Promise.all([
     prisma.job.count(),
     prisma.job.count({ where: { status: 'OPEN' } }),
@@ -49,9 +54,38 @@ export default async function DashboardPage() {
       orderBy: { createdAt: 'desc' },
       include: { application: { include: { candidate: true, job: true } } },
     }),
+    // Inbox: candidate IDs this user has messaged
+    userId
+      ? prisma.messageLog.findMany({
+          where: { sentById: userId, direction: 'OUTBOUND' },
+          select: { candidateId: true },
+          distinct: ['candidateId'],
+        })
+      : Promise.resolve([]),
   ])
 
   const stageMap = Object.fromEntries(stageBreakdown.map(s => [s.stage, s._count.stage]))
+
+  // Build inbox preview — latest message per candidate, up to 4 conversations
+  const myCandidateIds = myOutboundCandidateIds.map((l: any) => l.candidateId)
+  const inboxLogs = myCandidateIds.length > 0
+    ? await prisma.messageLog.findMany({
+        where: { candidateId: { in: myCandidateIds } },
+        orderBy: { sentAt: 'desc' },
+        include: { candidate: { select: { id: true, firstName: true, lastName: true } } },
+      })
+    : []
+  const seenInbox = new Set<string>()
+  const inboxPreview: { candidateId: string; candidate: { id: string; firstName: string; lastName: string }; body: string; sentAt: Date; direction: string; unread: number }[] = []
+  for (const log of inboxLogs) {
+    if (!seenInbox.has(log.candidateId)) {
+      seenInbox.add(log.candidateId)
+      const unread = inboxLogs.filter(l => l.candidateId === log.candidateId && l.direction === 'INBOUND' && !l.read).length
+      inboxPreview.push({ candidateId: log.candidateId, candidate: log.candidate, body: log.body, sentAt: log.sentAt, direction: log.direction, unread })
+      if (inboxPreview.length === 4) break
+    }
+  }
+  const totalInboxUnread = inboxPreview.reduce((s, c) => s + c.unread, 0)
 
   const funnelStages = ['APPLIED', 'PHONE_SCREEN', 'INTERVIEWING', 'ONSITE', 'OFFER', 'HIRED'] as const
   // Use the largest stage count as the 100% baseline so bars never exceed full width
@@ -146,6 +180,57 @@ export default async function DashboardPage() {
             ))}
           </ul>
         </div>
+      </div>
+
+      {/* Inbox Preview */}
+      <div className="card overflow-hidden mt-4 md:mt-6">
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Inbox className="w-4 h-4 text-gray-400" />
+            <h2 className="text-base font-semibold text-gray-900">Inbox</h2>
+            {totalInboxUnread > 0 && (
+              <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-bold bg-blue-600 text-white">
+                {totalInboxUnread}
+              </span>
+            )}
+          </div>
+          <Link href="/inbox" className="text-sm text-blue-600 hover:underline">Open inbox</Link>
+        </div>
+        {inboxPreview.length === 0 ? (
+          <div className="px-5 py-8 text-center text-sm text-gray-400">No messages yet. Send a message from any candidate profile.</div>
+        ) : (
+          <ul className="divide-y divide-gray-50">
+            {inboxPreview.map(conv => (
+              <li key={conv.candidateId}>
+                <Link
+                  href="/inbox"
+                  className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors"
+                >
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${conv.unread > 0 ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                    {initials(conv.candidate.firstName, conv.candidate.lastName)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`text-sm truncate ${conv.unread > 0 ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
+                        {conv.candidate.firstName} {conv.candidate.lastName}
+                      </span>
+                      <span className="text-xs text-gray-400 flex-shrink-0">{timeAgo(conv.sentAt)}</span>
+                    </div>
+                    <p className="text-xs text-gray-500 truncate mt-0.5">
+                      {conv.direction === 'OUTBOUND' ? 'You: ' : ''}
+                      {stripEmailQuote(conv.body).slice(0, 70)}
+                    </p>
+                  </div>
+                  {conv.unread > 0 && (
+                    <span className="flex-shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">
+                      {conv.unread}
+                    </span>
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* Recent Applications */}

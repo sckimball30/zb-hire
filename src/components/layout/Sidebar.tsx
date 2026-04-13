@@ -18,29 +18,38 @@ import {
   Menu,
   X,
   BookOpen,
+  Layers,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 const RECRUITER_NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/jobs', label: 'Jobs', icon: Briefcase },
-  { href: '/candidates', label: 'Candidates', icon: Users },
-  { href: '/analytics', label: 'Analytics', icon: BarChart2 },
-  { href: '/questions', label: 'Questions', icon: HelpCircle },
+  { href: '/jobs',      label: 'Jobs',       icon: Briefcase },
+  { href: '/candidates',label: 'Candidates', icon: Users },
+  { href: '/analytics', label: 'Analytics',  icon: BarChart2 },
   { href: '/interviewers', label: 'Interviewers', icon: UserCheck },
-  { href: '/inbox', label: 'Inbox', icon: Inbox },
-  { href: '/messages/templates', label: 'Templates', icon: Mail },
-  { href: '/help', label: 'Help Guide', icon: BookOpen },
+  { href: '/inbox',     label: 'Inbox',      icon: Inbox },
 ]
 
 const HIRING_MANAGER_NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/jobs', label: 'Jobs', icon: Briefcase },
-  { href: '/candidates', label: 'Candidates', icon: Users },
-  { href: '/analytics', label: 'Analytics', icon: BarChart2 },
-  { href: '/inbox', label: 'Inbox', icon: Inbox },
+  { href: '/jobs',      label: 'Jobs',       icon: Briefcase },
+  { href: '/candidates',label: 'Candidates', icon: Users },
+  { href: '/analytics', label: 'Analytics',  icon: BarChart2 },
+  { href: '/inbox',     label: 'Inbox',      icon: Inbox },
+]
+
+const RECRUITER_RESOURCES = [
+  { href: '/questions',         label: 'Questions',   icon: HelpCircle },
+  { href: '/messages/templates',label: 'Templates',   icon: Mail },
+  { href: '/help',              label: 'Help Guide',  icon: BookOpen },
+]
+
+const HM_RESOURCES = [
   { href: '/help', label: 'Help Guide', icon: BookOpen },
 ]
+
+const RESOURCE_PATHS = ['/questions', '/messages/templates', '/help']
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -50,6 +59,14 @@ export function Sidebar() {
   const [unreadCount, setUnreadCount] = useState(0)
 
   const role = (session?.user as any)?.role as string | undefined
+
+  const isResourceActive = RESOURCE_PATHS.some(p => pathname?.startsWith(p))
+  const [resourcesOpen, setResourcesOpen] = useState(isResourceActive)
+
+  // Keep open if navigating into a resource page
+  useEffect(() => {
+    if (isResourceActive) setResourcesOpen(true)
+  }, [isResourceActive])
 
   // Close mobile menu on route change
   useEffect(() => { setMobileOpen(false) }, [pathname])
@@ -62,38 +79,81 @@ export function Sidebar() {
     return () => clearInterval(interval)
   }, [])
 
-  const isAuthPage = pathname?.startsWith('/auth')
-  const isPublicPage = pathname?.startsWith('/apply') || pathname?.startsWith('/offers')
+  const isAuthPage       = pathname?.startsWith('/auth')
+  const isPublicPage     = pathname?.startsWith('/apply') || pathname?.startsWith('/offers')
   const isInterviewerHub = pathname?.startsWith('/interviewer')
 
   if (isAuthPage || isPublicPage || isInterviewerHub || role === 'INTERVIEWER') return null
 
-  const navItems = role === 'HIRING_MANAGER' ? HIRING_MANAGER_NAV : RECRUITER_NAV
+  const navItems     = role === 'HIRING_MANAGER' ? HIRING_MANAGER_NAV : RECRUITER_NAV
+  const resourceItems = role === 'HIRING_MANAGER' ? HM_RESOURCES : RECRUITER_RESOURCES
+
+  const NavLink = ({ href, label, icon: Icon }: { href: string; label: string; icon: React.ElementType }) => {
+    const active = pathname === href || (href !== '/dashboard' && pathname?.startsWith(href))
+    return (
+      <Link
+        href={href}
+        className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors group ${
+          active
+            ? 'bg-[#4AFFD2]/20 text-[#4AFFD2]'
+            : 'text-white/60 hover:bg-white/10 hover:text-white'
+        }`}
+      >
+        <Icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-[#4AFFD2]' : 'text-white/40 group-hover:text-white/70'}`} />
+        {label}
+        {href === '/inbox' && unreadCount > 0 && (
+          <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-blue-500 text-white">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
+      </Link>
+    )
+  }
 
   const NavLinks = () => (
     <>
-      {navItems.map(({ href, label, icon: Icon }) => {
-        const active = pathname === href || (href !== '/dashboard' && pathname?.startsWith(href))
-        return (
-          <Link
-            key={href}
-            href={href}
-            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors group ${
-              active
-                ? 'bg-[#4AFFD2]/20 text-[#4AFFD2]'
-                : 'text-white/60 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <Icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-[#4AFFD2]' : 'text-white/40 group-hover:text-white/70'}`} />
-            {label}
-            {href === '/inbox' && unreadCount > 0 && (
-              <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-blue-500 text-white">
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </span>
-            )}
-          </Link>
-        )
-      })}
+      {/* Main nav items */}
+      {navItems.map(item => (
+        <NavLink key={item.href} {...item} />
+      ))}
+
+      {/* Resources group */}
+      <div className="mt-0.5">
+        <button
+          onClick={() => setResourcesOpen(o => !o)}
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors group ${
+            isResourceActive && !resourcesOpen
+              ? 'bg-[#4AFFD2]/20 text-[#4AFFD2]'
+              : 'text-white/60 hover:bg-white/10 hover:text-white'
+          }`}
+        >
+          <Layers className={`w-4 h-4 flex-shrink-0 ${isResourceActive && !resourcesOpen ? 'text-[#4AFFD2]' : 'text-white/40 group-hover:text-white/70'}`} />
+          <span className="flex-1 text-left">Resources</span>
+          <ChevronDown className={`w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200 ${resourcesOpen ? 'rotate-180' : ''} ${isResourceActive && !resourcesOpen ? 'text-[#4AFFD2]' : 'text-white/30'}`} />
+        </button>
+
+        {resourcesOpen && (
+          <div className="mt-0.5 ml-3 pl-3 border-l border-white/10 space-y-0.5">
+            {resourceItems.map(item => {
+              const active = pathname?.startsWith(item.href)
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-2.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors group ${
+                    active
+                      ? 'bg-[#4AFFD2]/20 text-[#4AFFD2]'
+                      : 'text-white/50 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  <item.icon className={`w-3.5 h-3.5 flex-shrink-0 ${active ? 'text-[#4AFFD2]' : 'text-white/30 group-hover:text-white/60'}`} />
+                  {item.label}
+                </Link>
+              )
+            })}
+          </div>
+        )}
+      </div>
     </>
   )
 
@@ -134,7 +194,7 @@ export function Sidebar() {
         `}
         style={{ paddingLeft: 'env(safe-area-inset-left)' }}
       >
-        {/* Logo row — padding-top accounts for iOS notch on mobile */}
+        {/* Logo row */}
         <div
           className="flex items-center justify-between px-5 py-5 border-b border-white/10 flex-shrink-0"
           style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top))' }}
@@ -148,7 +208,6 @@ export function Sidebar() {
               <span className="text-white/40 text-xs leading-tight">by ZB Designs</span>
             </div>
           </div>
-          {/* Close button — mobile only */}
           <button
             onClick={() => setMobileOpen(false)}
             className="md:hidden p-2.5 rounded-md text-white/40 hover:text-white hover:bg-white/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
@@ -178,7 +237,7 @@ export function Sidebar() {
           </Link>
         </div>
 
-        {/* User section — padding-bottom accounts for iOS home indicator */}
+        {/* User section */}
         <div
           className="border-t border-white/10 px-3 py-3 flex-shrink-0"
           style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
