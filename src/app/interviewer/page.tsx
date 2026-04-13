@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import Link from 'next/link'
-import { Calendar, Clock, CheckCircle2, AlertCircle, User, LogOut } from 'lucide-react'
+import { Calendar, Clock, CheckCircle2, AlertCircle, User, LogOut, ChevronDown } from 'lucide-react'
 import { INTERVIEW_TYPE_LABELS } from '@/lib/constants'
 import { formatDate, formatDateTime } from '@/lib/utils'
 import { InterviewerSignOut } from '@/components/interviewer/InterviewerSignOut'
@@ -143,6 +143,9 @@ export default async function InterviewerHubPage() {
             </div>
           </section>
         )}
+
+        {/* ── Help FAQ ── */}
+        <InterviewerFAQ />
       </div>
     </div>
   )
@@ -222,5 +225,61 @@ function EventCard({
         </div>
       </div>
     </Link>
+  )
+}
+
+const FAQ_ITEMS = [
+  {
+    q: 'How do I submit my evaluation?',
+    a: 'Click any interview card to open the detail view, then click "Open scorecard." Fill out each section and hit Submit. You can\'t edit it after submitting, so review your notes before confirming.',
+  },
+  {
+    q: 'What if I haven\'t interviewed them yet but the card shows?',
+    a: 'You\'ll show up in upcoming interviews as soon as the recruiter logs it. The evaluation button only matters after the interview happens — there\'s no deadline set by the system, but submit as soon as possible while it\'s fresh.',
+  },
+  {
+    q: 'Can I see other interviewers\' evaluations?',
+    a: 'No — each evaluation is private. You only see your own assignments and your own submitted scorecards.',
+  },
+  {
+    q: 'Where is the candidate\'s resume?',
+    a: 'On the interview detail page, scroll down past the evaluation button. The resume preview loads inline, and there\'s a Download button if you want a copy.',
+  },
+  {
+    q: 'What do the ratings mean (A / B / C)?',
+    a: 'A = Strong yes, this person clearly meets or exceeds the bar for this area. B = Leaning yes, meets most of the bar with some gaps. C = No, doesn\'t meet the bar. Be honest — your feedback directly shapes the hiring decision.',
+  },
+  {
+    q: 'I can\'t find my interview — what should I do?',
+    a: 'Make sure you\'re logged in with the same email address the recruiter used when they added you as an interviewer. If you\'re still not seeing it, ask the recruiter to confirm which email they used.',
+  },
+]
+
+function InterviewerFAQ() {
+  return (
+    <section>
+      <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
+        Help & FAQ
+      </h2>
+      <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100 overflow-hidden">
+        {FAQ_ITEMS.map(item => (
+          <FAQItem key={item.q} q={item.q} a={item.a} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// Note: this needs to be a client component for interactivity, but since
+// this file is a server component we inline a simple details/summary instead
+function FAQItem({ q, a }: { q: string; a: string }) {
+  return (
+    <details className="group px-5 py-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+      <summary className="flex items-center justify-between gap-3 text-sm font-medium text-gray-800 select-none list-none">
+        {q}
+        <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 group-open:rotate-180 transition-transform duration-200" />
+      </summary>
+      <p className="mt-3 text-sm text-gray-500 leading-relaxed">{a}</p>
+    </details>
   )
 }

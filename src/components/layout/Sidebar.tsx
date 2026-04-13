@@ -17,6 +17,7 @@ import {
   BarChart2,
   Menu,
   X,
+  BookOpen,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
@@ -29,6 +30,7 @@ const RECRUITER_NAV = [
   { href: '/interviewers', label: 'Interviewers', icon: UserCheck },
   { href: '/inbox', label: 'Inbox', icon: Inbox },
   { href: '/messages/templates', label: 'Templates', icon: Mail },
+  { href: '/help', label: 'Help Guide', icon: BookOpen },
 ]
 
 const HIRING_MANAGER_NAV = [
@@ -37,6 +39,7 @@ const HIRING_MANAGER_NAV = [
   { href: '/candidates', label: 'Candidates', icon: Users },
   { href: '/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/inbox', label: 'Inbox', icon: Inbox },
+  { href: '/help', label: 'Help Guide', icon: BookOpen },
 ]
 
 export function Sidebar() {
