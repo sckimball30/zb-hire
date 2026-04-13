@@ -47,6 +47,137 @@ export async function sendEmail({
   return info
 }
 
+export async function sendInterviewAssignmentEmail({
+  to,
+  interviewerName,
+  candidateName,
+  jobTitle,
+  interviewType,
+  scheduledAt,
+  location,
+  notes,
+  eventId,
+}: {
+  to: string
+  interviewerName: string
+  candidateName: string
+  jobTitle: string
+  interviewType: string
+  scheduledAt?: string | null
+  location?: string | null
+  notes?: string | null
+  eventId: string
+}) {
+  const baseUrl = process.env.NEXTAUTH_URL ?? 'https://zb-hires.vercel.app'
+  const link = `${baseUrl}/interviewer/${eventId}`
+
+  const timeLabel = scheduledAt
+    ? new Date(scheduledAt).toLocaleString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric',
+        year: 'numeric', hour: 'numeric', minute: '2-digit',
+      })
+    : 'Time TBD — your recruiter will confirm shortly'
+
+  const detailRows = [
+    { label: 'Candidate', value: candidateName },
+    { label: 'Role', value: jobTitle },
+    { label: 'Type', value: interviewType },
+    { label: 'When', value: timeLabel },
+    ...(location ? [{ label: 'Where', value: location }] : []),
+    ...(notes ? [{ label: 'Notes', value: notes }] : []),
+  ]
+
+  try {
+    await sendEmail({
+      to,
+      subject: `Interview assigned: ${candidateName} — ${jobTitle}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #111;">
+          <div style="background: #111111; padding: 20px 28px; border-radius: 8px 8px 0 0;">
+            <span style="color: white; font-weight: 900; font-size: 18px; letter-spacing: -0.5px;">ZB Hire</span>
+            <span style="color: rgba(255,255,255,0.4); font-size: 13px; margin-left: 10px;">Interviewer Portal</span>
+          </div>
+          <div style="border: 1px solid #e5e7eb; border-top: none; padding: 28px 32px; border-radius: 0 0 8px 8px;">
+            <p style="margin: 0 0 6px; color: #6b7280; font-size: 14px;">Hi ${interviewerName},</p>
+            <h2 style="margin: 0 0 20px; font-size: 20px; font-weight: 700;">You've been assigned an interview</h2>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+              ${detailRows.map(r => `
+                <tr>
+                  <td style="padding: 8px 12px; background: #f9fafb; border: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; width: 80px; white-space: nowrap;">${r.label}</td>
+                  <td style="padding: 8px 12px; border: 1px solid #e5e7eb; font-size: 14px; color: #111827;">${r.value}</td>
+                </tr>
+              `).join('')}
+            </table>
+            <a href="${link}" style="display:inline-block; background:#4AFFD2; color:#111111; font-weight:700; font-size:14px; padding:12px 24px; border-radius:6px; text-decoration:none;">
+              View Interview &amp; Submit Evaluation →
+            </a>
+            <p style="margin: 28px 0 0; font-size: 12px; color: #9ca3af;">
+              Log in at <a href="${baseUrl}/interviewer" style="color:#4AFFD2;">${baseUrl}/interviewer</a> to see all your upcoming interviews.
+            </p>
+          </div>
+        </div>
+      `,
+    })
+  } catch (err) {
+    console.error('[email] Failed to send interview assignment notification:', err)
+  }
+}
+
+export async function sendInterviewReminderEmail({
+  to,
+  interviewerName,
+  candidateName,
+  jobTitle,
+  scheduledAt,
+  location,
+  eventId,
+}: {
+  to: string
+  interviewerName: string
+  candidateName: string
+  jobTitle: string
+  scheduledAt: string
+  location?: string | null
+  eventId: string
+}) {
+  const baseUrl = process.env.NEXTAUTH_URL ?? 'https://zb-hires.vercel.app'
+  const link = `${baseUrl}/interviewer/${eventId}`
+  const timeLabel = new Date(scheduledAt).toLocaleString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric',
+    year: 'numeric', hour: 'numeric', minute: '2-digit',
+  })
+
+  try {
+    await sendEmail({
+      to,
+      subject: `Reminder: Interview tomorrow with ${candidateName}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #111;">
+          <div style="background: #111111; padding: 20px 28px; border-radius: 8px 8px 0 0;">
+            <span style="color: white; font-weight: 900; font-size: 18px; letter-spacing: -0.5px;">ZB Hire</span>
+          </div>
+          <div style="border: 1px solid #e5e7eb; border-top: none; padding: 28px 32px; border-radius: 0 0 8px 8px;">
+            <p style="margin: 0 0 6px; color: #6b7280; font-size: 14px;">Hi ${interviewerName},</p>
+            <h2 style="margin: 0 0 8px; font-size: 20px; font-weight: 700;">Interview reminder</h2>
+            <p style="margin: 0 0 20px; color: #6b7280; font-size: 14px;">
+              You have an interview scheduled for <strong>${timeLabel}</strong>.
+            </p>
+            <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px 20px; margin-bottom: 24px;">
+              <p style="margin: 0 0 4px; font-size: 16px; font-weight: 600;">${candidateName}</p>
+              <p style="margin: 0; color: #6b7280; font-size: 14px;">${jobTitle}${location ? ` · ${location}` : ''}</p>
+            </div>
+            <a href="${link}" style="display:inline-block; background:#4AFFD2; color:#111111; font-weight:700; font-size:14px; padding:12px 24px; border-radius:6px; text-decoration:none;">
+              View Interview Details →
+            </a>
+          </div>
+        </div>
+      `,
+    })
+  } catch (err) {
+    console.error('[email] Failed to send interview reminder:', err)
+  }
+}
+
 export async function sendNewApplicationEmail({
   to,
   recruiterName,

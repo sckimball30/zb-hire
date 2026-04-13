@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { sendInterviewAssignmentEmail } from '@/lib/email'
+import { INTERVIEW_TYPE_LABELS } from '@/lib/constants'
 
 export async function POST(
   req: NextRequest,
@@ -56,6 +58,30 @@ export async function POST(
       actorName: session.user?.name ?? session.user?.email ?? 'Unknown',
     },
   })
+
+  // Send assignment notification email to the interviewer (non-blocking)
+  if (!isWorkingInterview && interviewer?.email) {
+    const application = await prisma.application.findUnique({
+      where: { id: applicationId },
+      include: {
+        candidate: { select: { firstName: true, lastName: true } },
+        job: { select: { title: true } },
+      },
+    })
+    if (application) {
+      sendInterviewAssignmentEmail({
+        to: interviewer.email,
+        interviewerName: interviewer.name,
+        candidateName: `${application.candidate.firstName} ${application.candidate.lastName}`,
+        jobTitle: application.job.title,
+        interviewType: INTERVIEW_TYPE_LABELS[type as keyof typeof INTERVIEW_TYPE_LABELS] ?? type,
+        scheduledAt: scheduledAt ?? null,
+        location: location ?? null,
+        notes: notes ?? null,
+        eventId: event.id,
+      }).catch(err => console.error('[events] assignment email failed:', err))
+    }
+  }
 
   return NextResponse.json(event, { status: 201 })
 }

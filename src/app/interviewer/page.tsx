@@ -67,13 +67,15 @@ export default async function InterviewerHubPage() {
     .reverse()
     .slice(0, 15)
 
+  const pendingEval = past.filter((e) => !e.scorecard?.submittedAt)
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <InterviewerHeader name={interviewer.name} />
 
-      <div className="max-w-2xl mx-auto w-full px-6 py-8 space-y-8">
+      <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-3">
           <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
             <p className="text-2xl font-bold text-gray-900">{upcoming.length}</p>
             <p className="text-xs text-gray-500 mt-0.5">Upcoming</p>
@@ -85,14 +87,31 @@ export default async function InterviewerHubPage() {
             <p className="text-xs text-gray-500 mt-0.5">Completed</p>
           </div>
           <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-            <p className="text-2xl font-bold text-amber-500">
-              {past.filter((e) => !e.scorecard?.submittedAt).length}
+            <p className={`text-2xl font-bold ${pendingEval.length > 0 ? 'text-amber-500' : 'text-gray-900'}`}>
+              {pendingEval.length}
             </p>
             <p className="text-xs text-gray-500 mt-0.5">Pending eval</p>
           </div>
         </div>
 
-        {/* Upcoming interviews */}
+        {/* ── Action Required ── */}
+        {pendingEval.length > 0 && (
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <AlertCircle className="w-4 h-4 text-amber-500" />
+              <h2 className="text-xs font-semibold text-amber-600 uppercase tracking-widest">
+                Action Required
+              </h2>
+            </div>
+            <div className="space-y-3">
+              {pendingEval.map((event) => (
+                <EventCard key={event.id} event={event} past />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── Upcoming ── */}
         <section>
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
             Upcoming
@@ -111,14 +130,14 @@ export default async function InterviewerHubPage() {
           )}
         </section>
 
-        {/* Past interviews */}
-        {past.length > 0 && (
+        {/* ── Recent (submitted only) ── */}
+        {past.filter(e => e.scorecard?.submittedAt).length > 0 && (
           <section>
             <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-              Recent
+              Recently Completed
             </h2>
             <div className="space-y-3">
-              {past.map((event) => (
+              {past.filter(e => e.scorecard?.submittedAt).map((event) => (
                 <EventCard key={event.id} event={event} past />
               ))}
             </div>
