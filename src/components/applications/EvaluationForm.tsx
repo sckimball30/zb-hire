@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
-import { Plus, Trash2, ChevronDown, ChevronUp, Briefcase } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Briefcase, CheckCircle2 } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -510,6 +510,7 @@ function SectionCard({
   })
 
   const [saving, setSaving] = useState(false)
+  const [collapsed, setCollapsed] = useState(submittedEntries.length > 0)
 
   const getInterviewerName = () => {
     if (interviewerMode === 'text') return customName.trim()
@@ -632,6 +633,7 @@ function SectionCard({
       }
 
       onEntrySaved(savedEntry)
+      if (status === 'SUBMITTED') setCollapsed(true)
       toast.success(
         status === 'SUBMITTED'
           ? `Section "${sectionTitle}" submitted!`
@@ -645,28 +647,47 @@ function SectionCard({
   }
 
   const hasDraft = !!draftEntry
+  const isSubmitted = submittedEntries.length > 0
 
   return (
     <div className="card overflow-hidden">
-      {/* Section header */}
-      <div className="bg-gray-50 border-b border-gray-100 px-5 py-3">
+      {/* Section header — clickable to expand when collapsed */}
+      <button
+        type="button"
+        onClick={() => setCollapsed(o => !o)}
+        className="w-full bg-gray-50 border-b border-gray-100 px-5 py-3 flex items-center justify-between text-left hover:bg-gray-100 transition-colors"
+      >
         <h2 className="text-sm font-semibold text-gray-900">{sectionTitle}</h2>
-      </div>
-
-      {/* Submitted feedback */}
-      {submittedEntries.length > 0 && (
-        <div className="px-5 pt-4 pb-2">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-            Submitted feedback
-          </p>
-          {submittedEntries.map((e) => (
-            <SubmittedEntryRow key={e.id} entry={e} questions={questions} />
-          ))}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {isSubmitted && (
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+              <CheckCircle2 className="w-3 h-3" />
+              Submitted
+            </span>
+          )}
+          {collapsed
+            ? <ChevronDown className="w-4 h-4 text-gray-400" />
+            : <ChevronUp className="w-4 h-4 text-gray-400" />
+          }
         </div>
-      )}
+      </button>
 
-      {/* Add your feedback */}
-      <div className="px-5 py-4 border-t border-gray-50">
+      {!collapsed && (
+        <>
+          {/* Submitted feedback */}
+          {submittedEntries.length > 0 && (
+            <div className="px-5 pt-4 pb-2">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                Submitted feedback
+              </p>
+              {submittedEntries.map((e) => (
+                <SubmittedEntryRow key={e.id} entry={e} questions={questions} />
+              ))}
+            </div>
+          )}
+
+          {/* Add your feedback */}
+          <div className="px-5 py-4 border-t border-gray-50">
         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
           {hasDraft ? 'Your draft' : 'Add your feedback'}
         </p>
@@ -1030,6 +1051,8 @@ function SectionCard({
           </button>
         </div>
       </div>
+        </>
+      )}
     </div>
   )
 }
@@ -1104,6 +1127,7 @@ function FinalAssessmentCard({
   )
 
   const [saving, setSaving] = useState(false)
+  const [collapsed, setCollapsed] = useState(submittedEntries.length > 0)
 
   const getInterviewerName = () => {
     if (interviewerMode === 'text') return customName.trim()
@@ -1172,6 +1196,7 @@ function FinalAssessmentCard({
       }
 
       onEntrySaved(savedEntry)
+      if (status === 'SUBMITTED') setCollapsed(true)
       toast.success(
         status === 'SUBMITTED' ? 'Final assessment submitted!' : 'Draft saved'
       )
@@ -1183,29 +1208,49 @@ function FinalAssessmentCard({
   }
 
   const hasDraft = !!draftEntry
+  const isSubmitted = submittedEntries.length > 0
 
   return (
     <div className="card overflow-hidden">
-      <div className="bg-gray-50 border-b border-gray-100 px-5 py-3">
-        <h2 className="text-sm font-semibold text-gray-900">Final Assessment</h2>
-        <p className="text-xs text-gray-400 mt-0.5">
-          Core values, gut check, and hire recommendation
-        </p>
-      </div>
-
-      {/* Submitted entries */}
-      {submittedEntries.length > 0 && (
-        <div className="px-5 pt-4 pb-2">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-            Submitted feedback
-          </p>
-          {submittedEntries.map((e) => (
-            <SubmittedEntryRow key={e.id} entry={e} questions={[]} />
-          ))}
+      {/* Header — clickable to toggle */}
+      <button
+        type="button"
+        onClick={() => setCollapsed(o => !o)}
+        className="w-full bg-gray-50 border-b border-gray-100 px-5 py-3 flex items-center justify-between text-left hover:bg-gray-100 transition-colors"
+      >
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900">Final Assessment</h2>
+          <p className="text-xs text-gray-400 mt-0.5">Core values, gut check, and hire recommendation</p>
         </div>
-      )}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {isSubmitted && (
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+              <CheckCircle2 className="w-3 h-3" />
+              Submitted
+            </span>
+          )}
+          {collapsed
+            ? <ChevronDown className="w-4 h-4 text-gray-400" />
+            : <ChevronUp className="w-4 h-4 text-gray-400" />
+          }
+        </div>
+      </button>
 
-      <div className="px-5 py-4 border-t border-gray-50">
+      {!collapsed && (
+        <>
+          {/* Submitted entries */}
+          {submittedEntries.length > 0 && (
+            <div className="px-5 pt-4 pb-2">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                Submitted feedback
+              </p>
+              {submittedEntries.map((e) => (
+                <SubmittedEntryRow key={e.id} entry={e} questions={[]} />
+              ))}
+            </div>
+          )}
+
+          <div className="px-5 py-4 border-t border-gray-50">
         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
           {hasDraft ? 'Your draft' : 'Add your assessment'}
         </p>
@@ -1369,6 +1414,8 @@ function FinalAssessmentCard({
           )}
         </div>
       </div>
+        </>
+      )}
     </div>
   )
 }
