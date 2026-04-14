@@ -30,6 +30,14 @@ export function initials(first: string, last: string) {
 }
 
 /**
+ * Returns true if the given date is within the last 12 hours (used for "New Applicant" badge).
+ */
+export function isNewApplicant(date: Date | string | null | undefined): boolean {
+  if (!date) return false
+  return Date.now() - new Date(date).getTime() < 12 * 60 * 60 * 1000
+}
+
+/**
  * Strip quoted email reply chains from a message body.
  * Removes "On [date] ... wrote:" blocks and trailing "> " quoted lines
  * so inbound replies display cleanly as chat messages.

@@ -5,7 +5,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import Link from 'next/link'
 import { Briefcase, Users, TrendingUp, Clock, CheckCircle, Inbox } from 'lucide-react'
-import { formatDate, timeAgo, initials, stripEmailQuote } from '@/lib/utils'
+import { formatDate, timeAgo, initials, stripEmailQuote, isNewApplicant } from '@/lib/utils'
 import { STAGE_COLORS, STAGE_LABELS } from '@/lib/constants'
 
 export default async function DashboardPage() {
@@ -257,7 +257,14 @@ export default async function DashboardPage() {
               {recentApplications.map(app => (
                 <tr key={app.id}>
                   <td className="font-medium text-gray-900">
-                    {app.candidate.firstName} {app.candidate.lastName}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {app.candidate.firstName} {app.candidate.lastName}
+                      {isNewApplicant(app.createdAt) && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wide">
+                          New
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="hidden sm:table-cell text-gray-600">{app.job.title}</td>
                   <td>

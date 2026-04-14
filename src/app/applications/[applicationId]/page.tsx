@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 import { getGmailStatus } from '@/lib/gmail'
 import { ChevronLeft, ChevronRight, Plus, Calendar, Clock, FileText, Download, ClipboardCheck, Linkedin, ExternalLink, MapPin, User, Video, Phone, Users, Briefcase } from 'lucide-react'
 import { STAGE_LABELS, STAGE_COLORS, INTERVIEW_TYPE_LABELS, REJECTION_REASONS } from '@/lib/constants'
-import { formatDate, formatDateTime, timeAgo } from '@/lib/utils'
+import { formatDate, formatDateTime, timeAgo, isNewApplicant } from '@/lib/utils'
 import { StageSelector } from '@/components/applications/StageSelector'
 import { ScheduleInterviewButton } from '@/components/applications/ScheduleInterviewButton'
 import { SendMessageButton } from '@/components/candidates/SendMessageButton'
@@ -180,6 +180,11 @@ export default async function ApplicationPage({
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STAGE_COLORS[application.stage]}`}>
                   {STAGE_LABELS[application.stage]}
                 </span>
+                {isNewApplicant(application.createdAt) && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 uppercase tracking-wide">
+                    New Applicant
+                  </span>
+                )}
                 {application.stage === 'REJECTED' && (application as any).rejectionReason && (() => {
                   const reason = REJECTION_REASONS.find(r => r.value === (application as any).rejectionReason)
                   return reason ? (

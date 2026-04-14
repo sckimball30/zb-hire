@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { Plus, Download } from 'lucide-react'
 import { CandidateFilters } from '@/components/candidates/CandidateFilters'
 import { Suspense } from 'react'
-import { formatDate } from '@/lib/utils'
+import { formatDate, isNewApplicant } from '@/lib/utils'
 
 // Consistent color palette per job — assigned by job order
 const JOB_COLORS = [
@@ -136,9 +136,16 @@ export default async function CandidatesPage({
                     {candidate.firstName[0]}{candidate.lastName[0]}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">
-                      {candidate.firstName} {candidate.lastName}
-                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-medium text-gray-900 truncate">
+                        {candidate.firstName} {candidate.lastName}
+                      </p>
+                      {latestApp && isNewApplicant(latestApp.createdAt) && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wide flex-shrink-0">
+                          New
+                        </span>
+                      )}
+                    </div>
                     {candidate.applications.length > 0 ? (
                       <p className="text-xs text-gray-500 truncate mt-0.5">
                         {candidate.applications.map(a => a.job.title).join(', ')}
@@ -192,9 +199,16 @@ export default async function CandidatesPage({
                             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#4AFFD2]/20 text-[#0e7a5c] text-xs font-semibold flex-shrink-0">
                               {candidate.firstName[0]}{candidate.lastName[0]}
                             </div>
-                            <span className="font-medium text-gray-900">
-                              {candidate.firstName} {candidate.lastName}
-                            </span>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium text-gray-900">
+                                {candidate.firstName} {candidate.lastName}
+                              </span>
+                              {latestApp && isNewApplicant(latestApp.createdAt) && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wide">
+                                  New
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td>

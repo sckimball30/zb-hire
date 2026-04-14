@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { GripVertical, FileText, Mail } from 'lucide-react'
-import { cn, initials } from '@/lib/utils'
+import { cn, initials, isNewApplicant } from '@/lib/utils'
 import { StarRating } from '@/components/shared/StarRating'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -28,6 +28,7 @@ export function CandidateCard({ application, isDragging = false, contacted = fal
   const daysInStage = Math.floor(
     (Date.now() - new Date(application.updatedAt).getTime()) / (1000 * 60 * 60 * 24)
   )
+  const isNew = isNewApplicant((application as any).createdAt)
 
   async function handleStarChange(rating: number | null) {
     setStarRating(rating)
@@ -78,6 +79,12 @@ export function CandidateCard({ application, isDragging = false, contacted = fal
           </div>
 
           <StarRating value={starRating} onChange={handleStarChange} size="sm" />
+
+          {isNew && (
+            <span className="inline-flex items-center mt-1 mb-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wide">
+              New Applicant
+            </span>
+          )}
 
           <div className="flex items-center justify-between mt-1.5 gap-1 flex-wrap">
             <span className="text-xs text-gray-400">
