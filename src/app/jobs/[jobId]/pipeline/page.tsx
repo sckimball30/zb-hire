@@ -74,7 +74,7 @@ export default async function JobPipelinePage({ params }: { params: { jobId: str
 
       {/* Kanban board */}
       <div className="flex-1 overflow-auto px-8 py-6">
-        <KanbanBoard groupedApplications={grouped} jobId={job.id} contactedCandidateIds={contactedCandidateIds} />
+        <KanbanBoard groupedApplications={grouped} jobId={job.id} jobTitle={job.title} contactedCandidateIds={contactedCandidateIds} />
       </div>
     </div>
   )

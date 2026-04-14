@@ -24,6 +24,7 @@ import type { ApplicationWithRelations } from '@/types'
 interface KanbanBoardProps {
   groupedApplications: Record<CandidateStage, ApplicationWithRelations[]>
   jobId: string
+  jobTitle?: string
   contactedCandidateIds?: string[]
 }
 
@@ -36,7 +37,7 @@ interface PendingRejection {
   currentStage: CandidateStage
 }
 
-export function KanbanBoard({ groupedApplications, jobId, contactedCandidateIds = [] }: KanbanBoardProps) {
+export function KanbanBoard({ groupedApplications, jobId, jobTitle = '', contactedCandidateIds = [] }: KanbanBoardProps) {
   const [groups, setGroups] = useState(groupedApplications)
   const [activeApp, setActiveApp] = useState<ApplicationWithRelations | null>(null)
   const [pendingRejection, setPendingRejection] = useState<PendingRejection | null>(null)
@@ -136,7 +137,7 @@ export function KanbanBoard({ groupedApplications, jobId, contactedCandidateIds 
             fromStage: originalStage,
             candidateId: (app.candidate as any).id,
             candidateFirstName: (app.candidate as any).firstName ?? '',
-            jobTitle: (app as any).job?.title ?? '',
+            jobTitle: jobTitle || (app as any).job?.title || '',
             currentStage: originalStage,
           })
         }
