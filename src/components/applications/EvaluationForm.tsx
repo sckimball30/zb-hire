@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
-import { Plus, Trash2, ChevronDown, ChevronUp, Briefcase, CheckCircle2 } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Briefcase, CheckCircle2, FileText } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -54,6 +54,11 @@ interface EvaluationFormProps {
   initialEntries: ScorecardEntry[]
   availableStart: string | null
   salaryExpectation: string | null
+  currentUserName?: string
+  currentUserId?: string
+  candidateId?: string
+  resumeUrl?: string | null
+  candidateName?: string
 }
 
 type ABC = 'A' | 'B' | 'C' | null
@@ -371,6 +376,8 @@ interface SectionCardProps {
   availableStart: string | null
   salaryExpectation: string | null
   onScreeningFieldsChange?: (fields: { availableStart: string; salaryExpectation: string }) => void
+  currentUserName?: string
+  currentUserId?: string
 }
 
 function SectionCard({
@@ -386,17 +393,11 @@ function SectionCard({
   availableStart,
   salaryExpectation,
   onScreeningFieldsChange,
+  currentUserName,
+  currentUserId,
 }: SectionCardProps) {
-  // Interviewer selection
-  const [interviewerMode, setInterviewerMode] = useState<'select' | 'text'>(
-    draftEntry ? 'text' : interviewers.length > 0 ? 'select' : 'text'
-  )
-  const [selectedInterviewerId, setSelectedInterviewerId] = useState(
-    draftEntry?.interviewerId ?? (interviewers[0]?.id || '')
-  )
-  const [customName, setCustomName] = useState(
-    draftEntry && !draftEntry.interviewerId ? draftEntry.interviewerName : ''
-  )
+  // If a logged-in user is provided, skip the interviewer picker entirely
+  const autoUser = !!currentUserName
 
   // ── WHO Interview job list ──────────────────────────────────────────────────
   const initWhoJobs = useCallback((): WhoJob[] => {
@@ -513,15 +514,11 @@ function SectionCard({
   const [collapsed, setCollapsed] = useState(submittedEntries.length > 0)
 
   const getInterviewerName = () => {
-    if (interviewerMode === 'text') return customName.trim()
-    const found = interviewers.find((i) => i.id === selectedInterviewerId)
-    return found?.name ?? ''
+    if (autoUser) return currentUserName!
+    return ''
   }
 
-  const getInterviewerId = () => {
-    if (interviewerMode === 'select') return selectedInterviewerId || null
-    return null
-  }
+  const getInterviewerId = () => null
 
   const setResponse = (
     questionId: string,
@@ -571,7 +568,7 @@ function SectionCard({
   const handleSave = async (status: 'DRAFT' | 'SUBMITTED') => {
     const name = getInterviewerName()
     if (!name) {
-      toast.error('Please enter your name before saving')
+      toast.error('Unable to determine your name. Please contact an admin.')
       return
     }
 
@@ -692,43 +689,10 @@ function SectionCard({
           {hasDraft ? 'Your draft' : 'Add your feedback'}
         </p>
 
-        {/* Interviewer name */}
-        <div className="mb-4">
-          <label className="label block mb-1.5">Your name</label>
-          <div className="flex items-center gap-2">
-            {interviewers.length > 0 && (
-              <select
-                className="input flex-1"
-                value={interviewerMode === 'select' ? selectedInterviewerId : '__custom__'}
-                onChange={(e) => {
-                  if (e.target.value === '__custom__') {
-                    setInterviewerMode('text')
-                  } else {
-                    setInterviewerMode('select')
-                    setSelectedInterviewerId(e.target.value)
-                  }
-                }}
-              >
-                <option value="">Select…</option>
-                {interviewers.map((i) => (
-                  <option key={i.id} value={i.id}>
-                    {i.name}
-                    {i.title ? ` — ${i.title}` : ''}
-                  </option>
-                ))}
-                <option value="__custom__">Other (type name…)</option>
-              </select>
-            )}
-            {(interviewerMode === 'text' || interviewers.length === 0) && (
-              <input
-                type="text"
-                className="input flex-1"
-                placeholder="Your name…"
-                value={customName}
-                onChange={(e) => setCustomName(e.target.value)}
-              />
-            )}
-          </div>
+        {/* Submitting as — auto from logged-in user */}
+        <div className="mb-4 flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
+          <span className="text-gray-400">Submitting as</span>
+          <span className="font-semibold text-gray-900">{currentUserName}</span>
         </div>
 
         {/* Screening extra fields */}
@@ -1065,6 +1029,8 @@ interface FinalAssessmentCardProps {
   submittedEntries: ScorecardEntry[]
   draftEntry: ScorecardEntry | null
   onEntrySaved: (entry: ScorecardEntry) => void
+  currentUserName?: string
+  currentUserId?: string
 }
 
 function FinalAssessmentCard({
@@ -1073,17 +1039,11 @@ function FinalAssessmentCard({
   submittedEntries,
   draftEntry,
   onEntrySaved,
+  currentUserName,
+  currentUserId,
 }: FinalAssessmentCardProps) {
   const sectionTitle = 'Final Assessment'
-
-  // Interviewer selection
-  const [interviewerMode, setInterviewerMode] = useState<'select' | 'text'>(
-    interviewers.length > 0 ? 'select' : 'text'
-  )
-  const [selectedInterviewerId, setSelectedInterviewerId] = useState(
-    draftEntry?.interviewerId ?? (interviewers[0]?.id || '')
-  )
-  const [customName, setCustomName] = useState('')
+  const autoUser = !!currentUserName
 
   // Parse draft responses
   const initFromDraft = () => {
@@ -1130,15 +1090,11 @@ function FinalAssessmentCard({
   const [collapsed, setCollapsed] = useState(submittedEntries.length > 0)
 
   const getInterviewerName = () => {
-    if (interviewerMode === 'text') return customName.trim()
-    const found = interviewers.find((i) => i.id === selectedInterviewerId)
-    return found?.name ?? ''
+    if (autoUser) return currentUserName!
+    return ''
   }
 
-  const getInterviewerId = () => {
-    if (interviewerMode === 'select') return selectedInterviewerId || null
-    return null
-  }
+  const getInterviewerId = () => null
 
   const buildPayload = () => ({
     fierceOwnership: { rating: fierceOwnership },
@@ -1255,43 +1211,10 @@ function FinalAssessmentCard({
           {hasDraft ? 'Your draft' : 'Add your assessment'}
         </p>
 
-        {/* Interviewer */}
-        <div className="mb-5">
-          <label className="label block mb-1.5">Your name</label>
-          <div className="flex items-center gap-2">
-            {interviewers.length > 0 && (
-              <select
-                className="input flex-1"
-                value={interviewerMode === 'select' ? selectedInterviewerId : '__custom__'}
-                onChange={(e) => {
-                  if (e.target.value === '__custom__') {
-                    setInterviewerMode('text')
-                  } else {
-                    setInterviewerMode('select')
-                    setSelectedInterviewerId(e.target.value)
-                  }
-                }}
-              >
-                <option value="">Select…</option>
-                {interviewers.map((i) => (
-                  <option key={i.id} value={i.id}>
-                    {i.name}
-                    {i.title ? ` — ${i.title}` : ''}
-                  </option>
-                ))}
-                <option value="__custom__">Other (type name…)</option>
-              </select>
-            )}
-            {(interviewerMode === 'text' || interviewers.length === 0) && (
-              <input
-                type="text"
-                className="input flex-1"
-                placeholder="Your name…"
-                value={customName}
-                onChange={(e) => setCustomName(e.target.value)}
-              />
-            )}
-          </div>
+        {/* Submitting as — auto from logged-in user */}
+        <div className="mb-5 flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
+          <span className="text-gray-400">Submitting as</span>
+          <span className="font-semibold text-gray-900">{currentUserName}</span>
         </div>
 
         {/* Core Values */}
@@ -1429,8 +1352,14 @@ export function EvaluationForm({
   initialEntries,
   availableStart,
   salaryExpectation,
+  currentUserName,
+  currentUserId,
+  candidateId,
+  resumeUrl,
+  candidateName,
 }: EvaluationFormProps) {
   const [entries, setEntries] = useState<ScorecardEntry[]>(initialEntries)
+  const [resumeOpen, setResumeOpen] = useState(false)
 
   const handleEntrySaved = (saved: ScorecardEntry) => {
     setEntries((prev) => {
@@ -1465,6 +1394,45 @@ export function EvaluationForm({
 
   return (
     <div className="space-y-6">
+      {/* Resume panel — collapsible */}
+      {candidateId && (
+        <div className="card overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setResumeOpen(o => !o)}
+            className="w-full px-5 py-3 flex items-center justify-between text-left bg-gray-50 border-b border-gray-100 hover:bg-gray-100 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-gray-400" />
+              <span className="text-sm font-semibold text-gray-900">
+                {candidateName ? `${candidateName}'s Resume` : 'Resume'}
+              </span>
+              {!resumeUrl && <span className="text-xs text-gray-400">(none on file)</span>}
+            </div>
+            {resumeOpen
+              ? <ChevronUp className="w-4 h-4 text-gray-400" />
+              : <ChevronDown className="w-4 h-4 text-gray-400" />
+            }
+          </button>
+          {resumeOpen && (
+            resumeUrl ? (
+              <div className="w-full bg-gray-50" style={{ height: 600 }}>
+                <iframe
+                  src={`/api/resume/${candidateId}`}
+                  className="w-full h-full border-0"
+                  title="Resume"
+                />
+              </div>
+            ) : (
+              <div className="px-5 py-8 text-center">
+                <FileText className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                <p className="text-sm text-gray-400">No resume uploaded yet.</p>
+              </div>
+            )
+          )}
+        </div>
+      )}
+
       {/* Template sections */}
       {sections.length > 0 ? (
         sections.map((section) => {
@@ -1484,6 +1452,8 @@ export function EvaluationForm({
               isWho={isWho}
               availableStart={availableStart}
               salaryExpectation={salaryExpectation}
+              currentUserName={currentUserName}
+              currentUserId={currentUserId}
             />
           )
         })
@@ -1503,6 +1473,8 @@ export function EvaluationForm({
         submittedEntries={getSubmittedForSection('Final Assessment')}
         draftEntry={getDraftForSection('Final Assessment')}
         onEntrySaved={handleEntrySaved}
+        currentUserName={currentUserName}
+        currentUserId={currentUserId}
       />
     </div>
   )

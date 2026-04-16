@@ -16,6 +16,8 @@ export default async function NewEvaluationPage({
   const session = await getServerSession(authOptions)
   const role = (session?.user as any)?.role as string | undefined
   const isInterviewer = role === 'INTERVIEWER'
+  const currentUserName = (session?.user as any)?.name as string | undefined
+  const currentUserId = (session?.user as any)?.id as string | undefined
   const application = await prisma.application.findUnique({
     where: { id: params.applicationId },
     include: {
@@ -76,6 +78,11 @@ export default async function NewEvaluationPage({
         initialEntries={entries as any}
         availableStart={(application as any).availableStart ?? null}
         salaryExpectation={(application as any).salaryExpectation ?? null}
+        currentUserName={currentUserName}
+        currentUserId={currentUserId}
+        candidateId={candidate.id}
+        resumeUrl={(candidate as any).resumeUrl ?? null}
+        candidateName={`${candidate.firstName} ${candidate.lastName}`}
       />
     </div>
   )
