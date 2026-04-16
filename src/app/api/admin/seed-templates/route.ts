@@ -133,9 +133,30 @@ Hiring Team — Wigglitz`,
   },
 ]
 
+// Variables that should never appear in rejection emails
+const SCHEDULING_VARS = [
+  '{{Calendly Link}}', '{{calendlyLink}}',
+  '{{Interviewer Name}}', '{{Interviewer Title}}',
+  '{{Duration}}', '{{Focus Area}}', '{{Timeframe}}',
+  '{{Confirmation Window}}', '{{Interview Format}}',
+  '{{Office Address}}', '{{Interviewers / Teams}}',
+]
+
+function stripSchedulingVars(text: string): string {
+  let out = text
+  for (const v of SCHEDULING_VARS) {
+    // Remove the variable and any surrounding blank line it may leave
+    out = out.split(v).join('')
+  }
+  // Collapse 3+ consecutive newlines down to 2
+  out = out.replace(/\n{3,}/g, '\n\n').trim()
+  return out
+}
+
 export async function POST() {
   const results: string[] = []
 
+  // Upsert seed templates
   for (const t of templates) {
     const existing = await prisma.messageTemplate.findFirst({ where: { name: t.name } })
     if (existing) {
@@ -144,6 +165,22 @@ export async function POST() {
     } else {
       await prisma.messageTemplate.create({ data: t })
       results.push(`Inserted: ${t.name}`)
+    }
+  }
+
+  // Clean scheduling vars out of any rejection templates in the DB
+  const rejectTemplates = await prisma.messageTemplate.findMany({
+    where: { name: { contains: 'reject', mode: 'insensitive' } },
+  })
+  for (const t of rejectTemplates) {
+    const cleanSubject = stripSchedulingVars(t.subject)
+    const cleanBody    = stripSchedulingVars(t.body)
+    if (cleanSubject !== t.subject || cleanBody !== t.body) {
+      await prisma.messageTemplate.update({
+        where: { id: t.id },
+        data: { subject: cleanSubject, body: cleanBody },
+      })
+      results.push(`Cleaned scheduling vars from: ${t.name}`)
     }
   }
 
