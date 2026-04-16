@@ -19,8 +19,10 @@ import {
   X,
   BookOpen,
   Layers,
+  Eye,
 } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback } from 'react'
 
 const RECRUITER_NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -51,14 +53,64 @@ const HM_RESOURCES = [
 
 const RESOURCE_PATHS = ['/questions', '/messages/templates', '/help']
 
+const PREVIEW_ROLES = [
+  { value: 'RECRUITER',      label: 'Recruiter' },
+  { value: 'HIRING_MANAGER', label: 'Hiring Manager' },
+  { value: 'INTERVIEWER',    label: 'Interviewer' },
+]
+
 export function Sidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
+  const router = useRouter()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [previewRole, setPreviewRole] = useState<string | null>(null)
+  const [viewAsOpen, setViewAsOpen] = useState(false)
 
   const role = (session?.user as any)?.role as string | undefined
+
+  // Read preview cookie on mount and when it changes
+  const syncPreviewRole = useCallback(() => {
+    const match = document.cookie.match(/zbhire_preview_role=([^;]+)/)
+    setPreviewRole(match ? match[1] : null)
+  }, [])
+
+  useEffect(() => {
+    syncPreviewRole()
+    window.addEventListener('zbhire_preview_changed', syncPreviewRole)
+    return () => window.removeEventListener('zbhire_preview_changed', syncPreviewRole)
+  }, [syncPreviewRole])
+
+  const activatePreview = async (targetRole: string) => {
+    setViewAsOpen(false)
+    await fetch('/api/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: targetRole }),
+    })
+    syncPreviewRole()
+    window.dispatchEvent(new Event('zbhire_preview_changed'))
+    // Navigate to appropriate landing page for that role
+    if (targetRole === 'INTERVIEWER') {
+      router.push('/interviewer')
+    } else {
+      router.push('/dashboard')
+    }
+    router.refresh()
+  }
+
+  const exitPreview = async () => {
+    await fetch('/api/preview', { method: 'DELETE' })
+    setPreviewRole(null)
+    window.dispatchEvent(new Event('zbhire_preview_changed'))
+    router.push('/dashboard')
+    router.refresh()
+  }
+
+  // Effective role for nav rendering: use preview if set
+  const effectiveRole = previewRole ?? role
 
   const isResourceActive = RESOURCE_PATHS.some(p => pathname?.startsWith(p))
   const [resourcesOpen, setResourcesOpen] = useState(isResourceActive)
@@ -83,10 +135,13 @@ export function Sidebar() {
   const isPublicPage     = pathname?.startsWith('/apply') || pathname?.startsWith('/offers')
   const isInterviewerHub = pathname?.startsWith('/interviewer')
 
-  if (isAuthPage || isPublicPage || isInterviewerHub || role === 'INTERVIEWER') return null
+  // Hide sidebar for interviewer role UNLESS admin is previewing (they keep sidebar to switch back)
+  if (isAuthPage || isPublicPage) return null
+  if ((isInterviewerHub || effectiveRole === 'INTERVIEWER') && role !== 'ADMIN') return null
+  if (isInterviewerHub && role === 'ADMIN' && !previewRole) return null
 
-  const navItems     = role === 'HIRING_MANAGER' ? HIRING_MANAGER_NAV : RECRUITER_NAV
-  const resourceItems = role === 'HIRING_MANAGER' ? HM_RESOURCES : RECRUITER_RESOURCES
+  const navItems      = effectiveRole === 'HIRING_MANAGER' ? HIRING_MANAGER_NAV : RECRUITER_NAV
+  const resourceItems = effectiveRole === 'HIRING_MANAGER' ? HM_RESOURCES : RECRUITER_RESOURCES
 
   const NavLink = ({ href, label, icon: Icon }: { href: string; label: string; icon: React.ElementType }) => {
     const active = pathname === href || (href !== '/dashboard' && pathname?.startsWith(href))
@@ -222,6 +277,53 @@ export function Sidebar() {
           <NavLinks />
         </nav>
 
+        {/* View As (admin only) */}
+        {role === 'ADMIN' && (
+          <div className="px-3 pb-1 flex-shrink-0 relative">
+            {previewRole ? (
+              <div className="rounded-lg bg-amber-500/20 border border-amber-400/30 px-3 py-2">
+                <p className="text-xs text-amber-300 font-semibold mb-1 flex items-center gap-1.5">
+                  <Eye className="w-3 h-3" /> Previewing as {PREVIEW_ROLES.find(r => r.value === previewRole)?.label}
+                </p>
+                <button
+                  onClick={exitPreview}
+                  className="text-xs text-amber-200 hover:text-white underline"
+                >
+                  Exit preview → back to Admin
+                </button>
+              </div>
+            ) : (
+              <div className="relative">
+                <button
+                  onClick={() => setViewAsOpen(o => !o)}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-white/60 hover:bg-white/10 hover:text-white transition-colors group"
+                >
+                  <Eye className="w-4 h-4 text-white/40 group-hover:text-white/70 flex-shrink-0" />
+                  <span className="flex-1 text-left">View as…</span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-white/30 transition-transform ${viewAsOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {viewAsOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setViewAsOpen(false)} />
+                    <div className="absolute bottom-full left-0 right-0 mb-1 bg-[#1e1e1e] border border-white/10 rounded-md shadow-lg z-20 overflow-hidden">
+                      {PREVIEW_ROLES.map(r => (
+                        <button
+                          key={r.value}
+                          onClick={() => activatePreview(r.value)}
+                          className="w-full text-left px-4 py-2.5 text-sm text-white/70 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-white/30" />
+                          {r.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Settings */}
         <div className="px-3 pb-2 flex-shrink-0">
           <Link
@@ -253,7 +355,7 @@ export function Sidebar() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-white/90 truncate">{session.user.name ?? session.user.email}</p>
-                  <p className="text-xs text-white/40 truncate capitalize">{role?.toLowerCase().replace('_', ' ')}</p>
+                  <p className="text-xs text-white/40 truncate capitalize">{role?.toLowerCase().replace('_', ' ')}{previewRole ? ` · previewing` : ''}</p>
                 </div>
                 <ChevronDown className="w-3 h-3 text-white/40 flex-shrink-0" />
               </button>

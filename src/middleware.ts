@@ -6,6 +6,12 @@ export default withAuth(
     const role = req.nextauth.token?.role as string | undefined
     const { pathname } = req.nextUrl
 
+    // Admins in preview mode bypass all role restrictions
+    const previewRole = req.cookies.get('zbhire_preview_role')?.value
+    if (role === 'ADMIN' && previewRole) {
+      return NextResponse.next()
+    }
+
     if (role === 'INTERVIEWER') {
       // Interviewers can only access their hub, scorecard submission, and APIs
       const allowed =

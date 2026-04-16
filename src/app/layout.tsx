@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Toaster } from 'sonner'
 import { SessionProvider } from '@/components/SessionProvider'
 import { Sidebar } from '@/components/layout/Sidebar'
+import { PreviewBanner } from '@/components/layout/PreviewBanner'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SessionProvider>
           <Sidebar />
           <main className="flex-1 overflow-auto min-w-0" style={{ paddingRight: 'env(safe-area-inset-right)', paddingBottom: 'env(safe-area-inset-bottom)' }}>{children}</main>
+          <PreviewBanner />
           <Toaster position="bottom-right" richColors />
         </SessionProvider>
       </body>

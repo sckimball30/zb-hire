@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
-import { signOut } from 'next-auth/react'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { Calendar, Clock, CheckCircle2, AlertCircle, User, LogOut, ChevronDown } from 'lucide-react'
 import { INTERVIEW_TYPE_LABELS } from '@/lib/constants'
@@ -15,11 +15,21 @@ export default async function InterviewerHubPage() {
   const session = await getServerSession(authOptions)
   if (!session?.user) redirect('/auth/login')
 
+  const sessionRole = (session.user as any).role as string
+  const cookieStore = cookies()
+  const previewRole = cookieStore.get('zbhire_preview_role')?.value
+  const isAdminPreview = sessionRole === 'ADMIN' && previewRole === 'INTERVIEWER'
+
   const email = session.user.email
 
-  const interviewer = email
+  // Admins previewing as interviewer: show the first available interviewer's data
+  let interviewer = email
     ? await prisma.interviewer.findUnique({ where: { email } })
     : null
+
+  if (!interviewer && isAdminPreview) {
+    interviewer = await prisma.interviewer.findFirst({ orderBy: { name: 'asc' } })
+  }
 
   if (!interviewer) {
     return (
