@@ -42,6 +42,14 @@ function applyVars(text: string, vars: Record<string, string>): string {
 
 const AUTO_VAR_NAMES = ['First Name', 'firstName', 'Job Title', 'jobTitle', 'Careers Page URL']
 
+// Variables that make no sense in a rejection email — strip them silently
+const REJECTION_SKIP_VARS = [
+  'Calendly Link', 'calendlyLink', 'calendly link',
+  'Interviewer Name', 'interviewerName', 'Interviewer Title', 'interviewerTitle',
+  'Duration', 'Focus Area', 'Timeframe', 'Confirmation Window',
+  'Interview Format', 'Office Address', 'Interviewers / Teams',
+]
+
 export function RejectionModal({
   candidateFirstName,
   candidateId,
@@ -101,13 +109,16 @@ export function RejectionModal({
     return m
   }, [candidateFirstName, jobTitle, careersPageUrl])
 
-  // Manual vars = any var that isn't auto-filled
+  // Manual vars = any var that isn't auto-filled and isn't a scheduling-only var
   const manualVars = useMemo(() => {
     if (!selectedTemplateId) return []
     const t = templates.find(t => t.id === selectedTemplateId)
     if (!t) return []
     const allVars = [...extractVars(t.subject), ...extractVars(t.body)]
-    return [...new Set(allVars)].filter(v => !(AUTO_VAR_NAMES.includes(v) && autoVars[v]))
+    return [...new Set(allVars)].filter(v =>
+      !(AUTO_VAR_NAMES.includes(v) && autoVars[v]) &&
+      !REJECTION_SKIP_VARS.includes(v)
+    )
   }, [selectedTemplateId, templates, autoVars])
 
   const hasUnfilled = manualVars.some(v => !manualVarValues[v]?.trim())
@@ -128,7 +139,9 @@ export function RejectionModal({
       if (sendEmail && candidateId && selectedTemplateId) {
         const template = templates.find(t => t.id === selectedTemplateId)
         if (template) {
-          const vars: Record<string, string> = { ...autoVars, ...manualVarValues }
+          // Auto-fill skip vars with empty string so they don't appear literally in the email
+          const skipVarMap = Object.fromEntries(REJECTION_SKIP_VARS.map(v => [v, '']))
+          const vars: Record<string, string> = { ...skipVarMap, ...autoVars, ...manualVarValues }
           const subject = applyVars(template.subject, vars)
           const body    = applyVars(template.body,    vars)
 
