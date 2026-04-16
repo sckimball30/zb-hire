@@ -6,74 +6,6 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Calendar, Clock, CheckCircle2, AlertCircle, ChevronDown, Clapperboard } from 'lucide-react'
 
-// ── Demo data — never touches the real database ───────────────────────────────
-
-function daysFromNow(n: number) {
-  const d = new Date()
-  d.setDate(d.getDate() + n)
-  d.setHours(10, 0, 0, 0)
-  return d
-}
-
-const DEMO_EVENTS = [
-  {
-    id: 'demo-pending',
-    candidateFirst: 'Jordan',
-    candidateLast: 'Lee',
-    jobTitle: 'Sales Representative',
-    department: 'Sales',
-    type: 'BEHAVIORAL',
-    scheduledAt: daysFromNow(-1),
-    durationMins: 45,
-    location: 'Zoom',
-    past: true,
-    evalPending: true,
-    evalSubmitted: false,
-  },
-  {
-    id: 'demo-upcoming-1',
-    candidateFirst: 'Alex',
-    candidateLast: 'Rivera',
-    jobTitle: 'Marketing Manager',
-    department: 'Marketing',
-    type: 'PHONE_SCREEN',
-    scheduledAt: daysFromNow(2),
-    durationMins: 30,
-    location: 'Phone',
-    past: false,
-    evalPending: false,
-    evalSubmitted: false,
-  },
-  {
-    id: 'demo-upcoming-2',
-    candidateFirst: 'Casey',
-    candidateLast: 'Morgan',
-    jobTitle: 'Sales Representative',
-    department: 'Sales',
-    type: 'BEHAVIORAL',
-    scheduledAt: daysFromNow(5),
-    durationMins: 45,
-    location: 'Zoom',
-    past: false,
-    evalPending: false,
-    evalSubmitted: false,
-  },
-  {
-    id: 'demo-completed',
-    candidateFirst: 'Sam',
-    candidateLast: 'Chen',
-    jobTitle: 'Operations Lead',
-    department: 'Operations',
-    type: 'TECHNICAL',
-    scheduledAt: daysFromNow(-7),
-    durationMins: 60,
-    location: 'On-site',
-    past: true,
-    evalPending: false,
-    evalSubmitted: true,
-  },
-]
-
 const TYPE_LABELS: Record<string, string> = {
   PHONE_SCREEN: 'Phone Screen',
   TECHNICAL: 'Technical',
@@ -88,13 +20,96 @@ function fmt(d: Date) {
     ' at ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+const FAQ_ITEMS = [
+  { q: 'How do I submit my evaluation?', a: "Click any interview card to open the detail view, then click \"Open scorecard.\" Fill out each section and hit Submit. You can't edit it after submitting, so review your notes before confirming." },
+  { q: "What if I haven't interviewed them yet but the card shows?", a: "You'll show up in upcoming interviews as soon as the recruiter logs it. The evaluation button only matters after the interview happens — there's no deadline set by the system, but submit as soon as possible while it's fresh." },
+  { q: "Can I see other interviewers' evaluations?", a: 'No — each evaluation is private. You only see your own assignments and your own submitted scorecards.' },
+  { q: "Where is the candidate's resume?", a: "On the scorecard page, the resume is shown on the left panel so you can read it while filling out your feedback." },
+  { q: 'What do the ratings mean (A / B / C)?', a: "A = Strong yes, clearly meets the bar. B = Leaning yes, meets most with some gaps. C = No, doesn't meet the bar. Be honest — your feedback directly shapes the hiring decision." },
+  { q: "I can't find my interview — what should I do?", a: "Make sure you're logged in with the same email address the recruiter used when they added you as an interviewer. If you're still not seeing it, ask the recruiter to confirm which email they used." },
+]
 
 export default async function SandboxInterviewerPage() {
   const session = await getServerSession(authOptions)
   if (!session?.user) redirect('/auth/login')
   const role = (session?.user as any)?.role as string
   if (role !== 'ADMIN') redirect('/dashboard')
+
+  // Build dates inside the request so they're always fresh
+  const now = new Date()
+  const d = (offsetDays: number, hour = 10) => {
+    const dt = new Date(now)
+    dt.setDate(dt.getDate() + offsetDays)
+    dt.setHours(hour, 0, 0, 0)
+    return dt
+  }
+
+  const DEMO_EVENTS = [
+    {
+      id: 'demo-pending',
+      candidateFirst: 'Jordan',
+      candidateLast: 'Lee',
+      initials: 'JL',
+      jobTitle: 'Sales Representative',
+      department: 'Sales',
+      type: 'BEHAVIORAL',
+      scheduledAt: d(-1),
+      durationMins: 45,
+      location: 'Zoom',
+      past: true,
+      evalPending: true,
+      evalSubmitted: false,
+      href: '/sandbox/scorecard',
+    },
+    {
+      id: 'demo-upcoming-1',
+      candidateFirst: 'Alex',
+      candidateLast: 'Rivera',
+      initials: 'AR',
+      jobTitle: 'Marketing Manager',
+      department: 'Marketing',
+      type: 'PHONE_SCREEN',
+      scheduledAt: d(2),
+      durationMins: 30,
+      location: 'Phone',
+      past: false,
+      evalPending: false,
+      evalSubmitted: false,
+      href: '/sandbox/upcoming/alex-rivera',
+    },
+    {
+      id: 'demo-upcoming-2',
+      candidateFirst: 'Casey',
+      candidateLast: 'Morgan',
+      initials: 'CM',
+      jobTitle: 'Sales Representative',
+      department: 'Sales',
+      type: 'BEHAVIORAL',
+      scheduledAt: d(5, 14),
+      durationMins: 45,
+      location: 'Zoom',
+      past: false,
+      evalPending: false,
+      evalSubmitted: false,
+      href: '/sandbox/upcoming/casey-morgan',
+    },
+    {
+      id: 'demo-completed',
+      candidateFirst: 'Sam',
+      candidateLast: 'Chen',
+      initials: 'SC',
+      jobTitle: 'Operations Lead',
+      department: 'Operations',
+      type: 'TECHNICAL',
+      scheduledAt: d(-7),
+      durationMins: 60,
+      location: 'On-site',
+      past: true,
+      evalPending: false,
+      evalSubmitted: true,
+      href: '#',
+    },
+  ]
 
   const upcoming = DEMO_EVENTS.filter(e => !e.past)
   const pendingEval = DEMO_EVENTS.filter(e => e.past && e.evalPending)
@@ -155,49 +170,35 @@ export default async function SandboxInterviewerPage() {
           <section>
             <div className="flex items-center gap-2 mb-3">
               <AlertCircle className="w-4 h-4 text-amber-500" />
-              <h2 className="text-xs font-semibold text-amber-600 uppercase tracking-widest">
-                Action Required
-              </h2>
+              <h2 className="text-xs font-semibold text-amber-600 uppercase tracking-widest">Action Required</h2>
             </div>
             <div className="space-y-3">
-              {pendingEval.map(e => (
-                <DemoEventCard key={e.id} event={e} />
-              ))}
+              {pendingEval.map(e => <DemoCard key={e.id} event={e} fmt={fmt} TYPE_LABELS={TYPE_LABELS} />)}
             </div>
           </section>
         )}
 
         {/* Upcoming */}
         <section>
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-            Upcoming
-          </h2>
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Upcoming</h2>
           <div className="space-y-3">
-            {upcoming.map(e => (
-              <DemoEventCard key={e.id} event={e} />
-            ))}
+            {upcoming.map(e => <DemoCard key={e.id} event={e} fmt={fmt} TYPE_LABELS={TYPE_LABELS} />)}
           </div>
         </section>
 
         {/* Recently Completed */}
         {completed.length > 0 && (
           <section>
-            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-              Recently Completed
-            </h2>
+            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Recently Completed</h2>
             <div className="space-y-3">
-              {completed.map(e => (
-                <DemoEventCard key={e.id} event={e} />
-              ))}
+              {completed.map(e => <DemoCard key={e.id} event={e} fmt={fmt} TYPE_LABELS={TYPE_LABELS} />)}
             </div>
           </section>
         )}
 
         {/* FAQ */}
         <section>
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-            Help & FAQ
-          </h2>
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Help & FAQ</h2>
           <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100 overflow-hidden">
             {FAQ_ITEMS.map(item => (
               <details key={item.q} className="group px-5 py-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
@@ -216,16 +217,14 @@ export default async function SandboxInterviewerPage() {
   )
 }
 
-function DemoEventCard({ event }: { event: typeof DEMO_EVENTS[0] }) {
-  const href = event.evalPending
-    ? '/sandbox/scorecard'
-    : event.evalSubmitted
-      ? '#'
-      : '/sandbox/upcoming'
-
+function DemoCard({ event, fmt, TYPE_LABELS }: {
+  event: { id: string; candidateFirst: string; candidateLast: string; initials: string; jobTitle: string; department: string; type: string; scheduledAt: Date; durationMins: number; past: boolean; evalPending: boolean; evalSubmitted: boolean; href: string }
+  fmt: (d: Date) => string
+  TYPE_LABELS: Record<string, string>
+}) {
   return (
     <Link
-      href={href}
+      href={event.href}
       className="block bg-white rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all p-5"
     >
       <div className="flex items-start justify-between gap-4">
@@ -242,11 +241,11 @@ function DemoEventCard({ event }: { event: typeof DEMO_EVENTS[0] }) {
               <span className="inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-100 rounded-full px-2 py-0.5 font-medium">
                 <AlertCircle className="w-3 h-3" /> Eval pending
               </span>
-            ) : !event.past ? (
+            ) : (
               <span className="inline-flex items-center gap-1 text-xs text-blue-700 bg-blue-50 rounded-full px-2 py-0.5 font-medium">
                 View profile →
               </span>
-            ) : null}
+            )}
           </div>
           <p className="text-sm text-gray-500">{event.jobTitle} · {event.department}</p>
           <div className="flex items-center gap-4 mt-2 flex-wrap">
@@ -264,18 +263,9 @@ function DemoEventCard({ event }: { event: typeof DEMO_EVENTS[0] }) {
           </div>
         </div>
         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 text-blue-700 text-sm font-bold flex items-center justify-center">
-          {event.candidateFirst[0]}{event.candidateLast[0]}
+          {event.initials}
         </div>
       </div>
     </Link>
   )
 }
-
-const FAQ_ITEMS = [
-  { q: 'How do I submit my evaluation?', a: 'Click any interview card to open the detail view, then click "Open scorecard." Fill out each section and hit Submit. You can\'t edit it after submitting, so review your notes before confirming.' },
-  { q: "What if I haven't interviewed them yet but the card shows?", a: "You'll show up in upcoming interviews as soon as the recruiter logs it. The evaluation button only matters after the interview happens — there's no deadline set by the system, but submit as soon as possible while it's fresh." },
-  { q: "Can I see other interviewers' evaluations?", a: 'No — each evaluation is private. You only see your own assignments and your own submitted scorecards.' },
-  { q: "Where is the candidate's resume?", a: "On the scorecard page, the resume is shown on the left panel so you can read it while filling out your feedback." },
-  { q: 'What do the ratings mean (A / B / C)?', a: 'A = Strong yes, clearly meets the bar. B = Leaning yes, meets most with some gaps. C = No, doesn\'t meet the bar. Be honest — your feedback directly shapes the hiring decision.' },
-  { q: "I can't find my interview — what should I do?", a: "Make sure you're logged in with the same email address the recruiter used when they added you as an interviewer. If you're still not seeing it, ask the recruiter to confirm which email they used." },
-]
