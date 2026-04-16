@@ -20,6 +20,7 @@ import {
   BookOpen,
   Layers,
   Eye,
+  Clapperboard,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback } from 'react'
@@ -316,6 +317,15 @@ export function Sidebar() {
                           {r.label}
                         </button>
                       ))}
+                      <div className="border-t border-white/10 my-1" />
+                      <Link
+                        href="/sandbox/interviewer"
+                        onClick={() => setViewAsOpen(false)}
+                        className="w-full text-left px-4 py-2.5 text-sm text-amber-400 hover:bg-white/10 transition-colors flex items-center gap-2"
+                      >
+                        <Clapperboard className="w-3.5 h-3.5" />
+                        Sandbox / Demo
+                      </Link>
                     </div>
                   </>
                 )}

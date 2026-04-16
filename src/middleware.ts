@@ -6,9 +6,8 @@ export default withAuth(
     const role = req.nextauth.token?.role as string | undefined
     const { pathname } = req.nextUrl
 
-    // Admins in preview mode bypass all role restrictions
-    const previewRole = req.cookies.get('zbhire_preview_role')?.value
-    if (role === 'ADMIN' && previewRole) {
+    // Admins always have full access (preview mode + sandbox)
+    if (role === 'ADMIN') {
       return NextResponse.next()
     }
 
