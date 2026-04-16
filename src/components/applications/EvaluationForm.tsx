@@ -1354,12 +1354,8 @@ export function EvaluationForm({
   salaryExpectation,
   currentUserName,
   currentUserId,
-  candidateId,
-  resumeUrl,
-  candidateName,
 }: EvaluationFormProps) {
   const [entries, setEntries] = useState<ScorecardEntry[]>(initialEntries)
-  const [resumeOpen, setResumeOpen] = useState(false)
 
   const handleEntrySaved = (saved: ScorecardEntry) => {
     setEntries((prev) => {
@@ -1394,45 +1390,6 @@ export function EvaluationForm({
 
   return (
     <div className="space-y-6">
-      {/* Resume panel — collapsible */}
-      {candidateId && (
-        <div className="card overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setResumeOpen(o => !o)}
-            className="w-full px-5 py-3 flex items-center justify-between text-left bg-gray-50 border-b border-gray-100 hover:bg-gray-100 transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-gray-400" />
-              <span className="text-sm font-semibold text-gray-900">
-                {candidateName ? `${candidateName}'s Resume` : 'Resume'}
-              </span>
-              {!resumeUrl && <span className="text-xs text-gray-400">(none on file)</span>}
-            </div>
-            {resumeOpen
-              ? <ChevronUp className="w-4 h-4 text-gray-400" />
-              : <ChevronDown className="w-4 h-4 text-gray-400" />
-            }
-          </button>
-          {resumeOpen && (
-            resumeUrl ? (
-              <div className="w-full bg-gray-50" style={{ height: 600 }}>
-                <iframe
-                  src={`/api/resume/${candidateId}`}
-                  className="w-full h-full border-0"
-                  title="Resume"
-                />
-              </div>
-            ) : (
-              <div className="px-5 py-8 text-center">
-                <FileText className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                <p className="text-sm text-gray-400">No resume uploaded yet.</p>
-              </div>
-            )
-          )}
-        </div>
-      )}
-
       {/* Template sections */}
       {sections.length > 0 ? (
         sections.map((section) => {
