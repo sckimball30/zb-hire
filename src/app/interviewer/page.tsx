@@ -212,7 +212,11 @@ function EventCard({
               <span className="inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-100 rounded-full px-2 py-0.5 font-medium">
                 <AlertCircle className="w-3 h-3" /> Eval pending
               </span>
-            ) : null}
+            ) : (
+              <span className="inline-flex items-center gap-1 text-xs text-blue-700 bg-blue-50 rounded-full px-2 py-0.5 font-medium">
+                View profile →
+              </span>
+            )}
           </div>
           <p className="text-sm text-gray-500">{job.title}{job.department ? ` · ${job.department}` : ''}</p>
           <div className="flex items-center gap-4 mt-2 flex-wrap">

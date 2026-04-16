@@ -219,9 +219,9 @@ export default async function SandboxInterviewerPage() {
 function DemoEventCard({ event }: { event: typeof DEMO_EVENTS[0] }) {
   const href = event.evalPending
     ? '/sandbox/scorecard'
-    : event.past
+    : event.evalSubmitted
       ? '#'
-      : '#'
+      : '/sandbox/upcoming'
 
   return (
     <Link
@@ -241,6 +241,10 @@ function DemoEventCard({ event }: { event: typeof DEMO_EVENTS[0] }) {
             ) : event.evalPending ? (
               <span className="inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-100 rounded-full px-2 py-0.5 font-medium">
                 <AlertCircle className="w-3 h-3" /> Eval pending
+              </span>
+            ) : !event.past ? (
+              <span className="inline-flex items-center gap-1 text-xs text-blue-700 bg-blue-50 rounded-full px-2 py-0.5 font-medium">
+                View profile →
               </span>
             ) : null}
           </div>
