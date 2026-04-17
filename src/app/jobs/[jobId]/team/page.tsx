@@ -37,8 +37,8 @@ export default async function JobTeamPage({
     }),
     prisma.interviewer.findMany({ orderBy: { name: 'asc' } }),
     prisma.user.findMany({
-      where: { role: { in: ['ADMIN', 'RECRUITER'] } },
-      select: { id: true, name: true, email: true },
+      where: { role: { in: ['ADMIN', 'RECRUITER', 'HIRING_MANAGER'] } },
+      select: { id: true, name: true, email: true, role: true },
       orderBy: { name: 'asc' },
     }),
   ])

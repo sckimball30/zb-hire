@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { UserPlus, Trash2, ChevronDown, Copy, Check, Mail, ShieldAlert, ChevronRight, X } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
+import { UserPlus, Trash2, ChevronDown, Copy, Check, Mail, ShieldAlert, ChevronRight, X, Briefcase } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDate } from '@/lib/utils'
 import { useSession } from 'next-auth/react'
@@ -37,6 +37,8 @@ function roleColor(role: string) {
   return 'bg-gray-100 text-gray-600'
 }
 
+type Job = { id: string; title: string; department: string; hiringManagerId: string | null }
+
 function UserRow({
   user,
   isSelf,
@@ -55,7 +57,53 @@ function UserRow({
   const [saving, setSaving] = useState(false)
   const [removing, setRemoving] = useState(false)
 
-  const hasProfile = PROFILE_ROLES.includes(role)
+  // Job assignments (for HM role)
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [jobsLoaded, setJobsLoaded] = useState(false)
+  const [togglingJob, setTogglingJob] = useState<string | null>(null)
+
+  const effectiveRole = role
+  const hasProfile = PROFILE_ROLES.includes(effectiveRole)
+  const isHM = effectiveRole === 'HIRING_MANAGER'
+
+  const loadJobs = useCallback(async () => {
+    if (jobsLoaded) return
+    const res = await fetch(`/api/users/${user.id}/jobs`)
+    if (res.ok) {
+      const data = await res.json()
+      setJobs(data.jobs)
+      setJobsLoaded(true)
+    }
+  }, [user.id, jobsLoaded])
+
+  useEffect(() => {
+    if (expanded && isHM && !jobsLoaded) loadJobs()
+  }, [expanded, isHM, jobsLoaded, loadJobs])
+
+  // Also reload when role switches to HM
+  useEffect(() => {
+    if (isHM && expanded && !jobsLoaded) loadJobs()
+  }, [isHM, expanded, jobsLoaded, loadJobs])
+
+  async function toggleJob(jobId: string, currentlyAssigned: boolean) {
+    setTogglingJob(jobId)
+    const res = await fetch(`/api/users/${user.id}/jobs`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jobId, assign: !currentlyAssigned }),
+    })
+    setTogglingJob(null)
+    if (res.ok) {
+      setJobs(prev => prev.map(j =>
+        j.id === jobId
+          ? { ...j, hiringManagerId: currentlyAssigned ? null : user.id }
+          : // unassign from others if assigning (one HM per job)
+            !currentlyAssigned ? { ...j, hiringManagerId: j.hiringManagerId === user.id ? null : j.hiringManagerId } : j
+      ))
+    } else {
+      toast.error('Failed to update job assignment')
+    }
+  }
 
   async function save() {
     setSaving(true)
@@ -94,6 +142,8 @@ function UserRow({
     }
   }
 
+  const assignedJobs = jobs.filter(j => j.hiringManagerId === user.id)
+
   return (
     <div className="border-b border-gray-100 last:border-0">
       {/* Main row */}
@@ -131,13 +181,14 @@ function UserRow({
       {expanded && (
         <div className="px-6 pb-5 bg-gray-50 border-t border-gray-100">
           <div className="max-w-lg pt-4 space-y-4">
+
             {/* Role */}
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1.5">Role</label>
               <div className="relative inline-block">
                 <select
                   value={role}
-                  onChange={e => setRole(e.target.value)}
+                  onChange={e => { setRole(e.target.value); setJobsLoaded(false) }}
                   disabled={isSelf}
                   className="appearance-none pl-3 pr-8 py-1.5 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -148,7 +199,7 @@ function UserRow({
               {isSelf && <p className="text-xs text-gray-400 mt-1">You cannot change your own role.</p>}
             </div>
 
-            {/* Profile fields — shown for Interviewer / Hiring Manager */}
+            {/* Profile fields — Interviewer / Hiring Manager */}
             {hasProfile && (
               <>
                 <div>
@@ -175,19 +226,70 @@ function UserRow({
               </>
             )}
 
+            {/* Job assignments — Hiring Manager only */}
+            {isHM && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Briefcase className="w-3.5 h-3.5 text-gray-400" />
+                  <label className="text-xs font-semibold text-gray-500">Job Assignments</label>
+                  {assignedJobs.length > 0 && (
+                    <span className="text-xs text-teal-600 font-medium">
+                      {assignedJobs.length} assigned
+                    </span>
+                  )}
+                </div>
+                {!jobsLoaded ? (
+                  <p className="text-xs text-gray-400">Loading jobs…</p>
+                ) : jobs.length === 0 ? (
+                  <p className="text-xs text-gray-400">No open jobs found.</p>
+                ) : (
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                    {jobs.map(job => {
+                      const assigned = job.hiringManagerId === user.id
+                      const takenBy = job.hiringManagerId && job.hiringManagerId !== user.id
+                      return (
+                        <label
+                          key={job.id}
+                          className={`flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
+                            assigned
+                              ? 'border-teal-200 bg-teal-50'
+                              : takenBy
+                              ? 'border-gray-100 bg-gray-50 opacity-60'
+                              : 'border-gray-200 bg-white hover:border-gray-300'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={assigned}
+                            disabled={!!togglingJob || (!!takenBy && !assigned)}
+                            onChange={() => toggleJob(job.id, assigned)}
+                            className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{job.title}</p>
+                            <p className="text-xs text-gray-400">{job.department}</p>
+                          </div>
+                          {takenBy && (
+                            <span className="text-xs text-gray-400 flex-shrink-0">assigned</span>
+                          )}
+                          {togglingJob === job.id && (
+                            <div className="w-3.5 h-3.5 border-2 border-teal-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                          )}
+                        </label>
+                      )
+                    })}
+                  </div>
+                )}
+                <p className="text-xs text-gray-400 mt-1.5">Changes save immediately when you check/uncheck</p>
+              </div>
+            )}
+
             <div className="flex items-center justify-between pt-1">
               <div className="flex items-center gap-2">
-                <button
-                  onClick={save}
-                  disabled={saving}
-                  className="btn-primary text-sm"
-                >
+                <button onClick={save} disabled={saving} className="btn-primary text-sm">
                   {saving ? 'Saving…' : 'Save'}
                 </button>
-                <button
-                  onClick={() => setExpanded(false)}
-                  className="btn-secondary text-sm"
-                >
+                <button onClick={() => setExpanded(false)} className="btn-secondary text-sm">
                   Cancel
                 </button>
               </div>
