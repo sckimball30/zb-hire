@@ -26,6 +26,7 @@ model User {
   messageLogs       MessageLog[]
   jobAssignments    JobRecruiter[]
   hiringManagerJobs Job[]         @relation("HiringManagerJobs")
+  interviewerProfile Interviewer?
 }
 
 model Account {
@@ -85,6 +86,8 @@ model Interviewer {
   title           String?
   avatarUrl       String?
   calendlyUrl     String?
+  userId          String?          @unique
+  user            User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   jobAssignments  JobInterviewer[]

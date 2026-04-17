@@ -1,29 +1,219 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { UserPlus, Trash2, ChevronDown, Copy, Check, Mail, ShieldAlert } from 'lucide-react'
+import { UserPlus, Trash2, ChevronDown, Copy, Check, Mail, ShieldAlert, ChevronRight, X } from 'lucide-react'
 import { toast } from 'sonner'
-import { formatDate, timeAgo } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 import { useSession } from 'next-auth/react'
 
-type User = { id: string; name: string | null; email: string | null; role: string; createdAt: string }
+type InterviewerProfile = { id: string; title: string | null; calendlyUrl: string | null }
+type User = {
+  id: string
+  name: string | null
+  email: string | null
+  role: string
+  createdAt: string
+  interviewerProfile: InterviewerProfile | null
+}
 type Invitation = {
   id: string; email: string; role: string; acceptedAt: string | null
   expiresAt: string; createdAt: string; invitedBy: { name: string | null; email: string | null }
 }
 
 const ROLES = ['ADMIN', 'RECRUITER', 'HIRING_MANAGER', 'INTERVIEWER']
-
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Admin',
   RECRUITER: 'Recruiter',
   HIRING_MANAGER: 'Hiring Manager',
   INTERVIEWER: 'Interviewer',
 }
+const PROFILE_ROLES = ['INTERVIEWER', 'HIRING_MANAGER']
+
+function roleColor(role: string) {
+  if (role === 'ADMIN') return 'bg-purple-100 text-purple-700'
+  if (role === 'RECRUITER') return 'bg-blue-100 text-blue-700'
+  if (role === 'HIRING_MANAGER') return 'bg-teal-100 text-teal-700'
+  if (role === 'INTERVIEWER') return 'bg-amber-100 text-amber-700'
+  return 'bg-gray-100 text-gray-600'
+}
+
+function UserRow({
+  user,
+  isSelf,
+  onSaved,
+  onRemoved,
+}: {
+  user: User
+  isSelf: boolean
+  onSaved: (updated: User) => void
+  onRemoved: (id: string) => void
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const [role, setRole] = useState(user.role)
+  const [title, setTitle] = useState(user.interviewerProfile?.title ?? '')
+  const [calendlyUrl, setCalendlyUrl] = useState(user.interviewerProfile?.calendlyUrl ?? '')
+  const [saving, setSaving] = useState(false)
+  const [removing, setRemoving] = useState(false)
+
+  const hasProfile = PROFILE_ROLES.includes(role)
+
+  async function save() {
+    setSaving(true)
+    const body: Record<string, string> = { role }
+    if (hasProfile) {
+      body.title = title
+      body.calendlyUrl = calendlyUrl
+    }
+    const res = await fetch(`/api/users/${user.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    setSaving(false)
+    if (res.ok) {
+      const updated = await res.json()
+      onSaved(updated)
+      setExpanded(false)
+      toast.success('Saved')
+    } else {
+      toast.error('Failed to save')
+    }
+  }
+
+  async function remove() {
+    if (!confirm(`Remove ${user.name ?? user.email}? This cannot be undone.`)) return
+    setRemoving(true)
+    const res = await fetch(`/api/users/${user.id}`, { method: 'DELETE' })
+    setRemoving(false)
+    if (res.ok) {
+      onRemoved(user.id)
+      toast.success('User removed')
+    } else {
+      const d = await res.json()
+      toast.error(d.error || 'Failed to remove')
+    }
+  }
+
+  return (
+    <div className="border-b border-gray-100 last:border-0">
+      {/* Main row */}
+      <div
+        className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 cursor-pointer"
+        onClick={() => setExpanded(e => !e)}
+      >
+        <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center flex-shrink-0">
+          {(user.name ?? user.email ?? '?')[0].toUpperCase()}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-gray-900 truncate">{user.name ?? '—'}</p>
+          <p className="text-xs text-gray-400 truncate">{user.email}</p>
+        </div>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {user.interviewerProfile?.calendlyUrl && (
+            <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              Calendly
+            </span>
+          )}
+          {user.interviewerProfile?.title && (
+            <span className="hidden sm:block text-xs text-gray-400 truncate max-w-[120px]">
+              {user.interviewerProfile.title}
+            </span>
+          )}
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${roleColor(user.role)}`}>
+            {ROLE_LABELS[user.role] ?? user.role}
+          </span>
+          <ChevronRight className={`w-4 h-4 text-gray-300 transition-transform ${expanded ? 'rotate-90' : ''}`} />
+        </div>
+      </div>
+
+      {/* Expanded edit panel */}
+      {expanded && (
+        <div className="px-6 pb-5 bg-gray-50 border-t border-gray-100">
+          <div className="max-w-lg pt-4 space-y-4">
+            {/* Role */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Role</label>
+              <div className="relative inline-block">
+                <select
+                  value={role}
+                  onChange={e => setRole(e.target.value)}
+                  disabled={isSelf}
+                  className="appearance-none pl-3 pr-8 py-1.5 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {ROLES.map(r => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+              </div>
+              {isSelf && <p className="text-xs text-gray-400 mt-1">You cannot change your own role.</p>}
+            </div>
+
+            {/* Profile fields — shown for Interviewer / Hiring Manager */}
+            {hasProfile && (
+              <>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Title</label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={e => setTitle(e.target.value)}
+                    placeholder="e.g. Senior Engineer"
+                    className="input w-full max-w-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Calendly Link</label>
+                  <input
+                    type="url"
+                    value={calendlyUrl}
+                    onChange={e => setCalendlyUrl(e.target.value)}
+                    placeholder="https://calendly.com/username/30min"
+                    className="input w-full max-w-sm"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Used to generate self-scheduling links for candidates</p>
+                </div>
+              </>
+            )}
+
+            <div className="flex items-center justify-between pt-1">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={save}
+                  disabled={saving}
+                  className="btn-primary text-sm"
+                >
+                  {saving ? 'Saving…' : 'Save'}
+                </button>
+                <button
+                  onClick={() => setExpanded(false)}
+                  className="btn-secondary text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+              {!isSelf && (
+                <button
+                  onClick={remove}
+                  disabled={removing}
+                  className="flex items-center gap-1.5 text-sm text-red-500 hover:text-red-700 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  {removing ? 'Removing…' : 'Remove user'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function UsersSettingsPage() {
   const { data: session } = useSession()
   const isAdmin = (session?.user as any)?.role === 'ADMIN'
+  const currentUserId = (session?.user as any)?.id as string | undefined
+
   const [users, setUsers] = useState<User[]>([])
   const [invitations, setInvitations] = useState<Invitation[]>([])
   const [loading, setLoading] = useState(true)
@@ -52,11 +242,8 @@ export default function UsersSettingsPage() {
     const res = await fetch('/api/admin/bootstrap', { method: 'POST' })
     const data = await res.json()
     setBootstrapping(false)
-    if (res.ok) {
-      toast.success(data.message ?? 'Done! Please sign out and sign back in.')
-    } else {
-      toast.error(data.error || 'Failed.')
-    }
+    if (res.ok) toast.success(data.message ?? 'Done! Sign out and back in.')
+    else toast.error(data.error || 'Failed.')
   }
 
   async function invite() {
@@ -79,27 +266,6 @@ export default function UsersSettingsPage() {
     }
   }
 
-  async function changeRole(userId: string, role: string) {
-    const res = await fetch(`/api/users/${userId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ role }),
-    })
-    if (res.ok) {
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, role } : u))
-      toast.success('Role updated.')
-    } else {
-      toast.error('Failed to update role.')
-    }
-  }
-
-  async function removeUser(userId: string) {
-    if (!confirm('Remove this user?')) return
-    const res = await fetch(`/api/users/${userId}`, { method: 'DELETE' })
-    if (res.ok) { setUsers(prev => prev.filter(u => u.id !== userId)); toast.success('User removed.') }
-    else { const d = await res.json(); toast.error(d.error || 'Failed.') }
-  }
-
   async function revokeInvite(id: string) {
     const res = await fetch('/api/invitations', {
       method: 'DELETE',
@@ -117,8 +283,6 @@ export default function UsersSettingsPage() {
 
   if (loading) return <div className="p-8 text-sm text-gray-400">Loading…</div>
 
-  const pendingInvites = invitations.filter(i => !i.acceptedAt && new Date(i.expiresAt) > new Date())
-
   if (!isAdmin) {
     return (
       <div className="p-8 max-w-lg">
@@ -134,17 +298,21 @@ export default function UsersSettingsPage() {
           <button onClick={bootstrap} disabled={bootstrapping} className="btn-primary">
             {bootstrapping ? 'Fixing…' : 'Make me Admin (first-time setup)'}
           </button>
-          <p className="text-xs text-gray-400">After clicking, sign out and sign back in for the change to take effect.</p>
+          <p className="text-xs text-gray-400">After clicking, sign out and sign back in.</p>
         </div>
       </div>
     )
   }
 
+  const pendingInvites = invitations.filter(i => !i.acceptedAt && new Date(i.expiresAt) > new Date())
+
   return (
     <div className="p-8 max-w-3xl space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Team & Users</h1>
-        <p className="text-sm text-gray-500 mt-1">Manage who has access to your ATS workspace</p>
+        <p className="text-sm text-gray-500 mt-1">
+          Manage access, roles, and profiles for everyone on your team
+        </p>
       </div>
 
       {/* Invite */}
@@ -160,7 +328,7 @@ export default function UsersSettingsPage() {
             className="input flex-1"
           />
           <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} className="input w-44">
-            {ROLES.map(r => <option key={r} value={r}>{ROLE_LABELS[r] ?? r}</option>)}
+            {ROLES.map(r => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
           </select>
           <button onClick={invite} disabled={inviting || !inviteEmail.trim()} className="btn-primary flex items-center gap-2">
             <UserPlus className="w-4 h-4" />
@@ -174,62 +342,35 @@ export default function UsersSettingsPage() {
               <Mail className="w-4 h-4 text-blue-500 flex-shrink-0" />
               <span className="text-xs text-blue-700 truncate">Invite link: {newLink}</span>
             </div>
-            <button onClick={() => copyLink(newLink)} className="flex-shrink-0 text-blue-600 hover:text-blue-800">
-              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            </button>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button onClick={() => copyLink(newLink)} className="text-blue-600 hover:text-blue-800">
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              </button>
+              <button onClick={() => setNewLink('')} className="text-blue-400 hover:text-blue-600">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Current Users */}
+      {/* Team members */}
       <div className="card overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100">
           <h2 className="text-base font-semibold text-gray-900">Team members ({users.length})</h2>
+          <p className="text-xs text-gray-400 mt-0.5">Click any row to edit role, title, or Calendly link</p>
         </div>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Joined</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map(user => (
-              <tr key={user.id}>
-                <td>
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center flex-shrink-0">
-                      {(user.name ?? user.email ?? '?')[0].toUpperCase()}
-                    </div>
-                    <span className="font-medium text-gray-900">{user.name ?? '—'}</span>
-                  </div>
-                </td>
-                <td className="text-gray-600 text-sm">{user.email}</td>
-                <td>
-                  <div className="relative inline-block">
-                    <select
-                      value={user.role}
-                      onChange={e => changeRole(user.id, e.target.value)}
-                      className="appearance-none pr-6 pl-2 py-1 text-xs font-medium rounded-full border border-gray-200 bg-gray-50 text-gray-700 cursor-pointer hover:border-blue-300 focus:outline-none"
-                    >
-                      {ROLES.map(r => <option key={r} value={r}>{ROLE_LABELS[r] ?? r}</option>)}
-                    </select>
-                    <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
-                  </div>
-                </td>
-                <td className="text-gray-500 text-sm">{formatDate(user.createdAt)}</td>
-                <td>
-                  <button onClick={() => removeUser(user.id)} className="text-gray-400 hover:text-red-500 transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div>
+          {users.map(user => (
+            <UserRow
+              key={user.id}
+              user={user}
+              isSelf={user.id === currentUserId}
+              onSaved={updated => setUsers(prev => prev.map(u => u.id === updated.id ? updated : u))}
+              onRemoved={id => setUsers(prev => prev.filter(u => u.id !== id))}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Pending invitations */}
@@ -238,32 +379,30 @@ export default function UsersSettingsPage() {
           <div className="px-6 py-4 border-b border-gray-100">
             <h2 className="text-base font-semibold text-gray-900">Pending invitations ({pendingInvites.length})</h2>
           </div>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Invited by</th>
-                <th>Expires</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {pendingInvites.map(inv => (
-                <tr key={inv.id}>
-                  <td className="text-gray-800 font-medium">{inv.email}</td>
-                  <td className="text-gray-600 text-sm">{ROLE_LABELS[inv.role] ?? inv.role}</td>
-                  <td className="text-gray-500 text-sm">{inv.invitedBy.name ?? inv.invitedBy.email}</td>
-                  <td className="text-gray-500 text-sm">{timeAgo(inv.expiresAt)}</td>
-                  <td>
-                    <button onClick={() => revokeInvite(inv.id)} className="text-gray-400 hover:text-red-500 text-xs">
-                      Revoke
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="divide-y divide-gray-100">
+            {pendingInvites.map(inv => (
+              <div key={inv.id} className="flex items-center gap-4 px-6 py-3">
+                <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-400 text-xs font-bold flex items-center justify-center flex-shrink-0">
+                  ?
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{inv.email}</p>
+                  <p className="text-xs text-gray-400">
+                    Invited by {inv.invitedBy.name ?? inv.invitedBy.email} · expires {new Date(inv.expiresAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${roleColor(inv.role)}`}>
+                  {ROLE_LABELS[inv.role] ?? inv.role}
+                </span>
+                <button
+                  onClick={() => revokeInvite(inv.id)}
+                  className="text-xs text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                >
+                  Revoke
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

@@ -30,7 +30,7 @@ const RECRUITER_NAV = [
   { href: '/jobs',      label: 'Jobs',       icon: Briefcase },
   { href: '/candidates',label: 'Candidates', icon: Users },
   { href: '/analytics', label: 'Analytics',  icon: BarChart2 },
-  { href: '/interviewers', label: 'Interviewers', icon: UserCheck },
+
   { href: '/inbox',     label: 'Inbox',      icon: Inbox },
 ]
 

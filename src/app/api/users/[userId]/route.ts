@@ -2,17 +2,56 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/requireAdmin'
 
+const PROFILE_ROLES = ['INTERVIEWER', 'HIRING_MANAGER']
+
 export async function PATCH(req: NextRequest, { params }: { params: { userId: string } }) {
   const result = await requireAdmin(req)
   if (result instanceof NextResponse) return result
 
-  const { role } = await req.json()
+  const { role, title, calendlyUrl } = await req.json()
+
+  // Update the user's role if provided
   const user = await prisma.user.update({
     where: { id: params.userId },
-    data: { role },
+    data: { ...(role !== undefined && { role }) },
     select: { id: true, name: true, email: true, role: true },
   })
-  return NextResponse.json(user)
+
+  const effectiveRole = role ?? user.role
+
+  if (user.email) {
+    const needsProfile = PROFILE_ROLES.includes(effectiveRole)
+    const hasProfileUpdate = title !== undefined || calendlyUrl !== undefined
+
+    if (needsProfile || hasProfileUpdate) {
+      await prisma.interviewer.upsert({
+        where: { email: user.email },
+        update: {
+          userId: user.id,
+          name: user.name ?? user.email,
+          ...(title !== undefined && { title: title || null }),
+          ...(calendlyUrl !== undefined && { calendlyUrl: calendlyUrl || null }),
+        },
+        create: {
+          email: user.email,
+          name: user.name ?? user.email,
+          userId: user.id,
+          ...(title !== undefined && { title: title || null }),
+          ...(calendlyUrl !== undefined && { calendlyUrl: calendlyUrl || null }),
+        },
+      })
+    }
+  }
+
+  // Return full user with profile
+  const full = await prisma.user.findUnique({
+    where: { id: params.userId },
+    select: {
+      id: true, name: true, email: true, role: true, createdAt: true,
+      interviewerProfile: { select: { id: true, title: true, calendlyUrl: true } },
+    },
+  })
+  return NextResponse.json(full)
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { userId: string } }) {
