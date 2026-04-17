@@ -67,13 +67,9 @@ export default async function SandboxAlexRiveraPage() {
               <h1 className="text-xl font-bold text-gray-900">Alex Rivera</h1>
               <p className="text-sm text-gray-500 mt-0.5">Applying for: <strong>Marketing Manager</strong></p>
               <p className="text-sm text-gray-400">Marketing</p>
-              <a
-                href="#"
-                onClick={e => e.preventDefault()}
-                className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline mt-1"
-              >
+              <span className="inline-flex items-center gap-1 text-sm text-blue-400 mt-1 cursor-default">
                 LinkedIn profile ↗
-              </a>
+              </span>
             </div>
           </div>
 
