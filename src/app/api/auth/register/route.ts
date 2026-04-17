@@ -35,5 +35,15 @@ export async function POST(req: NextRequest) {
   const hashed = await bcrypt.hash(password, 12)
   await prisma.user.create({ data: { name, email, password: hashed, role } })
 
+  // Auto-create an Interviewer profile for interviewers and hiring managers
+  // so they show up in the interviewers list and can have a Calendly link added
+  if (role === 'INTERVIEWER' || role === 'HIRING_MANAGER') {
+    await prisma.interviewer.upsert({
+      where: { email },
+      update: { name: name || email },
+      create: { name: name || email, email },
+    })
+  }
+
   return NextResponse.json({ ok: true })
 }
