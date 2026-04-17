@@ -24,16 +24,13 @@ export default withAuth(
     }
 
     if (role === 'HIRING_MANAGER') {
-      // Hiring managers can't access user management or system settings
-      const blocked =
-        pathname.startsWith('/settings/users') ||
-        pathname.startsWith('/interviewers') ||
-        pathname.startsWith('/messages') ||
-        pathname.startsWith('/settings/integrations') ||
-        pathname.startsWith('/settings/automations')
+      // Hiring managers only access their own hub and APIs
+      const allowed =
+        pathname.startsWith('/hiring-manager') ||
+        pathname.startsWith('/api')
 
-      if (blocked) {
-        return NextResponse.redirect(new URL('/dashboard', req.url))
+      if (!allowed) {
+        return NextResponse.redirect(new URL('/hiring-manager', req.url))
       }
     }
 

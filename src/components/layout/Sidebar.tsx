@@ -96,6 +96,8 @@ export function Sidebar() {
     // Navigate to appropriate landing page for that role
     if (targetRole === 'INTERVIEWER') {
       router.push('/interviewer')
+    } else if (targetRole === 'HIRING_MANAGER') {
+      router.push('/hiring-manager')
     } else {
       router.push('/dashboard')
     }
@@ -135,11 +137,14 @@ export function Sidebar() {
   const isAuthPage       = pathname?.startsWith('/auth')
   const isPublicPage     = pathname?.startsWith('/apply') || pathname?.startsWith('/offers')
   const isInterviewerHub = pathname?.startsWith('/interviewer')
+  const isHMHub          = pathname?.startsWith('/hiring-manager')
 
-  // Hide sidebar for interviewer role UNLESS admin is previewing (they keep sidebar to switch back)
+  // Hide sidebar for interviewer/HM role UNLESS admin is previewing (they keep sidebar to switch back)
   if (isAuthPage || isPublicPage) return null
   if ((isInterviewerHub || effectiveRole === 'INTERVIEWER') && role !== 'ADMIN') return null
   if (isInterviewerHub && role === 'ADMIN' && !previewRole) return null
+  if ((isHMHub || effectiveRole === 'HIRING_MANAGER') && role !== 'ADMIN') return null
+  if (isHMHub && role === 'ADMIN' && !previewRole) return null
 
   const navItems      = effectiveRole === 'HIRING_MANAGER' ? HIRING_MANAGER_NAV : RECRUITER_NAV
   const resourceItems = effectiveRole === 'HIRING_MANAGER' ? HM_RESOURCES : RECRUITER_RESOURCES
