@@ -329,7 +329,15 @@ export function Sidebar() {
                         className="w-full text-left px-4 py-2.5 text-sm text-amber-400 hover:bg-white/10 transition-colors flex items-center gap-2"
                       >
                         <Clapperboard className="w-3.5 h-3.5" />
-                        Sandbox / Demo
+                        Sandbox — Interviewer
+                      </Link>
+                      <Link
+                        href="/sandbox/hiring-manager"
+                        onClick={() => setViewAsOpen(false)}
+                        className="w-full text-left px-4 py-2.5 text-sm text-amber-400 hover:bg-white/10 transition-colors flex items-center gap-2"
+                      >
+                        <Clapperboard className="w-3.5 h-3.5" />
+                        Sandbox — Hiring Manager
                       </Link>
                     </div>
                   </>
