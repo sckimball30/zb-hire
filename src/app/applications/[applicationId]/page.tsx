@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { getGmailStatus } from '@/lib/gmail'
-import { ChevronLeft, ChevronRight, Plus, Calendar, Clock, FileText, Download, ClipboardCheck, Linkedin, ExternalLink, MapPin, User, Video, Phone, Users, Briefcase } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Calendar, Clock, FileText, Download, ClipboardCheck, Linkedin, ExternalLink, MapPin, User, Video, Phone, Users, Briefcase, Ban } from 'lucide-react'
 import { STAGE_LABELS, STAGE_COLORS, INTERVIEW_TYPE_LABELS, REJECTION_REASONS } from '@/lib/constants'
 import { formatDate, formatDateTime, timeAgo, isNewApplicant } from '@/lib/utils'
 import { StageSelector } from '@/components/applications/StageSelector'
@@ -16,6 +16,7 @@ import { MessagesCard } from '@/components/candidates/MessagesCard'
 import { TransferJobButton } from '@/components/applications/TransferJobButton'
 import { HireDecisionPanel } from '@/components/applications/HireDecisionPanel'
 import { EditCandidateButton } from '@/components/candidates/EditCandidateButton'
+import { BlockCandidateButton } from '@/components/candidates/BlockCandidateButton'
 import { ResumeUploadButton } from '@/components/candidates/ResumeUploadButton'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -193,6 +194,11 @@ export default async function ApplicationPage({
                     </span>
                   ) : null
                 })()}
+                {(candidate as any).blocked && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                    <Ban className="w-3 h-3" /> Do Not Contact
+                  </span>
+                )}
               </div>
 
               {/* Contact */}
@@ -263,6 +269,11 @@ export default async function ApplicationPage({
                 candidateEmail={candidate.email}
                 candidateFirstName={candidate.firstName}
                 jobTitle={application.job.title}
+                blocked={(candidate as any).blocked}
+              />
+              <BlockCandidateButton
+                candidateId={candidate.id}
+                blocked={(candidate as any).blocked}
               />
               <ScheduleInterviewButton
                 applicationId={application.id}

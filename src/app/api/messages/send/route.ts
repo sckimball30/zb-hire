@@ -15,6 +15,7 @@ export async function POST(req: NextRequest) {
 
   const candidate = await prisma.candidate.findUnique({ where: { id: candidateId } })
   if (!candidate) return NextResponse.json({ error: 'Candidate not found' }, { status: 404 })
+  if (candidate.blocked) return NextResponse.json({ error: 'This candidate is marked Do Not Contact.' }, { status: 403 })
 
   let gmailThreadId: string | null = null
   let gmailMessageId: string | null = null

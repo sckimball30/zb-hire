@@ -107,6 +107,7 @@ model Candidate {
   resumeUrl    String?
   source       String?
   notes        String?
+  blocked      Boolean         @default(false)
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
   applications Application[]

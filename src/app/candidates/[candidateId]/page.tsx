@@ -6,12 +6,13 @@ import { prisma } from '@/lib/prisma'
 import {
   ArrowLeft, FileText, Download, Clock, Calendar,
   ClipboardCheck, Plus, Linkedin, ExternalLink,
-  MapPin, MessageSquare, ChevronRight
+  MapPin, MessageSquare, ChevronRight, Ban
 } from 'lucide-react'
 import { STAGE_LABELS, STAGE_COLORS, INTERVIEW_TYPE_LABELS } from '@/lib/constants'
 import { formatDate, formatDateTime, timeAgo } from '@/lib/utils'
 import { NotesPanel } from '@/components/candidates/NotesPanel'
 import { SendMessageButton } from '@/components/candidates/SendMessageButton'
+import { BlockCandidateButton } from '@/components/candidates/BlockCandidateButton'
 import { CandidateTags } from '@/components/candidates/CandidateTags'
 import { ScheduledMessagesList } from '@/components/candidates/ScheduledMessagesList'
 import { ResumeUploadButton } from '@/components/candidates/ResumeUploadButton'
@@ -102,6 +103,11 @@ export default async function CandidatePage({ params }: { params: { candidateId:
                     {STAGE_LABELS[latestApp.stage]}
                   </span>
                 )}
+                {(candidate as any).blocked && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                    <Ban className="w-3 h-3" /> Do Not Contact
+                  </span>
+                )}
               </div>
 
               {/* Contact info */}
@@ -181,6 +187,11 @@ export default async function CandidatePage({ params }: { params: { candidateId:
                 candidateEmail={candidate.email}
                 candidateFirstName={candidate.firstName}
                 jobTitle={latestApp?.job.title}
+                blocked={(candidate as any).blocked}
+              />
+              <BlockCandidateButton
+                candidateId={candidate.id}
+                blocked={(candidate as any).blocked}
               />
               {latestApp && (
                 <Link

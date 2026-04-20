@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { Plus, Download } from 'lucide-react'
+import { Plus, Download, Ban } from 'lucide-react'
 import { CandidateFilters } from '@/components/candidates/CandidateFilters'
 import { Suspense } from 'react'
 import { formatDate, isNewApplicant } from '@/lib/utils'
@@ -145,6 +145,11 @@ export default async function CandidatesPage({
                           New
                         </span>
                       )}
+                      {(candidate as any).blocked && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-600 flex-shrink-0">
+                          <Ban className="w-2.5 h-2.5" /> DNC
+                        </span>
+                      )}
                     </div>
                     {candidate.applications.length > 0 ? (
                       <p className="text-xs text-gray-500 truncate mt-0.5">
@@ -206,6 +211,11 @@ export default async function CandidatesPage({
                               {latestApp && isNewApplicant(latestApp.createdAt) && (
                                 <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wide">
                                   New
+                                </span>
+                              )}
+                              {(candidate as any).blocked && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-600">
+                                  <Ban className="w-2.5 h-2.5" /> DNC
                                 </span>
                               )}
                             </div>

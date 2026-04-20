@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Send, X, Clock, ChevronDown, User, Link2 } from 'lucide-react'
+import { Send, X, Clock, ChevronDown, User, Link2, Ban } from 'lucide-react'
 import { toast } from 'sonner'
 
 type Template = { id: string; name: string; subject: string; body: string }
@@ -13,6 +13,7 @@ interface Props {
   candidateFirstName?: string
   jobTitle?: string
   recruiterName?: string
+  blocked?: boolean
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -86,6 +87,7 @@ export function SendMessageButton({
   candidateFirstName,
   jobTitle,
   recruiterName,
+  blocked = false,
 }: Props) {
   const [open, setOpen] = useState(false)
   const [templates, setTemplates] = useState<Template[]>([])
@@ -253,6 +255,17 @@ export function SendMessageButton({
 
   const scheduledDate = deliveryMode === 'schedule' ? addBusinessDays(delayDays) : null
   const unfilledCount = [...extractVars(subject), ...extractVars(body)].length
+
+  if (blocked) {
+    return (
+      <span
+        title="This candidate is marked Do Not Contact"
+        className="btn-outline text-xs flex items-center gap-1.5 opacity-50 cursor-not-allowed border-red-200 text-red-400"
+      >
+        <Ban className="w-3.5 h-3.5" /> Do Not Contact
+      </span>
+    )
+  }
 
   return (
     <>

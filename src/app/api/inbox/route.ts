@@ -19,9 +19,11 @@ export async function GET() {
     : []
   const myCandidateIds = myOutbound.map(l => l.candidateId)
 
-  // Fetch all messages (inbound + outbound) for those candidates
+  // Fetch all messages (inbound + outbound) for those candidates, excluding blocked ones
   const logs = await prisma.messageLog.findMany({
-    where: myCandidateIds.length > 0 ? { candidateId: { in: myCandidateIds } } : { id: 'none' },
+    where: myCandidateIds.length > 0
+      ? { candidateId: { in: myCandidateIds }, candidate: { blocked: false } }
+      : { id: 'none' },
     orderBy: { sentAt: 'desc' },
     include: {
       candidate: { select: { id: true, firstName: true, lastName: true, email: true } },

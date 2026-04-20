@@ -21,7 +21,12 @@ export async function GET() {
 
   const count = myCandidateIds.length > 0
     ? await prisma.messageLog.count({
-        where: { direction: 'INBOUND', read: false, candidateId: { in: myCandidateIds } },
+        where: {
+          direction: 'INBOUND',
+          read: false,
+          candidateId: { in: myCandidateIds },
+          candidate: { blocked: false },
+        },
       })
     : 0
 

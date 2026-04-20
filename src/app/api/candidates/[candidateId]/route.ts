@@ -33,7 +33,7 @@ export async function PATCH(
 ) {
   try {
     const body = await request.json()
-    const { firstName, lastName, email, phone, linkedInUrl, source, notes } = body
+    const { firstName, lastName, email, phone, linkedInUrl, source, notes, blocked } = body
 
     const candidate = await prisma.candidate.update({
       where: { id: params.candidateId },
@@ -45,6 +45,7 @@ export async function PATCH(
         ...(linkedInUrl !== undefined && { linkedInUrl: linkedInUrl?.trim() || null }),
         ...(source !== undefined && { source: source?.trim() || null }),
         ...(notes !== undefined && { notes: notes?.trim() || null }),
+        ...(blocked !== undefined && { blocked }),
       },
     })
 
