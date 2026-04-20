@@ -55,6 +55,44 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true, link })
 }
 
+export async function PATCH(req: NextRequest) {
+  const admin = await requireAdmin(req)
+  if (admin instanceof NextResponse) return admin
+
+  const { id } = await req.json()
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
+  // Generate a fresh token and extend expiry by 7 days
+  const { randomUUID } = await import('crypto')
+  const invitation = await prisma.invitation.update({
+    where: { id },
+    data: {
+      token: randomUUID(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    },
+  })
+
+  const baseUrl = process.env.NEXTAUTH_URL ?? 'http://localhost:3000'
+  const link = `${baseUrl}/auth/register?token=${invitation.token}`
+
+  try {
+    await sendEmail({
+      to: invitation.email,
+      subject: "You've been invited to join ATS",
+      html: `
+        <p>You've been invited to join the ATS platform.</p>
+        <p><a href="${link}">Click here to accept your invitation</a></p>
+        <p>This link expires in 7 days.</p>
+        <p style="color:#888;font-size:12px">Or copy this URL: ${link}</p>
+      `,
+    })
+  } catch (err) {
+    console.error('[resend invite email]', err)
+  }
+
+  return NextResponse.json({ ok: true, link })
+}
+
 export async function DELETE(req: NextRequest) {
   const result = await requireAdmin(req)
   if (result instanceof NextResponse) return result

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { UserPlus, Trash2, ChevronDown, Copy, Check, Mail, ShieldAlert, ChevronRight, X, Briefcase } from 'lucide-react'
+import { UserPlus, Trash2, ChevronDown, Copy, Check, Mail, ShieldAlert, ChevronRight, X, Briefcase, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDate } from '@/lib/utils'
 import { useSession } from 'next-auth/react'
@@ -377,6 +377,23 @@ export default function UsersSettingsPage() {
     if (res.ok) { setInvitations(prev => prev.filter(i => i.id !== id)); toast.success('Invitation revoked.') }
   }
 
+  async function resendInvite(id: string, email: string) {
+    const res = await fetch('/api/invitations', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    const data = await res.json()
+    if (res.ok) {
+      setNewLink(data.link)
+      // Refresh so the new expiry shows
+      await load()
+      toast.success(`Invite resent to ${email}`)
+    } else {
+      toast.error('Failed to resend invitation.')
+    }
+  }
+
   function copyLink(link: string) {
     navigator.clipboard.writeText(link)
     setCopied(true)
@@ -496,6 +513,13 @@ export default function UsersSettingsPage() {
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${roleColor(inv.role)}`}>
                   {ROLE_LABELS[inv.role] ?? inv.role}
                 </span>
+                <button
+                  onClick={() => resendInvite(inv.id, inv.email)}
+                  className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 transition-colors flex-shrink-0"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Resend
+                </button>
                 <button
                   onClick={() => revokeInvite(inv.id)}
                   className="text-xs text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
