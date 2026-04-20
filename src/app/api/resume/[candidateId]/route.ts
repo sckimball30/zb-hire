@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getDownloadUrl } from '@vercel/blob'
 
 export async function GET(
   req: NextRequest,
@@ -32,20 +33,20 @@ export async function GET(
   }
 
   try {
-    const blobRes = await fetch(resumeUrl, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    // Generate a signed download URL via the SDK (correct approach for private blobs)
+    const signedUrl = await getDownloadUrl(resumeUrl, { token })
+
+    // Fetch from the signed URL — no auth header needed, it's already embedded
+    const blobRes = await fetch(signedUrl)
 
     if (!blobRes.ok) {
-      console.error(`[resume] Blob fetch failed: ${blobRes.status} ${blobRes.statusText} for ${resumeUrl}`)
+      console.error(`[resume] Blob fetch failed: ${blobRes.status} ${blobRes.statusText}`)
       return new NextResponse('Resume file not found', { status: 404 })
     }
 
-    // Buffer the full response — streaming blobRes.body directly through
-    // Next.js route handlers can produce truncated or unreadable files
     const buffer = await blobRes.arrayBuffer()
 
-    // Determine content type — prefer blob header, but always force pdf for .pdf URLs
+    // Always force PDF content-type for .pdf files
     let contentType = blobRes.headers.get('content-type') ?? 'application/pdf'
     if (resumeUrl.toLowerCase().includes('.pdf') || contentType === 'application/octet-stream') {
       contentType = 'application/pdf'
