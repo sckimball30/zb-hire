@@ -107,7 +107,7 @@ export function HireDecisionForm({ applicationId, onClose }: HireDecisionFormPro
   // Overall
   const [overallRating, setOverallRating] = useState<ABC>(null)
   const [rationale, setRationale] = useState('')
-  const [recommendation, setRecommendation] = useState<'HIRE' | 'KEEP INTERVIEWING' | 'NO HIRE' | null>(null)
+  const [recommendation, setRecommendation] = useState<'HIRE' | 'MAYBE' | 'NO HIRE' | null>(null)
 
   const handleSubmit = async () => {
     if (!recommendation) {
@@ -261,14 +261,14 @@ export function HireDecisionForm({ applicationId, onClose }: HireDecisionFormPro
               </button>
               <button
                 type="button"
-                onClick={() => setRecommendation(recommendation === 'KEEP INTERVIEWING' ? null : 'KEEP INTERVIEWING')}
+                onClick={() => setRecommendation(recommendation === 'MAYBE' ? null : 'MAYBE')}
                 className={`flex-1 py-3 text-sm font-bold rounded-lg border-2 transition-all ${
-                  recommendation === 'KEEP INTERVIEWING'
+                  recommendation === 'MAYBE'
                     ? 'bg-amber-500 text-white border-amber-500'
                     : 'bg-white text-amber-600 border-amber-300 hover:bg-amber-50'
                 }`}
               >
-                KEEP INTERVIEWING
+                MAYBE
               </button>
               <button
                 type="button"
