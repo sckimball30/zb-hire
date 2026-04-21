@@ -107,11 +107,11 @@ export function HireDecisionForm({ applicationId, onClose }: HireDecisionFormPro
   // Overall
   const [overallRating, setOverallRating] = useState<ABC>(null)
   const [rationale, setRationale] = useState('')
-  const [recommendation, setRecommendation] = useState<'HIRE' | 'NO HIRE' | null>(null)
+  const [recommendation, setRecommendation] = useState<'HIRE' | 'KEEP INTERVIEWING' | 'NO HIRE' | null>(null)
 
   const handleSubmit = async () => {
     if (!recommendation) {
-      toast.error('Please select HIRE or NO HIRE before submitting')
+      toast.error('Please select a recommendation before submitting')
       return
     }
     setSubmitting(true)
@@ -258,6 +258,17 @@ export function HireDecisionForm({ applicationId, onClose }: HireDecisionFormPro
                 }`}
               >
                 HIRE
+              </button>
+              <button
+                type="button"
+                onClick={() => setRecommendation(recommendation === 'KEEP INTERVIEWING' ? null : 'KEEP INTERVIEWING')}
+                className={`flex-1 py-3 text-sm font-bold rounded-lg border-2 transition-all ${
+                  recommendation === 'KEEP INTERVIEWING'
+                    ? 'bg-amber-500 text-white border-amber-500'
+                    : 'bg-white text-amber-600 border-amber-300 hover:bg-amber-50'
+                }`}
+              >
+                KEEP INTERVIEWING
               </button>
               <button
                 type="button"

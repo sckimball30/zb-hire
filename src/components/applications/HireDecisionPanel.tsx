@@ -47,10 +47,12 @@ function RatingBadge({ value }: { value: string | null | undefined }) {
 
 function RecommendationBadge({ value }: { value: string | null | undefined }) {
   if (!value) return <span className="text-gray-400 text-xs">Pending</span>
+  const styles =
+    value === 'HIRE'             ? 'bg-green-700 text-white' :
+    value === 'KEEP INTERVIEWING' ? 'bg-amber-500 text-white' :
+                                   'bg-red-700 text-white'
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
-      value === 'HIRE' ? 'bg-green-700 text-white' : 'bg-red-700 text-white'
-    }`}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${styles}`}>
       {value}
     </span>
   )
