@@ -23,7 +23,7 @@ export async function POST(
     const blob = await put(
       `resumes/${params.candidateId}-${Date.now()}-${file.name}`,
       file,
-      { access: 'private', token }
+      { access: 'public', token }
     )
 
     await prisma.candidate.update({

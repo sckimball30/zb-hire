@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getDownloadUrl } from '@vercel/blob'
 
 export async function GET(
   req: NextRequest,
@@ -26,18 +25,19 @@ export async function GET(
     return new NextResponse('Resume not available', { status: 404 })
   }
 
-  const token = process.env.BLOB_READ_WRITE_TOKEN ?? process.env.BLOB2_READ_WRITE_TOKEN
-  if (!token) {
-    console.error('[resume] No blob token configured')
-    return new NextResponse('Storage not configured', { status: 500 })
-  }
-
   try {
-    // Generate a signed download URL via the SDK (correct approach for private blobs)
-    const signedUrl = await getDownloadUrl(resumeUrl, { token })
+    // New uploads are public — fetch directly. Fall back to auth header for
+    // any older blobs that were stored as private.
+    let blobRes = await fetch(resumeUrl)
 
-    // Fetch from the signed URL — no auth header needed, it's already embedded
-    const blobRes = await fetch(signedUrl)
+    if (!blobRes.ok) {
+      const token = process.env.BLOB_READ_WRITE_TOKEN ?? process.env.BLOB2_READ_WRITE_TOKEN
+      if (token) {
+        blobRes = await fetch(resumeUrl, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+      }
+    }
 
     if (!blobRes.ok) {
       console.error(`[resume] Blob fetch failed: ${blobRes.status} ${blobRes.statusText}`)
@@ -46,7 +46,6 @@ export async function GET(
 
     const buffer = await blobRes.arrayBuffer()
 
-    // Always force PDF content-type for .pdf files
     let contentType = blobRes.headers.get('content-type') ?? 'application/pdf'
     if (resumeUrl.toLowerCase().includes('.pdf') || contentType === 'application/octet-stream') {
       contentType = 'application/pdf'
