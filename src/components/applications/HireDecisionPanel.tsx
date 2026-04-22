@@ -79,7 +79,7 @@ function DecisionCard({ d }: { d: HireDecision }) {
   const gutCheckRows = [
     { label: 'Would be thrilled to work with', value: d.gutCheckThrilled },
     { label: 'Would make team better', value: d.gutCheckTeam },
-    { label: 'Embarrassed if underperformed', value: d.gutCheckEmbarrassed },
+    { label: 'Confident they will get it done', value: d.gutCheckEmbarrassed },
   ]
 
   return (

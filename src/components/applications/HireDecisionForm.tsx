@@ -216,7 +216,7 @@ export function HireDecisionForm({ applicationId, onClose }: HireDecisionFormPro
                 onChange={setGutCheckTeam}
               />
               <GutCheckRow
-                label="Would you be embarrassed if this person joined and underperformed?"
+                label="If I give this person a task, am I confident they will get it done?"
                 value={gutCheckEmbarrassed}
                 onChange={setGutCheckEmbarrassed}
               />
