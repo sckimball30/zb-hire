@@ -35,7 +35,7 @@ export default async function HMApplicationPage({
   const application = await prisma.application.findUnique({
     where: { id: params.applicationId },
     include: {
-      candidate: { select: { id: true, firstName: true, lastName: true, resumeUrl: true, email: true, phone: true, linkedinUrl: true } },
+      candidate: { select: { id: true, firstName: true, lastName: true, resumeUrl: true, email: true, phone: true, linkedInUrl: true } },
       job: { select: { id: true, title: true, department: true, hiringManagerId: true } },
       scorecardEntries: {
         orderBy: { createdAt: 'asc' },
@@ -134,8 +134,8 @@ export default async function HMApplicationPage({
                 {candidate.phone && (
                   <span className="text-xs text-gray-400">{candidate.phone}</span>
                 )}
-                {candidate.linkedinUrl && (
-                  <a href={candidate.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
+                {candidate.linkedInUrl && (
+                  <a href={candidate.linkedInUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
                     LinkedIn ↗
                   </a>
                 )}

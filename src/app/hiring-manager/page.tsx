@@ -25,6 +25,7 @@ export default async function HiringManagerHubPage() {
 
   const userId = (session.user as any).id as string
   const userName = session.user.name ?? session.user.email ?? 'Hiring Manager'
+  const userEmail = session.user.email ?? ''
 
   // For admin preview: find the first job with a hiring manager assigned
   let jobWhereClause: any = { hiringManagerId: userId }
@@ -39,20 +40,18 @@ export default async function HiringManagerHubPage() {
 
   const jobs = await prisma.job.findMany({
     where: { ...jobWhereClause, status: 'OPEN' },
-    include: {
-      _count: { select: { applications: true } },
-    },
+    include: { _count: { select: { applications: true } } },
     orderBy: { createdAt: 'desc' },
   })
 
   const jobIds = jobs.map((j) => j.id)
 
-  // Applications for their jobs — include scorecard entries and events
+  // Applications for their jobs — only INTERVIEW stage and beyond (not raw applicants)
   const applications = jobIds.length > 0
     ? await prisma.application.findMany({
         where: {
           jobId: { in: jobIds },
-          stage: { notIn: ['REJECTED', 'HIRED', 'OFFER'] },
+          stage: { in: ['PHONE_SCREEN', 'INTERVIEW', 'OFFER'] },
         },
         include: {
           candidate: { select: { id: true, firstName: true, lastName: true } },
@@ -72,6 +71,29 @@ export default async function HiringManagerHubPage() {
       })
     : []
 
+  // Interviews SHE is conducting (as an interviewer)
+  const interviewerProfile = await prisma.interviewer.findUnique({
+    where: { email: userEmail },
+  })
+  const myUpcomingEvents = interviewerProfile
+    ? await prisma.interviewEvent.findMany({
+        where: {
+          interviewerId: interviewerProfile.id,
+          scheduledAt: { gte: new Date() },
+        },
+        include: {
+          application: {
+            include: {
+              candidate: { select: { firstName: true, lastName: true } },
+              job: { select: { title: true } },
+            },
+          },
+        },
+        orderBy: { scheduledAt: 'asc' },
+        take: 10,
+      })
+    : []
+
   // Split: needs review = has submitted scorecards, no hire decision
   const needsReview = applications.filter(
     (a) => a.scorecardEntries.length > 0 && a.hireDecisions.length === 0
@@ -80,8 +102,7 @@ export default async function HiringManagerHubPage() {
     (a) => a.scorecardEntries.length === 0
   )
 
-  const totalApps = applications.length
-  const upcomingInterviews = applications.filter((a) => a.events.length > 0).length
+  const upcomingInterviews = myUpcomingEvents.length
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -118,6 +139,47 @@ export default async function HiringManagerHubPage() {
               Ask your recruiter to assign you as hiring manager on a job posting.
             </p>
           </div>
+        )}
+
+        {/* My upcoming interviews */}
+        {myUpcomingEvents.length > 0 && (
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <Calendar className="w-4 h-4 text-blue-500" />
+              <h2 className="text-xs font-semibold text-blue-600 uppercase tracking-widest">
+                Your upcoming interviews
+              </h2>
+            </div>
+            <div className="space-y-2">
+              {myUpcomingEvents.map((event) => (
+                <Link
+                  key={event.id}
+                  href={`/interviewer/${event.id}`}
+                  className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-5 py-3.5 hover:border-blue-200 hover:shadow-sm transition-all"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center flex-shrink-0">
+                      {event.application.candidate.firstName[0]}{event.application.candidate.lastName[0]}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900">
+                        {event.application.candidate.firstName} {event.application.candidate.lastName}
+                      </p>
+                      <p className="text-xs text-gray-400 truncate">{event.application.job.title}</p>
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0 ml-3">
+                    <p className="text-xs font-medium text-blue-600">
+                      {event.scheduledAt ? new Date(event.scheduledAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'TBD'}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {event.scheduledAt ? new Date(event.scheduledAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : ''}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
         )}
 
         {/* Needs decision */}
