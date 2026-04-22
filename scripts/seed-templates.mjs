@@ -105,6 +105,148 @@ Thank you again — we're rooting for you.
 
 Hiring Team — Wigglitz`,
   },
+  {
+    name: 'Application Received',
+    subject: 'We Got Your Application — {{Job Title}} at Wigglitz',
+    body: `Hi {{First Name}},
+
+Thanks for applying for the {{Job Title}} role at Wigglitz. We received your application and our team will be reviewing it shortly.
+
+We go through every application carefully, so we appreciate your patience. If your background looks like a strong match, someone from our team will be in touch to set up a call.
+
+Either way, we'll follow up with you once we've had a chance to review. Thanks again for your interest in Wigglitz.
+
+Hiring Team — Wigglitz`,
+  },
+  {
+    name: 'Phone Screen Follow-Up (No Response)',
+    subject: 'Still Interested? — {{Job Title}} at Wigglitz',
+    body: `Hi {{First Name}},
+
+Just wanted to follow up on my note from a few days ago about the {{Job Title}} role at Wigglitz. I know things get busy and emails get buried, so I didn't want this to fall through the cracks.
+
+We're still excited about your background and would love to connect. If you're still interested, go ahead and grab a time using the link below — it's just a quick 20–30 minute introductory call.
+
+{{Calendly Link}}
+
+If your situation has changed or the timing isn't right, no worries at all — just let me know and I'll update things on our end.
+
+Either way, thanks for your time and we wish you the best!
+
+Hiring Team — Wigglitz`,
+  },
+  {
+    name: 'Interview Confirmation / Reminder',
+    subject: '{{Interview Type}} Confirmed — {{Job Title}} at Wigglitz',
+    body: `Hi {{First Name}},
+
+Just confirming your {{Interview Type}} for the {{Job Title}} role. Here are the details:
+
+Date: {{Interview Date}}
+Time: {{Interview Time}} {{Time Zone}}
+Format: {{Video Call / Phone / In-Person}}
+{{If video: Meeting link: {{Meeting Link}}}}
+{{If in-person: Address: {{Office Address}}, Ask for {{Contact Name}} at the front desk}}
+Who you'll be meeting with: {{Interviewer Name(s) and Title(s)}}
+
+The conversation will run about {{Duration}}. No need to prepare anything specific — just come ready to talk through your experience and ask whatever questions you have about the role and the team.
+
+If anything comes up and you need to reschedule, just reply here or reach out directly and we'll get you sorted.
+
+Looking forward to it.
+
+Hiring Team — Wigglitz`,
+  },
+  {
+    name: 'Reference Check Request',
+    subject: 'Reference Request — {{Candidate Full Name}}, {{Job Title}} at Wigglitz',
+    body: `Hi {{Reference First Name}},
+
+My name is {{Your Name}} and I'm on the talent team at Wigglitz. {{Candidate First Name}} listed you as a reference as part of their application for our {{Job Title}} opening, and I was hoping to connect with you briefly.
+
+If you're open to it, I'd love to schedule a 10-15 minute call at your convenience. You can grab a time using the link below, or feel free to reply with what works for you.
+
+{{Scheduling Link or Availability}}
+
+If a call doesn't work, I'm also happy to send over a few questions by email — just let me know what you'd prefer.
+
+Thanks so much for your time. We really appreciate it.
+
+Hiring Team — Wigglitz`,
+  },
+  {
+    name: 'Verbal Offer',
+    subject: 'Great News — Your Offer for {{Job Title}} at Wigglitz',
+    body: `Hi {{First Name}},
+
+It was great talking with you today. As we discussed, we'd love to officially welcome you to the team as our {{Job Title}}.
+
+Here's a quick recap of what we covered:
+
+Start date: {{Start Date}}
+Compensation: {{Salary/Rate}}
+{{Other Key Terms, e.g., bonus, equity, location/remote status}}
+
+You'll receive your formal offer letter at this email address within {{X business days}}. Please take the time you need to review everything, and don't hesitate to reach out if you have questions before then.
+
+We're really excited about this and hope you are too. Looking forward to making it official.
+
+Hiring Team — Wigglitz`,
+  },
+  {
+    name: 'Offer Letter Follow-Up',
+    subject: 'Following Up — Offer Letter for {{Job Title}}',
+    body: `Hi {{First Name}},
+
+Just checking in on the offer letter we sent over for the {{Job Title}} role. We know it's a big decision and we want to make sure you have everything you need.
+
+If you have any questions about the terms, the start date, or anything else, please don't hesitate to reach out. We're happy to talk through it.
+
+If you're ready to move forward, you can sign and return the letter at your earliest convenience. Our target start date is {{Start Date}}, so ideally we'd love to hear back by {{Response Deadline}}.
+
+Looking forward to hearing from you.
+
+Hiring Team — Wigglitz`,
+  },
+  {
+    name: 'Candidate Withdrawal Acknowledgment',
+    subject: 'Re: {{Job Title}} at Wigglitz',
+    body: `Hi {{First Name}},
+
+Thanks for letting us know, and no worries at all. We completely understand that circumstances change and that you have to do what's right for you.
+
+We genuinely enjoyed getting to know you throughout this process, and we think you'd be a great fit for the right opportunity. We'll keep your information on file and hope our paths cross again down the road.
+
+Wishing you all the best with whatever comes next.
+
+Hiring Team — Wigglitz`,
+  },
+  {
+    name: 'Keeping You in Mind (Silver Medalist)',
+    subject: 'Staying in Touch — {{Job Title}} at Wigglitz',
+    body: `Hi {{First Name}},
+
+I wanted to reach out personally to let you know that we've moved forward with another candidate for the {{Job Title}} role. This was a genuinely tough call — you stood out throughout the process and we have a lot of respect for your background.
+
+We don't want to lose touch. If the right role opens up at Wigglitz, you'll be one of the first people we think of, and we'd love to reconnect when that happens.
+
+Thanks again for the time you invested in getting to know us. We hope to work together someday.
+
+Hiring Team — Wigglitz`,
+  },
+  {
+    name: 'Pre-Onboarding / Welcome to the Team',
+    subject: 'Welcome to Wigglitz, {{First Name}}!',
+    body: `Hi {{First Name}},
+
+We are so excited to have you joining the team. Your first day is {{Start Date}} and we want to make sure you feel set up and ready to go.
+
+{{HR to insert: paperwork/I-9 instructions, equipment details, office/remote logistics, point of contact for day one questions, etc.}}
+
+In the meantime, don't hesitate to reach out if anything comes up. We can't wait to get started.
+
+Hiring Team — Wigglitz`,
+  },
 ]
 
 async function main() {
