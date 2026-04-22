@@ -1,22 +1,15 @@
 #!/usr/bin/env node
-/**
- * zbhire ATS — MCP bridge for Claude Desktop
- *
- * The Claude desktop app communicates with MCP servers over stdio.
- * This script reads JSON-RPC messages from stdin, forwards them to
- * the Vercel-hosted /api/mcp endpoint, and writes responses to stdout.
- *
- * Claude Desktop config (see setup instructions below):
- *   C:\Users\<you>\AppData\Roaming\Claude\claude_desktop_config.json
- */
+import { appendFileSync } from 'fs'
 
 const ENDPOINT = process.env.ATS_MCP_URL
 const API_KEY  = process.env.ATS_MCP_KEY
+const LOG      = 'C:\\Users\\sckim\\mcp-debug.log'
+
+appendFileSync(LOG, `[${new Date().toISOString()}] Started. ENDPOINT=${ENDPOINT} KEY=${API_KEY ? 'set' : 'missing'}\n`)
 
 if (!ENDPOINT || !API_KEY) {
-  process.stderr.write(
-    '[zbhire-mcp] ERROR: ATS_MCP_URL and ATS_MCP_KEY env vars must be set in claude_desktop_config.json\n'
-  )
+  appendFileSync(LOG, 'ERROR: env vars missing — exiting\n')
+  process.stderr.write('[zbhire-mcp] ERROR: ATS_MCP_URL and ATS_MCP_KEY must be set in claude_desktop_config.json\n')
   process.exit(1)
 }
 
@@ -24,9 +17,10 @@ process.stdin.setEncoding('utf8')
 let buffer = ''
 
 process.stdin.on('data', (chunk) => {
+  appendFileSync(LOG, `[stdin] ${chunk.slice(0, 200)}\n`)
   buffer += chunk
   const lines = buffer.split('\n')
-  buffer = lines.pop() // keep any incomplete trailing line
+  buffer = lines.pop()
   for (const line of lines) {
     const trimmed = line.trim()
     if (trimmed) {
@@ -37,6 +31,7 @@ process.stdin.on('data', (chunk) => {
 })
 
 async function handleMessage(message) {
+  appendFileSync(LOG, `[msg] ${JSON.stringify(message).slice(0, 200)}\n`)
   try {
     const res = await fetch(ENDPOINT, {
       method: 'POST',
@@ -47,12 +42,13 @@ async function handleMessage(message) {
       body: JSON.stringify(message),
     })
 
-    // 204 = notification acknowledged, no body to return
     if (res.status === 204) return
 
     const json = await res.json()
+    appendFileSync(LOG, `[resp] ${JSON.stringify(json).slice(0, 200)}\n`)
     process.stdout.write(JSON.stringify(json) + '\n')
   } catch (err) {
+    appendFileSync(LOG, `[err] ${err.message}\n`)
     process.stdout.write(JSON.stringify({
       jsonrpc: '2.0',
       id: message?.id ?? null,

@@ -3,15 +3,15 @@
   "configurations": [
     {
       "name": "ATS - Next.js Dev Server",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "-p", "3001"],
-      "port": 3001
-    },
-    {
-      "name": "ATS - Prisma Studio",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "db:studio"],
-      "port": 5555
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:\\Users\\sckim\\ats\\node_modules\\next\\dist\\bin\\next",
+        "dev",
+        "C:\\Users\\sckim\\ats",
+        "-p",
+        "3002"
+      ],
+      "port": 3002
     }
   ]
 }
