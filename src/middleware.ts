@@ -47,7 +47,8 @@ export default withAuth(
           pathname.startsWith('/offers') ||
           pathname.startsWith('/api/auth') ||
           pathname.startsWith('/api/apply') ||
-          pathname.startsWith('/api/offers')
+          pathname.startsWith('/api/offers') ||
+          pathname.startsWith('/api/claude/snapshot')
         ) return true
         return !!token
       },
