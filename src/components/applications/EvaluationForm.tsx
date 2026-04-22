@@ -505,7 +505,7 @@ function SectionCard({
     if (!draftEntry) return null
     try { return (JSON.parse(draftEntry.responses) as any).__gutCheck__?.embarrassed ?? null } catch { return null }
   })
-  const [sectionRecommendation, setSectionRecommendation] = useState<'HIRE' | 'NO HIRE' | null>(() => {
+  const [sectionRecommendation, setSectionRecommendation] = useState<'HIRE' | 'MAYBE' | 'NO HIRE' | null>(() => {
     if (!draftEntry) return null
     try { return (JSON.parse(draftEntry.responses) as any).__recommendation__ ?? null } catch { return null }
   })
@@ -956,7 +956,7 @@ function SectionCard({
             {[
               { label: 'Would you be thrilled to work with this person every day?', value: gutCheckThrilled, set: setGutCheckThrilled },
               { label: 'Would this person make the team better?', value: gutCheckTeam, set: setGutCheckTeam },
-              { label: 'Would you be embarrassed if they joined and underperformed?', value: gutCheckEmbarrassed, set: setGutCheckEmbarrassed },
+              { label: 'If I give this person a task, am I confident they will get it done?', value: gutCheckEmbarrassed, set: setGutCheckEmbarrassed },
             ].map(({ label, value, set }) => (
               <div key={label} className="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0">
                 <span className="text-sm text-gray-700 pr-4">{label}</span>
@@ -966,10 +966,10 @@ function SectionCard({
           </div>
         </div>
 
-        {/* Hire / No Hire */}
+        {/* Hire / Maybe / No Hire */}
         <div className="mb-5">
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Recommendation</h3>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <button
               type="button"
               onClick={() => setSectionRecommendation(sectionRecommendation === 'HIRE' ? null : 'HIRE')}
@@ -980,6 +980,17 @@ function SectionCard({
               }`}
             >
               HIRE
+            </button>
+            <button
+              type="button"
+              onClick={() => setSectionRecommendation(sectionRecommendation === 'MAYBE' ? null : 'MAYBE')}
+              className={`py-3 text-sm font-bold rounded-xl border-2 transition-all ${
+                sectionRecommendation === 'MAYBE'
+                  ? 'bg-amber-500 text-white border-amber-500 shadow-md'
+                  : 'bg-white text-amber-600 border-amber-300 hover:bg-amber-50'
+              }`}
+            >
+              MAYBE
             </button>
             <button
               type="button"
@@ -1082,8 +1093,8 @@ function FinalAssessmentCard({
   )
 
   // Recommendation
-  const [recommendation, setRecommendation] = useState<'HIRE' | 'NO HIRE' | null>(
-    (draftParsed['recommendation']?.value as 'HIRE' | 'NO HIRE' | null) ?? null
+  const [recommendation, setRecommendation] = useState<'HIRE' | 'MAYBE' | 'NO HIRE' | null>(
+    (draftParsed['recommendation']?.value as 'HIRE' | 'MAYBE' | 'NO HIRE' | null) ?? null
   )
 
   const [saving, setSaving] = useState(false)
@@ -1261,7 +1272,7 @@ function FinalAssessmentCard({
                 set: setGutCheckTeam,
               },
               {
-                label: 'Would you be embarrassed if they joined and underperformed?',
+                label: 'If I give this person a task, am I confident they will get it done?',
                 value: gutCheckEmbarrassed,
                 set: setGutCheckEmbarrassed,
               },
@@ -1282,12 +1293,10 @@ function FinalAssessmentCard({
           <h3 className="text-sm font-semibold text-gray-900 mb-3">
             Final Recommendation
           </h3>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <button
               type="button"
-              onClick={() =>
-                setRecommendation(recommendation === 'HIRE' ? null : 'HIRE')
-              }
+              onClick={() => setRecommendation(recommendation === 'HIRE' ? null : 'HIRE')}
               className={`py-4 text-base font-bold rounded-xl border-2 transition-all ${
                 recommendation === 'HIRE'
                   ? 'bg-green-700 text-white border-green-700 shadow-md'
@@ -1298,9 +1307,18 @@ function FinalAssessmentCard({
             </button>
             <button
               type="button"
-              onClick={() =>
-                setRecommendation(recommendation === 'NO HIRE' ? null : 'NO HIRE')
-              }
+              onClick={() => setRecommendation(recommendation === 'MAYBE' ? null : 'MAYBE')}
+              className={`py-4 text-base font-bold rounded-xl border-2 transition-all ${
+                recommendation === 'MAYBE'
+                  ? 'bg-amber-500 text-white border-amber-500 shadow-md'
+                  : 'bg-white text-amber-600 border-amber-300 hover:bg-amber-50'
+              }`}
+            >
+              MAYBE
+            </button>
+            <button
+              type="button"
+              onClick={() => setRecommendation(recommendation === 'NO HIRE' ? null : 'NO HIRE')}
               className={`py-4 text-base font-bold rounded-xl border-2 transition-all ${
                 recommendation === 'NO HIRE'
                   ? 'bg-red-700 text-white border-red-700 shadow-md'
@@ -1332,7 +1350,7 @@ function FinalAssessmentCard({
           </button>
           {!recommendation && (
             <span className="text-xs text-gray-400 ml-1">
-              Select HIRE or NO HIRE to submit
+              Select a recommendation to submit
             </span>
           )}
         </div>
