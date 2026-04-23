@@ -194,148 +194,154 @@ export default async function ApplicationPage({
 
       {/* Candidate Header */}
       <div className="card p-6 mb-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-4">
-            <div className="flex items-center justify-center w-14 h-14 rounded-full bg-blue-100 text-blue-700 text-xl font-bold flex-shrink-0">
-              {candidate.firstName[0]}{candidate.lastName[0]}
-            </div>
-            <div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {candidate.firstName} {candidate.lastName}
-                </h1>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STAGE_COLORS[application.stage]}`}>
-                  {STAGE_LABELS[application.stage]}
-                </span>
-                {isNewApplicant(application.createdAt) && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 uppercase tracking-wide">
-                    New Applicant
+        {/* Top row: avatar + info + stage selector */}
+        <div className="flex items-start gap-4">
+          <div className="flex items-center justify-center w-14 h-14 rounded-full bg-blue-100 text-blue-700 text-xl font-bold flex-shrink-0">
+            {candidate.firstName[0]}{candidate.lastName[0]}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div className="min-w-0">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    {candidate.firstName} {candidate.lastName}
+                  </h1>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STAGE_COLORS[application.stage]}`}>
+                    {STAGE_LABELS[application.stage]}
                   </span>
-                )}
-                {application.stage === 'REJECTED' && (application as any).rejectionReason && (() => {
-                  const reason = REJECTION_REASONS.find(r => r.value === (application as any).rejectionReason)
-                  return reason ? (
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${reason.color}`}>
-                      {reason.label}
+                  {isNewApplicant(application.createdAt) && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 uppercase tracking-wide">
+                      New
                     </span>
-                  ) : null
-                })()}
-                {(candidate as any).blocked && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-                    <Ban className="w-3 h-3" /> Do Not Contact
-                  </span>
-                )}
-              </div>
+                  )}
+                  {application.stage === 'REJECTED' && (application as any).rejectionReason && (() => {
+                    const reason = REJECTION_REASONS.find(r => r.value === (application as any).rejectionReason)
+                    return reason ? (
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${reason.color}`}>
+                        {reason.label}
+                      </span>
+                    ) : null
+                  })()}
+                  {(candidate as any).blocked && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                      <Ban className="w-3 h-3" /> Do Not Contact
+                    </span>
+                  )}
+                </div>
 
-              {/* Contact */}
-              <p className="text-sm text-gray-600 mt-1">{candidate.email}</p>
-              {candidate.phone && <p className="text-sm text-gray-600">{candidate.phone}</p>}
+                {/* Contact */}
+                <p className="text-sm text-gray-600 mt-1">{candidate.email}</p>
+                {candidate.phone && <p className="text-sm text-gray-600">{candidate.phone}</p>}
 
-              {/* LinkedIn / Address / Source */}
-              <div className="flex flex-wrap items-center gap-4 mt-1">
-                {candidate.linkedInUrl && (
-                  <a href={candidate.linkedInUrl} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-sm text-gray-500 hover:text-blue-600 transition-colors">
-                    <Linkedin className="w-3.5 h-3.5" /> LinkedIn <ExternalLink className="w-3 h-3" />
-                  </a>
-                )}
-                {(candidate as any).address && (
-                  <span className="flex items-center gap-1 text-sm text-gray-500">
-                    <MapPin className="w-3.5 h-3.5" />{(candidate as any).address}
-                  </span>
-                )}
-                {candidate.source && (
-                  <span className="text-sm text-gray-500">Source: {candidate.source}</span>
-                )}
-              </div>
+                {/* LinkedIn / Address / Source */}
+                <div className="flex flex-wrap items-center gap-4 mt-1">
+                  {candidate.linkedInUrl && (
+                    <a href={candidate.linkedInUrl} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-sm text-gray-500 hover:text-blue-600 transition-colors">
+                      <Linkedin className="w-3.5 h-3.5" /> LinkedIn <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                  {(candidate as any).address && (
+                    <span className="flex items-center gap-1 text-sm text-gray-500">
+                      <MapPin className="w-3.5 h-3.5" />{(candidate as any).address}
+                    </span>
+                  )}
+                  {candidate.source && (
+                    <span className="text-sm text-gray-500">Source: {candidate.source}</span>
+                  )}
+                </div>
 
-              {/* Job / Dept / Applied */}
-              <div className="flex items-center gap-4 mt-2 flex-wrap">
-                <span className="text-sm text-gray-500">
-                  <strong>Job:</strong> {job.title}
-                </span>
-                {job.department && (
+                {/* Job / Dept / Applied */}
+                <div className="flex items-center gap-4 mt-2 flex-wrap">
                   <span className="text-sm text-gray-500">
-                    <strong>Dept:</strong> {job.department}
+                    <strong>Job:</strong> {job.title}
                   </span>
-                )}
-                <span className="text-sm text-gray-500">
-                  Applied {formatDate(application.createdAt)}
-                </span>
-                <Link
-                  href={`/candidates/${candidate.id}`}
-                  className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  <User className="w-3.5 h-3.5" /> Full Profile
-                </Link>
+                  {job.department && (
+                    <span className="text-sm text-gray-500">
+                      <strong>Dept:</strong> {job.department}
+                    </span>
+                  )}
+                  <span className="text-sm text-gray-500">
+                    Applied {formatDate(application.createdAt)}
+                  </span>
+                  <Link
+                    href={`/candidates/${candidate.id}`}
+                    className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    <User className="w-3.5 h-3.5" /> Full Profile
+                  </Link>
+                </div>
+
+                {/* Tags */}
+                <div className="mt-2">
+                  <CandidateTags
+                    candidateId={candidate.id}
+                    initialTags={(candidate as any).tags?.map((ct: any) => ct.tag) ?? []}
+                  />
+                </div>
               </div>
 
-              {/* Tags */}
-              <div className="mt-2">
-                <CandidateTags
+              {/* Stage selector — top-right */}
+              <div className="flex-shrink-0">
+                <StageSelector
+                  applicationId={application.id}
+                  currentStage={application.stage as any}
                   candidateId={candidate.id}
-                  initialTags={(candidate as any).tags?.map((ct: any) => ct.tag) ?? []}
+                  candidateEmail={candidate.email}
+                  candidateFirstName={candidate.firstName}
+                  jobTitle={job.title}
                 />
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="flex flex-col items-end gap-2 md:gap-3 flex-shrink-0">
-            <StageSelector
-              applicationId={application.id}
-              currentStage={application.stage as any}
-              candidateId={candidate.id}
-              candidateEmail={candidate.email}
-              candidateFirstName={candidate.firstName}
-              jobTitle={job.title}
-            />
-            <div className="flex items-center gap-2 flex-wrap justify-end">
-              <SendMessageButton
-                candidateId={candidate.id}
-                candidateEmail={candidate.email}
-                candidateFirstName={candidate.firstName}
-                jobTitle={application.job.title}
-                blocked={(candidate as any).blocked}
-              />
-              <BlockCandidateButton
-                candidateId={candidate.id}
-                blocked={(candidate as any).blocked}
-              />
-              <ScheduleInterviewButton
-                applicationId={application.id}
-                interviewers={jobInterviewers}
-                candidateId={candidate.id}
-                candidateEmail={candidate.email}
-                candidateFirstName={candidate.firstName}
-                jobTitle={job.title}
-              />
-              <Link
-                href={`/applications/${application.id}/scorecard/new`}
-                className="btn-outline text-xs"
-              >
-                <ClipboardCheck className="w-3 h-3" />
-                Add Evaluation
-              </Link>
-              <TransferJobButton
-                applicationId={application.id}
-                currentJobId={job.id}
-                currentJobTitle={job.title}
-                candidateName={`${candidate.firstName} ${candidate.lastName}`}
-              />
-              <EditCandidateButton
-                candidate={{
-                  id: candidate.id,
-                  firstName: candidate.firstName,
-                  lastName: candidate.lastName,
-                  email: candidate.email ?? '',
-                  phone: candidate.phone ?? null,
-                  linkedInUrl: candidate.linkedInUrl ?? null,
-                  source: candidate.source ?? null,
-                  notes: candidate.notes ?? null,
-                }}
-              />
-            </div>
-          </div>
+        {/* Action buttons — full-width row at bottom */}
+        <div className="flex items-center gap-2 flex-wrap mt-4 pt-4 border-t border-gray-100">
+          <SendMessageButton
+            candidateId={candidate.id}
+            candidateEmail={candidate.email}
+            candidateFirstName={candidate.firstName}
+            jobTitle={application.job.title}
+            blocked={(candidate as any).blocked}
+          />
+          <BlockCandidateButton
+            candidateId={candidate.id}
+            blocked={(candidate as any).blocked}
+          />
+          <ScheduleInterviewButton
+            applicationId={application.id}
+            interviewers={jobInterviewers}
+            candidateId={candidate.id}
+            candidateEmail={candidate.email}
+            candidateFirstName={candidate.firstName}
+            jobTitle={job.title}
+          />
+          <Link
+            href={`/applications/${application.id}/scorecard/new`}
+            className="btn-outline text-xs"
+          >
+            <ClipboardCheck className="w-3 h-3" />
+            Add Evaluation
+          </Link>
+          <TransferJobButton
+            applicationId={application.id}
+            currentJobId={job.id}
+            currentJobTitle={job.title}
+            candidateName={`${candidate.firstName} ${candidate.lastName}`}
+          />
+          <EditCandidateButton
+            candidate={{
+              id: candidate.id,
+              firstName: candidate.firstName,
+              lastName: candidate.lastName,
+              email: candidate.email ?? '',
+              phone: candidate.phone ?? null,
+              linkedInUrl: candidate.linkedInUrl ?? null,
+              source: candidate.source ?? null,
+              notes: candidate.notes ?? null,
+            }}
+          />
         </div>
       </div>
 
