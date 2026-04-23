@@ -19,6 +19,7 @@ import { EditCandidateButton } from '@/components/candidates/EditCandidateButton
 import { BlockCandidateButton } from '@/components/candidates/BlockCandidateButton'
 import { ResumeUploadButton } from '@/components/candidates/ResumeUploadButton'
 import { EvaluationEntryRow } from '@/components/applications/EvaluationEntryRow'
+import { EditInterviewButton } from '@/components/applications/EditInterviewButton'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -499,7 +500,7 @@ export default async function ApplicationPage({
                     <li key={event.id} className="px-4 py-3">
                       <div className="flex items-start gap-2">
                         <span className={`mt-0.5 flex-shrink-0 ${event.type === 'WORKING_INTERVIEW' ? 'text-amber-500' : 'text-gray-400'}`}>{typeIcon}</span>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="text-xs font-semibold text-gray-800">
                             {INTERVIEW_TYPE_LABELS[event.type] ?? event.type}
                           </p>
@@ -519,9 +520,24 @@ export default async function ApplicationPage({
                             <p className="text-xs text-gray-400 truncate mt-0.5">{event.location}</p>
                           )}
                         </div>
-                        {event.scorecard && (
-                          <span className="ml-auto flex-shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-green-100 text-green-700 font-medium">✓</span>
-                        )}
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {event.scorecard && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-green-100 text-green-700 font-medium">✓</span>
+                          )}
+                          <EditInterviewButton
+                            applicationId={application.id}
+                            interviewers={jobInterviewers}
+                            event={{
+                              id: event.id,
+                              interviewerId: event.interviewerId ?? null,
+                              type: event.type,
+                              scheduledAt: event.scheduledAt ? event.scheduledAt.toISOString() : null,
+                              durationMins: event.durationMins,
+                              location: event.location ?? null,
+                              notes: event.notes ?? null,
+                            }}
+                          />
+                        </div>
                       </div>
                     </li>
                   )

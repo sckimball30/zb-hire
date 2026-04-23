@@ -71,6 +71,8 @@ export default async function InterviewerEventPage({
   const isSubmitted = !!event.scorecard?.submittedAt
   const typeLabel = INTERVIEW_TYPE_LABELS[event.type] ?? event.type
   const isUpcoming = event.scheduledAt ? new Date(event.scheduledAt) > new Date() : false
+  const template = job.scorecardTemplate
+  const templateSections = template?.sections ?? []
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -152,49 +154,63 @@ export default async function InterviewerEventPage({
           )}
         </div>
 
-        {/* Evaluation CTA */}
-        {isUpcoming ? (
-          <div className="rounded-xl border border-blue-100 bg-blue-50 p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                <Calendar className="w-5 h-5 text-blue-600" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-base font-semibold text-gray-900">Interview coming up</h2>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  Review the candidate's profile and resume below to prepare. You'll be able to submit your evaluation after the interview takes place.
-                </p>
-              </div>
+        {/* Evaluation CTA — always visible */}
+        <div className={`rounded-xl border p-6 ${isSubmitted ? 'bg-green-50 border-green-200' : isUpcoming ? 'bg-blue-50 border-blue-100' : 'bg-white border-gray-200'}`}>
+          <div className="flex items-start gap-4">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isSubmitted ? 'bg-green-100' : isUpcoming ? 'bg-blue-100' : 'bg-indigo-100'}`}>
+              {isSubmitted
+                ? <CheckCircle2 className="w-5 h-5 text-green-600" />
+                : isUpcoming
+                  ? <Calendar className="w-5 h-5 text-blue-600" />
+                  : <ClipboardCheck className="w-5 h-5 text-indigo-600" />
+              }
+            </div>
+            <div className="flex-1">
+              <h2 className="text-base font-semibold text-gray-900">
+                {isSubmitted ? 'Evaluation submitted' : isUpcoming ? 'Interview coming up' : 'Submit your evaluation'}
+              </h2>
+              <p className="text-sm text-gray-500 mt-0.5">
+                {isSubmitted
+                  ? `Submitted on ${new Date(event.scorecard!.submittedAt!).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}`
+                  : isUpcoming
+                    ? 'Review the questions below and use the scorecard to take notes during the interview.'
+                    : 'Share your feedback on this candidate using the scorecard below.'}
+              </p>
+              {!isSubmitted && (
+                <Link
+                  href={`/applications/${application.id}/scorecard/new`}
+                  className={`inline-flex items-center gap-2 mt-3 px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors ${isUpcoming ? 'bg-blue-600 hover:bg-blue-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                >
+                  <ClipboardCheck className="w-4 h-4" />
+                  {isUpcoming ? 'Open scorecard' : 'Open scorecard'}
+                </Link>
+              )}
             </div>
           </div>
-        ) : (
-          <div className={`rounded-xl border p-6 ${isSubmitted ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
-            <div className="flex items-start gap-4">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isSubmitted ? 'bg-green-100' : 'bg-indigo-100'}`}>
-                {isSubmitted
-                  ? <CheckCircle2 className="w-5 h-5 text-green-600" />
-                  : <ClipboardCheck className="w-5 h-5 text-indigo-600" />
-                }
-              </div>
-              <div className="flex-1">
-                <h2 className="text-base font-semibold text-gray-900">
-                  {isSubmitted ? 'Evaluation submitted' : 'Submit your evaluation'}
-                </h2>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  {isSubmitted
-                    ? `Submitted on ${new Date(event.scorecard!.submittedAt!).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}`
-                    : 'Share your feedback on this candidate using the scorecard below.'}
-                </p>
-                {!isSubmitted && (
-                  <Link
-                    href={`/applications/${application.id}/scorecard/new`}
-                    className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
-                  >
-                    <ClipboardCheck className="w-4 h-4" />
-                    Open scorecard
-                  </Link>
-                )}
-              </div>
+        </div>
+
+        {/* Interview questions — always visible so interviewers can prepare & reference during the call */}
+        {templateSections.length > 0 && (
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+              <ClipboardCheck className="w-4 h-4 text-gray-400" />
+              <h2 className="text-base font-semibold text-gray-900">Interview Questions</h2>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {templateSections.map((section) => (
+                <div key={section.id} className="px-6 py-4">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
+                    {section.title}
+                  </p>
+                  <ol className="space-y-2 list-decimal list-inside">
+                    {section.questions.map((tq) => (
+                      <li key={tq.id} className="text-sm text-gray-700 leading-relaxed">
+                        {tq.question.text}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              ))}
             </div>
           </div>
         )}

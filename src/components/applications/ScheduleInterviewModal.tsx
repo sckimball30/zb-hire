@@ -29,6 +29,16 @@ interface Interviewer {
   calendlyUrl: string | null
 }
 
+interface ExistingEvent {
+  id: string
+  interviewerId: string | null
+  type: string
+  scheduledAt: string | null
+  durationMins: number
+  location: string | null
+  notes: string | null
+}
+
 interface Props {
   applicationId: string
   interviewers: Interviewer[]
@@ -36,23 +46,43 @@ interface Props {
   candidateEmail?: string
   candidateFirstName?: string
   jobTitle?: string
+  existingEvent?: ExistingEvent
   onClose: () => void
+}
+
+const PRESET_LOCATIONS = ['Google Meet', 'Zoom', 'Phone Call', 'On-Site']
+
+function toDatetimeLocal(iso: string | null): string {
+  if (!iso) return ''
+  // Convert ISO string to datetime-local format (YYYY-MM-DDTHH:mm)
+  return iso.slice(0, 16)
 }
 
 export function ScheduleInterviewModal({
   applicationId,
   interviewers,
+  existingEvent,
   onClose,
 }: Props) {
   const router = useRouter()
+  const isEditing = !!existingEvent
 
-  const [interviewerId, setInterviewerId] = useState(interviewers[0]?.id ?? '')
-  const [type, setType] = useState('PHONE_SCREEN')
-  const [location, setLocation] = useState('')
-  const [customLocation, setCustomLocation] = useState('')
-  const [scheduledAt, setScheduledAt] = useState('')
-  const [notes, setNotes] = useState('')
-  const [showNotes, setShowNotes] = useState(false)
+  // Pre-populate from existing event when editing
+  const initLocation = () => {
+    if (!existingEvent?.location) return ''
+    if (PRESET_LOCATIONS.includes(existingEvent.location)) return existingEvent.location
+    return '__custom__'
+  }
+
+  const [interviewerId, setInterviewerId] = useState(existingEvent?.interviewerId ?? interviewers[0]?.id ?? '')
+  const [type, setType] = useState(existingEvent?.type ?? 'PHONE_SCREEN')
+  const [location, setLocation] = useState(initLocation)
+  const [customLocation, setCustomLocation] = useState(
+    existingEvent?.location && !PRESET_LOCATIONS.includes(existingEvent.location) ? existingEvent.location : ''
+  )
+  const [scheduledAt, setScheduledAt] = useState(toDatetimeLocal(existingEvent?.scheduledAt ?? null))
+  const [notes, setNotes] = useState(existingEvent?.notes ?? '')
+  const [showNotes, setShowNotes] = useState(!!(existingEvent?.notes))
   const [loading, setLoading] = useState(false)
 
   const effectiveLocation = location === '__custom__' ? customLocation : location
@@ -65,11 +95,14 @@ export function ScheduleInterviewModal({
 
     setLoading(true)
     try {
-      const res = await fetch(`/api/applications/${applicationId}/events`, {
-        method: 'POST',
+      const url = isEditing
+        ? `/api/applications/${applicationId}/events/${existingEvent!.id}`
+        : `/api/applications/${applicationId}/events`
+      const res = await fetch(url, {
+        method: isEditing ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          interviewerId,
+          interviewerId: isWorkingInterview ? null : interviewerId,
           type,
           durationMins: 60,
           scheduledAt: scheduledAt || null,
@@ -79,13 +112,13 @@ export function ScheduleInterviewModal({
       })
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data.error || 'Failed to log interview')
+        throw new Error(data.error || (isEditing ? 'Failed to update interview' : 'Failed to log interview'))
       }
-      toast.success('Interview logged!')
+      toast.success(isEditing ? 'Interview updated!' : 'Interview logged!')
       onClose()
       router.refresh()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to log interview')
+      toast.error(err instanceof Error ? err.message : 'Save failed')
     } finally {
       setLoading(false)
     }
@@ -104,8 +137,8 @@ export function ScheduleInterviewModal({
               <Calendar className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-gray-900">Log Interview</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Track interview progress for the team</p>
+              <h2 className="text-base font-semibold text-gray-900">{isEditing ? 'Edit Interview' : 'Log Interview'}</h2>
+              <p className="text-xs text-gray-400 mt-0.5">{isEditing ? 'Update the details for this interview' : 'Track interview progress for the team'}</p>
             </div>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -262,7 +295,7 @@ export function ScheduleInterviewModal({
               disabled={loading || (!isWorkingInterview && interviewers.length === 0)}
               className="btn-primary flex-1"
             >
-              {loading ? 'Saving…' : 'Log Interview'}
+              {loading ? 'Saving…' : isEditing ? 'Save Changes' : 'Log Interview'}
             </button>
             <button type="button" onClick={onClose} className="btn-outline">
               Cancel
