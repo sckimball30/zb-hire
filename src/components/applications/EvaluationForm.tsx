@@ -346,13 +346,6 @@ function WhoQuestionsBlock({
                 )}
               </div>
             )}
-            <textarea
-              className="input h-auto text-sm"
-              rows={2}
-              placeholder="Notes…"
-              value={resp.notes ?? ''}
-              onChange={(e) => setResponse(tq.questionId, 'notes', e.target.value)}
-            />
           </div>
         )
       })}
@@ -469,12 +462,6 @@ function SectionCard({
   const [localAvailableStart, setLocalAvailableStart] = useState(availableStart ?? '')
   const [localSalaryExpectation, setLocalSalaryExpectation] = useState(salaryExpectation ?? '')
 
-  // ── Section-level notes ─────────────────────────────────────────────────────
-  const [sectionNotes, setSectionNotes] = useState(() => {
-    if (!draftEntry) return ''
-    try { return (JSON.parse(draftEntry.responses) as any).__sectionNotes__ ?? '' } catch { return '' }
-  })
-
   // ── Custom questions (screening only) ──────────────────────────────────────
   const [customQuestions, setCustomQuestions] = useState<{ id: string; text: string; rating: ABC; notes: string }[]>(() => {
     if (!draftEntry || !isScreening) return []
@@ -491,24 +478,6 @@ function SectionCard({
     setCustomQuestions(prev => prev.map(q => q.id === id ? { ...q, [field]: value } : q))
   const removeCustomQuestion = (id: string) =>
     setCustomQuestions(prev => prev.filter(q => q.id !== id))
-
-  // ── Per-section gut check + recommendation ──────────────────────────────────
-  const [gutCheckThrilled, setGutCheckThrilled] = useState<string | null>(() => {
-    if (!draftEntry) return null
-    try { return (JSON.parse(draftEntry.responses) as any).__gutCheck__?.thrilled ?? null } catch { return null }
-  })
-  const [gutCheckTeam, setGutCheckTeam] = useState<string | null>(() => {
-    if (!draftEntry) return null
-    try { return (JSON.parse(draftEntry.responses) as any).__gutCheck__?.team ?? null } catch { return null }
-  })
-  const [gutCheckEmbarrassed, setGutCheckEmbarrassed] = useState<string | null>(() => {
-    if (!draftEntry) return null
-    try { return (JSON.parse(draftEntry.responses) as any).__gutCheck__?.embarrassed ?? null } catch { return null }
-  })
-  const [sectionRecommendation, setSectionRecommendation] = useState<'HIRE' | 'MAYBE' | 'NO HIRE' | null>(() => {
-    if (!draftEntry) return null
-    try { return (JSON.parse(draftEntry.responses) as any).__recommendation__ ?? null } catch { return null }
-  })
 
   const [saving, setSaving] = useState(false)
   const [collapsed, setCollapsed] = useState(submittedEntries.length > 0)
@@ -532,7 +501,6 @@ function SectionCard({
   }
 
   const buildResponsesPayload = () => {
-    const gutCheck = { thrilled: gutCheckThrilled, team: gutCheckTeam, embarrassed: gutCheckEmbarrassed }
     if (isWho) {
       return {
         type: 'who',
@@ -547,9 +515,6 @@ function SectionCard({
             ])
           ),
         })),
-        __sectionNotes__: sectionNotes,
-        __gutCheck__: gutCheck,
-        __recommendation__: sectionRecommendation,
       }
     }
     const out: Record<string, any> = {}
@@ -559,9 +524,6 @@ function SectionCard({
     if (isScreening && customQuestions.length > 0) {
       out.__customQuestions__ = customQuestions
     }
-    out.__sectionNotes__ = sectionNotes
-    out.__gutCheck__ = gutCheck
-    out.__recommendation__ = sectionRecommendation
     return out
   }
 
@@ -866,14 +828,6 @@ function SectionCard({
                       )}
                     </div>
                   )}
-
-                  <textarea
-                    className="input h-auto text-sm"
-                    rows={2}
-                    placeholder="Notes on this question…"
-                    value={response.notes ?? ''}
-                    onChange={(e) => setResponse(tq.questionId, 'notes', e.target.value)}
-                  />
                 </div>
               )
             })}
@@ -900,16 +854,7 @@ function SectionCard({
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    <div className="mb-2">
-                      <ABCButtons value={cq.rating} onChange={(v) => updateCustomQuestion(cq.id, 'rating', v)} />
-                    </div>
-                    <textarea
-                      className="input h-auto text-sm"
-                      rows={2}
-                      placeholder="Notes…"
-                      value={cq.notes}
-                      onChange={(e) => updateCustomQuestion(cq.id, 'notes', e.target.value)}
-                    />
+                    <ABCButtons value={cq.rating} onChange={(v) => updateCustomQuestion(cq.id, 'rating', v)} />
                   </div>
                 ))}
               </div>
@@ -934,77 +879,6 @@ function SectionCard({
             </div>
           </div>
         )}
-
-        {/* Section notes */}
-        <div className="mb-5">
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">
-            Section Notes
-          </label>
-          <textarea
-            className="input h-auto text-sm"
-            rows={3}
-            placeholder="Overall notes for this section…"
-            value={sectionNotes}
-            onChange={(e) => setSectionNotes(e.target.value)}
-          />
-        </div>
-
-        {/* Gut Check */}
-        <div className="mb-5 p-4 rounded-lg bg-gray-50 border border-gray-100">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Gut Check</h3>
-          <div className="space-y-2">
-            {[
-              { label: 'Would you be thrilled to work with this person every day?', value: gutCheckThrilled, set: setGutCheckThrilled },
-              { label: 'Would this person make the team better?', value: gutCheckTeam, set: setGutCheckTeam },
-              { label: 'If I give this person a task, am I confident they will get it done?', value: gutCheckEmbarrassed, set: setGutCheckEmbarrassed },
-            ].map(({ label, value, set }) => (
-              <div key={label} className="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0">
-                <span className="text-sm text-gray-700 pr-4">{label}</span>
-                <YesNoButtons value={value} onChange={set} />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Hire / Maybe / No Hire */}
-        <div className="mb-5">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Recommendation</h3>
-          <div className="grid grid-cols-3 gap-3">
-            <button
-              type="button"
-              onClick={() => setSectionRecommendation(sectionRecommendation === 'HIRE' ? null : 'HIRE')}
-              className={`py-3 text-sm font-bold rounded-xl border-2 transition-all ${
-                sectionRecommendation === 'HIRE'
-                  ? 'bg-green-700 text-white border-green-700 shadow-md'
-                  : 'bg-white text-green-700 border-green-300 hover:bg-green-50'
-              }`}
-            >
-              HIRE
-            </button>
-            <button
-              type="button"
-              onClick={() => setSectionRecommendation(sectionRecommendation === 'MAYBE' ? null : 'MAYBE')}
-              className={`py-3 text-sm font-bold rounded-xl border-2 transition-all ${
-                sectionRecommendation === 'MAYBE'
-                  ? 'bg-amber-500 text-white border-amber-500 shadow-md'
-                  : 'bg-white text-amber-600 border-amber-300 hover:bg-amber-50'
-              }`}
-            >
-              MAYBE
-            </button>
-            <button
-              type="button"
-              onClick={() => setSectionRecommendation(sectionRecommendation === 'NO HIRE' ? null : 'NO HIRE')}
-              className={`py-3 text-sm font-bold rounded-xl border-2 transition-all ${
-                sectionRecommendation === 'NO HIRE'
-                  ? 'bg-red-700 text-white border-red-700 shadow-md'
-                  : 'bg-white text-red-700 border-red-300 hover:bg-red-50'
-              }`}
-            >
-              NO HIRE
-            </button>
-          </div>
-        </div>
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 pt-1">
@@ -1097,6 +971,12 @@ function FinalAssessmentCard({
     (draftParsed['recommendation']?.value as 'HIRE' | 'MAYBE' | 'NO HIRE' | null) ?? null
   )
 
+  // General notes (global notes field, replaces per-question/per-section notes)
+  const [generalNotes, setGeneralNotes] = useState<string>(() => {
+    if (!draftEntry) return ''
+    try { return (JSON.parse(draftEntry.responses) as any).__sectionNotes__ ?? '' } catch { return '' }
+  })
+
   const [saving, setSaving] = useState(false)
   const [collapsed, setCollapsed] = useState(submittedEntries.length > 0)
 
@@ -1116,6 +996,7 @@ function FinalAssessmentCard({
     gutCheckTeam: { value: gutCheckTeam },
     gutCheckEmbarrassed: { value: gutCheckEmbarrassed },
     recommendation: { value: recommendation },
+    __sectionNotes__: generalNotes,
   })
 
   const handleSave = async (status: 'DRAFT' | 'SUBMITTED') => {
@@ -1187,7 +1068,7 @@ function FinalAssessmentCard({
       >
         <div>
           <h2 className="text-sm font-semibold text-gray-900">Final Assessment</h2>
-          <p className="text-xs text-gray-400 mt-0.5">Core values, gut check, and hire recommendation</p>
+          <p className="text-xs text-gray-400 mt-0.5">Notes, core values, gut check, and hire recommendation</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           {isSubmitted && (
@@ -1254,6 +1135,21 @@ function FinalAssessmentCard({
               </div>
             ))}
           </div>
+        </div>
+
+        {/* General Notes */}
+        <div className="mb-5">
+          <h3 className="text-sm font-semibold text-gray-900 mb-1">Notes</h3>
+          <p className="text-xs text-gray-400 mb-2">
+            Paste your interview notes here (from Granola.ai or your own notes).
+          </p>
+          <textarea
+            className="input h-auto text-sm"
+            rows={5}
+            placeholder="Add your interview notes here…"
+            value={generalNotes}
+            onChange={(e) => setGeneralNotes(e.target.value)}
+          />
         </div>
 
         {/* Gut Check */}

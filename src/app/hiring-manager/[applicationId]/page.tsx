@@ -268,7 +268,7 @@ function EvalEntry({
   dominantRating: string | null
   ratingColor: string
 }) {
-  const questionEntries = Object.entries(parsed)
+  const questionEntries = Object.entries(parsed).filter(([k]) => !k.startsWith('__'))
 
   return (
     <div className="border border-gray-100 rounded-lg p-4">
