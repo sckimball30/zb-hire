@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
+import { NotesRenderer } from '@/components/ui/NotesRenderer'
 
 interface EvaluationEntryRowProps {
   entry: {
@@ -134,9 +135,9 @@ export function EvaluationEntryRow({ entry, questionMap, canExpand }: Evaluation
 
           {/* Section notes */}
           {sectionNotes && (
-            <div className="text-xs">
-              <p className="text-gray-400 font-semibold uppercase tracking-wide mb-0.5">Notes</p>
-              <p className="text-gray-600">{sectionNotes}</p>
+            <div>
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Notes</p>
+              <NotesRenderer text={sectionNotes} />
             </div>
           )}
 

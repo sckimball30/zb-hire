@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
 import { Plus, Trash2, ChevronDown, ChevronUp, Briefcase, CheckCircle2, FileText } from 'lucide-react'
+import { NotesRenderer } from '@/components/ui/NotesRenderer'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -208,47 +209,72 @@ function SubmittedEntryRow({
 
       {expanded && (
         <div className="border-t border-gray-100 px-4 py-3 space-y-3">
+          {/* Per-question ratings */}
           {questions.map((tq) => {
             const r = parsed[tq.questionId]
+            if (!r?.rating) return null
             return (
               <div key={tq.id} className="text-sm">
                 <p className="font-medium text-gray-700 mb-0.5">{tq.question.text}</p>
-                <div className="flex items-center gap-2">
-                  {r?.rating && (
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${ratingBadgeClass(r.rating)}`}
-                    >
-                      {r.rating}
-                    </span>
-                  )}
-                  {r?.notes && (
-                    <span className="text-gray-600 italic text-xs">"{r.notes}"</span>
-                  )}
-                  {!r?.rating && !r?.notes && (
-                    <span className="text-gray-400 text-xs">No response</span>
-                  )}
-                </div>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${ratingBadgeClass(r.rating)}`}>
+                  {r.rating}
+                </span>
               </div>
             )
           })}
-          {/* Handle special Final Assessment responses */}
-          {questions.length === 0 && (
-            <div className="space-y-2">
-              {Object.entries(parsed).map(([key, val]) => (
-                <div key={key} className="text-sm flex items-center gap-2">
-                  <span className="text-gray-600 font-medium">{key}:</span>
-                  {val?.rating && (
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${ratingBadgeClass(val.rating)}`}
-                    >
-                      {val.rating}
-                    </span>
-                  )}
-                  {(val as any)?.value && (
-                    <span className="text-gray-600 text-xs">{(val as any).value}</span>
-                  )}
+
+          {/* General notes (from __sectionNotes__) */}
+          {(parsed as any).__sectionNotes__ && (
+            <div>
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Notes</p>
+              <NotesRenderer text={(parsed as any).__sectionNotes__} />
+            </div>
+          )}
+
+          {/* Gut check */}
+          {(parsed as any).__gutCheck__ && ((parsed as any).__gutCheck__.thrilled || (parsed as any).__gutCheck__.team || (parsed as any).__gutCheck__.embarrassed) && (
+            <div className="text-xs space-y-1">
+              <p className="text-gray-400 font-semibold uppercase tracking-wide">Gut Check</p>
+              {(parsed as any).__gutCheck__.thrilled && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Thrilled to work with?</span>
+                  <span className={`font-medium ${(parsed as any).__gutCheck__.thrilled === 'Yes' ? 'text-green-600' : 'text-red-600'}`}>{(parsed as any).__gutCheck__.thrilled}</span>
                 </div>
-              ))}
+              )}
+              {(parsed as any).__gutCheck__.team && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Makes team better?</span>
+                  <span className={`font-medium ${(parsed as any).__gutCheck__.team === 'Yes' ? 'text-green-600' : 'text-red-600'}`}>{(parsed as any).__gutCheck__.team}</span>
+                </div>
+              )}
+              {(parsed as any).__gutCheck__.embarrassed && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Confident they get it done?</span>
+                  <span className={`font-medium ${(parsed as any).__gutCheck__.embarrassed === 'Yes' ? 'text-green-600' : 'text-red-600'}`}>{(parsed as any).__gutCheck__.embarrassed}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Final Assessment core values + recommendation (questions.length === 0 means Final Assessment) */}
+          {questions.length === 0 && (
+            <div className="space-y-1.5">
+              {Object.entries(parsed)
+                .filter(([k]) => !k.startsWith('__') && k !== 'recommendation')
+                .map(([key, val]) => {
+                  const v = val as any
+                  if (!v?.rating && !v?.value) return null
+                  return (
+                    <div key={key} className="flex items-center gap-2 text-xs">
+                      <span className="text-gray-500 capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                      {v?.rating && (
+                        <span className={`inline-flex items-center px-1.5 py-0 rounded font-bold ${ratingBadgeClass(v.rating)}`}>
+                          {v.rating}
+                        </span>
+                      )}
+                    </div>
+                  )
+                })}
             </div>
           )}
         </div>

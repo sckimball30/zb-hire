@@ -11,6 +11,7 @@ import { STAGE_LABELS, STAGE_COLORS, INTERVIEW_TYPE_LABELS } from '@/lib/constan
 import { formatDateTime } from '@/lib/utils'
 import { HireDecisionPanel } from '@/components/applications/HireDecisionPanel'
 import { InterviewerSignOut } from '@/components/interviewer/InterviewerSignOut'
+import { NotesRenderer } from '@/components/ui/NotesRenderer'
 
 export default async function HMApplicationPage({
   params,
@@ -264,15 +265,18 @@ function EvalEntry({
   ratingColor,
 }: {
   entry: any
-  parsed: Record<string, { rating?: string | null; notes?: string | null }>
+  parsed: Record<string, any>
   dominantRating: string | null
   ratingColor: string
 }) {
   const questionEntries = Object.entries(parsed).filter(([k]) => !k.startsWith('__'))
+  const sectionNotes = parsed['__sectionNotes__'] as string | null | undefined
+  const gutCheck = parsed['__gutCheck__'] as { thrilled?: string; team?: string; embarrassed?: string } | null | undefined
+  const recommendation = parsed['recommendation']?.value as string | null | undefined
 
   return (
-    <div className="border border-gray-100 rounded-lg p-4">
-      <div className="flex items-center justify-between mb-3">
+    <div className="border border-gray-100 rounded-lg p-4 space-y-3">
+      <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold text-gray-900">{entry.interviewerName}</p>
           {entry.submittedAt && (
@@ -281,36 +285,77 @@ function EvalEntry({
             </p>
           )}
         </div>
-        {dominantRating && (
-          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${ratingColor}`}>
-            {dominantRating} Player
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {recommendation && (
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
+              recommendation === 'HIRE' ? 'bg-green-700 text-white' :
+              recommendation === 'MAYBE' ? 'bg-amber-500 text-white' :
+              'bg-red-700 text-white'
+            }`}>
+              {recommendation}
+            </span>
+          )}
+          {dominantRating && (
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${ratingColor}`}>
+              {dominantRating} Player
+            </span>
+          )}
+        </div>
       </div>
 
-      {questionEntries.length > 0 && (
-        <div className="space-y-3">
-          {questionEntries.map(([qId, response]) => (
-            <div key={qId} className="text-sm">
-              <div className="flex items-start gap-2">
-                {response.rating && (
-                  <span className={`mt-0.5 inline-flex items-center px-1.5 py-0 rounded text-xs font-bold flex-shrink-0 ${
-                    response.rating === 'A' ? 'bg-green-100 text-green-700' :
-                    response.rating === 'B' ? 'bg-amber-100 text-amber-700' :
-                    'bg-red-100 text-red-700'
-                  }`}>
-                    {response.rating}
-                  </span>
-                )}
-                {response.notes && (
-                  <p className="text-gray-600 text-xs leading-relaxed">{response.notes}</p>
-                )}
-                {!response.notes && !response.rating && (
-                  <p className="text-gray-300 text-xs italic">No notes</p>
-                )}
+      {/* Per-question ratings */}
+      {questionEntries.filter(([, r]) => (r as any)?.rating).length > 0 && (
+        <div className="space-y-1.5">
+          {questionEntries.map(([qId, response]) => {
+            const r = response as { rating?: string | null; notes?: string | null }
+            if (!r?.rating) return null
+            return (
+              <div key={qId} className="flex items-center gap-2 text-xs">
+                <span className={`inline-flex items-center px-1.5 py-0 rounded font-bold flex-shrink-0 ${
+                  r.rating === 'A' ? 'bg-green-100 text-green-700' :
+                  r.rating === 'B' ? 'bg-amber-100 text-amber-700' :
+                  'bg-red-100 text-red-700'
+                }`}>
+                  {r.rating}
+                </span>
               </div>
-            </div>
-          ))}
+            )
+          })}
+        </div>
+      )}
+
+      {/* General notes */}
+      {sectionNotes && (
+        <div>
+          <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Notes</p>
+          <NotesRenderer text={sectionNotes} />
+        </div>
+      )}
+
+      {/* Gut check */}
+      {gutCheck && (gutCheck.thrilled || gutCheck.team || gutCheck.embarrassed) && (
+        <div>
+          <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Gut Check</p>
+          <div className="space-y-1">
+            {gutCheck.thrilled && (
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-gray-500">Thrilled to work with?</span>
+                <span className={`font-medium ${gutCheck.thrilled === 'Yes' ? 'text-green-600' : 'text-red-600'}`}>{gutCheck.thrilled}</span>
+              </div>
+            )}
+            {gutCheck.team && (
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-gray-500">Makes team better?</span>
+                <span className={`font-medium ${gutCheck.team === 'Yes' ? 'text-green-600' : 'text-red-600'}`}>{gutCheck.team}</span>
+              </div>
+            )}
+            {gutCheck.embarrassed && (
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-gray-500">Confident they get it done?</span>
+                <span className={`font-medium ${gutCheck.embarrassed === 'Yes' ? 'text-green-600' : 'text-red-600'}`}>{gutCheck.embarrassed}</span>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
