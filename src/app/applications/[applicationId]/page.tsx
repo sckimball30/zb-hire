@@ -18,6 +18,7 @@ import { HireDecisionPanel } from '@/components/applications/HireDecisionPanel'
 import { EditCandidateButton } from '@/components/candidates/EditCandidateButton'
 import { BlockCandidateButton } from '@/components/candidates/BlockCandidateButton'
 import { ResumeUploadButton } from '@/components/candidates/ResumeUploadButton'
+import { EvaluationEntryRow } from '@/components/applications/EvaluationEntryRow'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -50,6 +51,15 @@ export default async function ApplicationPage({
             include: { interviewer: { select: { id: true, name: true, title: true, calendlyUrl: true } } },
           },
           recruiters: { select: { userId: true } },
+          scorecardTemplate: {
+            include: {
+              sections: {
+                include: {
+                  questions: { include: { question: true } },
+                },
+              },
+            },
+          },
         },
       },
       events: {
@@ -109,6 +119,17 @@ export default async function ApplicationPage({
   const submittedScorecards = application.scorecards.filter((s) => s.submittedAt)
   const jobInterviewers = job.interviewers.map(ji => ji.interviewer)
 
+  // Build a map of questionId → question text from the scorecard template
+  const questionMap: Record<string, string> = {}
+  const template = (job as any).scorecardTemplate
+  if (template?.sections) {
+    for (const section of template.sections) {
+      for (const tq of section.questions) {
+        questionMap[tq.question.id] = tq.question.text
+      }
+    }
+  }
+
   // Group scorecard entries by section
   const scorecardEntries = (application as any).scorecardEntries ?? []
   const submittedEntries = scorecardEntries.filter((e: any) => e.status === 'SUBMITTED')
@@ -118,6 +139,11 @@ export default async function ApplicationPage({
     return acc
   }, {} as Record<string, any[]>)
   const sectionGroups = Object.entries(entriesBySection) as [string, any[]][]
+
+  const canExpandEvaluations =
+    userRole === 'ADMIN' ||
+    userRole === 'HIRING_MANAGER' ||
+    recruiterIds.has(currentUserId ?? '')
 
   return (
     <div className="p-4 md:p-8 max-w-5xl">
@@ -406,46 +432,14 @@ export default async function ApplicationPage({
                       {sectionTitle}
                     </p>
                     <ul className="space-y-1.5">
-                      {sectionEntries.map((entry: any) => {
-                        // Compute most common rating
-                        let dominantRating: string | null = null
-                        try {
-                          const parsed = JSON.parse(entry.responses) as Record<string, { rating?: string | null }>
-                          const ratings = Object.values(parsed).map((r) => r?.rating).filter(Boolean) as string[]
-                          if (ratings.length) {
-                            const counts: Record<string, number> = {}
-                            for (const r of ratings) counts[r] = (counts[r] || 0) + 1
-                            dominantRating = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0]
-                          }
-                        } catch {}
-                        const ratingColor =
-                          dominantRating === 'A'
-                            ? 'bg-green-100 text-green-700'
-                            : dominantRating === 'B'
-                            ? 'bg-amber-100 text-amber-700'
-                            : dominantRating === 'C'
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-gray-100 text-gray-500'
-
-                        return (
-                          <li key={entry.id} className="flex items-center gap-2 text-sm">
-                            <span className="font-medium text-gray-800">{entry.interviewerName}</span>
-                            {dominantRating && (
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${ratingColor}`}>
-                                {dominantRating} Player
-                              </span>
-                            )}
-                            <span className="text-xs text-gray-400 ml-auto">
-                              {entry.submittedAt
-                                ? new Date(entry.submittedAt).toLocaleDateString(undefined, {
-                                    month: 'short',
-                                    day: 'numeric',
-                                  })
-                                : ''}
-                            </span>
-                          </li>
-                        )
-                      })}
+                      {sectionEntries.map((entry: any) => (
+                        <EvaluationEntryRow
+                          key={entry.id}
+                          entry={entry}
+                          questionMap={questionMap}
+                          canExpand={!!canExpandEvaluations}
+                        />
+                      ))}
                     </ul>
                   </div>
                 ))}
