@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sendInterviewAssignmentEmail } from '@/lib/email'
 import { INTERVIEW_TYPE_LABELS } from '@/lib/constants'
+import { createCalendarEvent, buildEventDescription } from '@/lib/google-calendar'
 
 export async function POST(
   req: NextRequest,
@@ -26,7 +27,13 @@ export async function POST(
     return NextResponse.json({ error: 'interviewerId is required for this interview type' }, { status: 400 })
   }
 
-  const application = await prisma.application.findUnique({ where: { id: applicationId } })
+  const application = await prisma.application.findUnique({
+    where: { id: applicationId },
+    include: {
+      candidate: { select: { firstName: true, lastName: true } },
+      job: { select: { title: true } },
+    },
+  })
   if (!application) return NextResponse.json({ error: 'Application not found' }, { status: 404 })
 
   let interviewer = null
@@ -59,28 +66,54 @@ export async function POST(
     },
   })
 
-  // Send assignment notification email to the interviewer (non-blocking)
-  if (!isWorkingInterview && interviewer?.email) {
-    const application = await prisma.application.findUnique({
-      where: { id: applicationId },
-      include: {
-        candidate: { select: { firstName: true, lastName: true } },
-        job: { select: { title: true } },
-      },
-    })
-    if (application) {
-      sendInterviewAssignmentEmail({
-        to: interviewer.email,
-        interviewerName: interviewer.name,
-        candidateName: `${application.candidate.firstName} ${application.candidate.lastName}`,
-        jobTitle: application.job.title,
-        interviewType: INTERVIEW_TYPE_LABELS[type as keyof typeof INTERVIEW_TYPE_LABELS] ?? type,
-        scheduledAt: scheduledAt ?? null,
-        location: location ?? null,
+  const candidateName = `${application.candidate.firstName} ${application.candidate.lastName}`
+  const jobTitle = application.job.title
+  const typeLabel = INTERVIEW_TYPE_LABELS[type as keyof typeof INTERVIEW_TYPE_LABELS] ?? type
+  const baseUrl = process.env.NEXTAUTH_URL ?? 'https://zb-hires.vercel.app'
+
+  // Google Calendar event — fire-and-forget, only when time is set
+  if (!isWorkingInterview && interviewer?.email && scheduledAt) {
+    const startTime = new Date(scheduledAt)
+    const endTime = new Date(startTime.getTime() + (durationMins ?? 60) * 60 * 1000)
+
+    createCalendarEvent({
+      interviewerEmail: interviewer.email,
+      summary: `Interview: ${candidateName} — ${jobTitle}`,
+      description: buildEventDescription({
+        candidateName,
+        jobTitle,
+        interviewType: typeLabel,
+        scorecardUrl: `${baseUrl}/interviewer/${event.id}`,
         notes: notes ?? null,
-        eventId: event.id,
-      }).catch(err => console.error('[events] assignment email failed:', err))
-    }
+      }),
+      location: location ?? null,
+      startTime,
+      endTime,
+    })
+      .then(async (googleCalendarEventId) => {
+        if (googleCalendarEventId) {
+          await prisma.interviewEvent.update({
+            where: { id: event.id },
+            data: { googleCalendarEventId },
+          })
+        }
+      })
+      .catch(err => console.error('[events] Google Calendar create failed:', err))
+  }
+
+  // Send assignment notification email — fire-and-forget
+  if (!isWorkingInterview && interviewer?.email) {
+    sendInterviewAssignmentEmail({
+      to: interviewer.email,
+      interviewerName: interviewer.name,
+      candidateName,
+      jobTitle,
+      interviewType: typeLabel,
+      scheduledAt: scheduledAt ?? null,
+      location: location ?? null,
+      notes: notes ?? null,
+      eventId: event.id,
+    }).catch(err => console.error('[events] assignment email failed:', err))
   }
 
   return NextResponse.json(event, { status: 201 })

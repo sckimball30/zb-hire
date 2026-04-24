@@ -340,20 +340,21 @@ model Offer {
 }
 
 model InterviewEvent {
-  id               String        @id @default(cuid())
-  applicationId    String
-  interviewerId    String?
-  type             String
-  scheduledAt      DateTime?
-  durationMins     Int           @default(60)
-  location         String?
-  notes            String?
-  calendlyEventUrl String?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  application      Application   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  interviewer      Interviewer?  @relation(fields: [interviewerId], references: [id], onDelete: SetNull)
-  scorecard        Scorecard?
+  id                   String        @id @default(cuid())
+  applicationId        String
+  interviewerId        String?
+  type                 String
+  scheduledAt          DateTime?
+  durationMins         Int           @default(60)
+  location             String?
+  notes                String?
+  calendlyEventUrl     String?
+  googleCalendarEventId String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  application          Application   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  interviewer          Interviewer?  @relation(fields: [interviewerId], references: [id], onDelete: SetNull)
+  scorecard            Scorecard?
 }
 
 model ScorecardTemplate {
