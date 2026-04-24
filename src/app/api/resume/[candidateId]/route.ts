@@ -25,36 +25,54 @@ export async function GET(
     return new NextResponse('Resume not available', { status: 404 })
   }
 
-  try {
-    // New uploads are public — fetch directly. Fall back to auth header for
-    // any older blobs that were stored as private.
-    let blobRes = await fetch(resumeUrl)
+  const token = process.env.BLOB_READ_WRITE_TOKEN ?? process.env.BLOB2_READ_WRITE_TOKEN
 
-    if (!blobRes.ok) {
-      const token = process.env.BLOB_READ_WRITE_TOKEN ?? process.env.BLOB2_READ_WRITE_TOKEN
-      if (token) {
-        blobRes = await fetch(resumeUrl, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-      }
+  try {
+    // Helper: check if a fetch response looks like real file content
+    // (not an HTML error/redirect page returned by Vercel for private blobs)
+    const isRealFile = (res: Response) => {
+      if (!res.ok) return false
+      const ct = res.headers.get('content-type') ?? ''
+      return !ct.includes('text/html')
     }
 
-    if (!blobRes.ok) {
-      console.error(`[resume] Blob fetch failed: ${blobRes.status} ${blobRes.statusText}`)
+    let blobRes = await fetch(resumeUrl)
+
+    // If the direct fetch returned HTML (e.g. Vercel auth wall for a private blob)
+    // or a non-OK status, retry with the token.
+    if (!isRealFile(blobRes) && token) {
+      blobRes = await fetch(resumeUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+    }
+
+    if (!isRealFile(blobRes)) {
+      console.error(`[resume] Blob fetch failed: ${blobRes.status} ${blobRes.statusText} ct=${blobRes.headers.get('content-type')}`)
       return new NextResponse('Resume file not found', { status: 404 })
     }
 
     const buffer = await blobRes.arrayBuffer()
 
-    let contentType = blobRes.headers.get('content-type') ?? 'application/pdf'
-    if (resumeUrl.toLowerCase().includes('.pdf') || contentType === 'application/octet-stream') {
+    // Derive content-type from URL extension or fall back to the blob header
+    const urlLower = resumeUrl.toLowerCase()
+    let contentType: string
+    if (urlLower.includes('.pdf')) {
       contentType = 'application/pdf'
+    } else if (urlLower.includes('.docx')) {
+      contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    } else if (urlLower.includes('.doc')) {
+      contentType = 'application/msword'
+    } else {
+      const blobCt = blobRes.headers.get('content-type') ?? 'application/octet-stream'
+      // Don't propagate an HTML content-type
+      contentType = blobCt.includes('text/html') ? 'application/octet-stream' : blobCt
     }
 
     const isDownload = req.nextUrl.searchParams.get('download') === '1'
+    const ext = urlLower.includes('.docx') ? 'docx' : urlLower.includes('.doc') ? 'doc' : 'pdf'
     const disposition = isDownload
-      ? 'attachment; filename="resume.pdf"'
-      : 'inline; filename="resume.pdf"'
+      ? `attachment; filename="resume.${ext}"`
+      : `inline; filename="resume.${ext}"`
 
     return new NextResponse(buffer, {
       headers: {
