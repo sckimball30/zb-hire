@@ -8,7 +8,7 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { ArrowLeft, Calendar, Clock, FileText, Download, ClipboardCheck, MapPin } from 'lucide-react'
 import { STAGE_LABELS, STAGE_COLORS, INTERVIEW_TYPE_LABELS } from '@/lib/constants'
-import { formatDateTime } from '@/lib/utils'
+import { formatDateTime, normalizeUrl } from '@/lib/utils'
 import { HireDecisionPanel } from '@/components/applications/HireDecisionPanel'
 import { InterviewerSignOut } from '@/components/interviewer/InterviewerSignOut'
 import { NotesRenderer } from '@/components/ui/NotesRenderer'
@@ -136,7 +136,7 @@ export default async function HMApplicationPage({
                   <span className="text-xs text-gray-400">{candidate.phone}</span>
                 )}
                 {candidate.linkedInUrl && (
-                  <a href={candidate.linkedInUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
+                  <a href={normalizeUrl(candidate.linkedInUrl)!} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
                     LinkedIn ↗
                   </a>
                 )}

@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 import { getGmailStatus } from '@/lib/gmail'
 import { ChevronLeft, ChevronRight, Plus, Calendar, Clock, FileText, Download, ClipboardCheck, Linkedin, ExternalLink, MapPin, User, Video, Phone, Users, Briefcase, Ban } from 'lucide-react'
 import { STAGE_LABELS, STAGE_COLORS, INTERVIEW_TYPE_LABELS, REJECTION_REASONS } from '@/lib/constants'
-import { formatDate, formatDateTime, timeAgo, isNewApplicant } from '@/lib/utils'
+import { formatDate, formatDateTime, timeAgo, isNewApplicant, normalizeUrl } from '@/lib/utils'
 import { StageSelector } from '@/components/applications/StageSelector'
 import { ScheduleInterviewButton } from '@/components/applications/ScheduleInterviewButton'
 import { SendMessageButton } from '@/components/candidates/SendMessageButton'
@@ -237,7 +237,7 @@ export default async function ApplicationPage({
                 {/* LinkedIn / Address / Source */}
                 <div className="flex flex-wrap items-center gap-4 mt-1">
                   {candidate.linkedInUrl && (
-                    <a href={candidate.linkedInUrl} target="_blank" rel="noopener noreferrer"
+                    <a href={normalizeUrl(candidate.linkedInUrl)!} target="_blank" rel="noopener noreferrer"
                       className="flex items-center gap-1 text-sm text-gray-500 hover:text-blue-600 transition-colors">
                       <Linkedin className="w-3.5 h-3.5" /> LinkedIn <ExternalLink className="w-3 h-3" />
                     </a>

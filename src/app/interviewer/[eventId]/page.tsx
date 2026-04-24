@@ -16,7 +16,7 @@ import {
   MapPin,
 } from 'lucide-react'
 import { INTERVIEW_TYPE_LABELS } from '@/lib/constants'
-import { formatDateTime } from '@/lib/utils'
+import { formatDateTime, normalizeUrl } from '@/lib/utils'
 import { InterviewerSignOut } from '@/components/interviewer/InterviewerSignOut'
 
 export default async function InterviewerEventPage({
@@ -115,7 +115,7 @@ export default async function InterviewerEventPage({
               )}
               {candidate.linkedInUrl && (
                 <a
-                  href={candidate.linkedInUrl}
+                  href={normalizeUrl(candidate.linkedInUrl)!}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline mt-1"

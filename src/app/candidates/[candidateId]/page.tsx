@@ -9,7 +9,7 @@ import {
   MapPin, MessageSquare, ChevronRight, Ban
 } from 'lucide-react'
 import { STAGE_LABELS, STAGE_COLORS, INTERVIEW_TYPE_LABELS } from '@/lib/constants'
-import { formatDate, formatDateTime, timeAgo } from '@/lib/utils'
+import { formatDate, formatDateTime, timeAgo, normalizeUrl } from '@/lib/utils'
 import { NotesPanel } from '@/components/candidates/NotesPanel'
 import { SendMessageButton } from '@/components/candidates/SendMessageButton'
 import { BlockCandidateButton } from '@/components/candidates/BlockCandidateButton'
@@ -117,7 +117,7 @@ export default async function CandidatePage({ params }: { params: { candidateId:
               {/* Extra contact — LinkedIn, address */}
               <div className="flex flex-wrap items-center gap-4 mt-1">
                 {candidate.linkedInUrl && (
-                  <a href={candidate.linkedInUrl} target="_blank" rel="noopener noreferrer"
+                  <a href={normalizeUrl(candidate.linkedInUrl)!} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-1 text-sm text-gray-500 hover:text-blue-600 transition-colors">
                     <Linkedin className="w-3.5 h-3.5" /> LinkedIn <ExternalLink className="w-3 h-3" />
                   </a>

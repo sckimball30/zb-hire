@@ -38,6 +38,18 @@ export function isNewApplicant(date: Date | string | null | undefined): boolean 
 }
 
 /**
+ * Ensure a URL has a protocol prefix so it opens as an external link
+ * rather than being treated as a relative path by the browser.
+ * Returns null if the input is falsy.
+ */
+export function normalizeUrl(url: string | null | undefined): string | null {
+  if (!url?.trim()) return null
+  const trimmed = url.trim()
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  return `https://${trimmed}`
+}
+
+/**
  * Strip quoted email reply chains from a message body.
  * Removes "On [date] ... wrote:" blocks and trailing "> " quoted lines
  * so inbound replies display cleanly as chat messages.
