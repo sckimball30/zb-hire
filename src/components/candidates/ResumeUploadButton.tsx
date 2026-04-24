@@ -5,12 +5,20 @@ import { Upload, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
+const MAX_SIZE_MB = 10
+
 export function ResumeUploadButton({ candidateId }: { candidateId: string }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const router = useRouter()
 
   const handleFile = async (file: File) => {
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      toast.error(`File is too large. Please upload a file under ${MAX_SIZE_MB} MB.`)
+      if (inputRef.current) inputRef.current.value = ''
+      return
+    }
+
     setUploading(true)
     try {
       const fd = new FormData()
@@ -19,11 +27,20 @@ export function ResumeUploadButton({ candidateId }: { candidateId: string }) {
         method: 'POST',
         body: fd,
       })
-      if (!res.ok) throw new Error('Upload failed')
+
+      if (!res.ok) {
+        let message = 'Upload failed'
+        try {
+          const data = await res.json()
+          if (data?.error) message = data.error
+        } catch {}
+        throw new Error(message)
+      }
+
       toast.success('Resume uploaded!')
       router.refresh()
-    } catch {
-      toast.error('Failed to upload resume. Please try again.')
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to upload resume. Please try again.')
     } finally {
       setUploading(false)
       if (inputRef.current) inputRef.current.value = ''
