@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { X, AlertTriangle, Send } from 'lucide-react'
+import { X, AlertTriangle, Send, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { REJECTION_REASONS } from '@/lib/constants'
 
@@ -40,6 +40,20 @@ function applyVars(text: string, vars: Record<string, string>): string {
   return out
 }
 
+// Render body text with unfilled {{vars}} highlighted in amber
+function PreviewBody({ text }: { text: string }) {
+  const parts = text.split(/(\{\{[^}]+\}\})/g)
+  return (
+    <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+      {parts.map((part, i) =>
+        part.startsWith('{{') && part.endsWith('}}')
+          ? <mark key={i} className="bg-amber-200 text-amber-800 rounded px-0.5 not-italic font-medium">{part}</mark>
+          : <span key={i}>{part}</span>
+      )}
+    </p>
+  )
+}
+
 const AUTO_VAR_NAMES = ['First Name', 'firstName', 'Job Title', 'jobTitle', 'Careers Page URL']
 
 // Variables that make no sense in a rejection email — strip them silently
@@ -67,6 +81,7 @@ export function RejectionModal({
   const [rejectionReason, setRejectionReason] = useState('')
   const [manualVarValues, setManualVarValues] = useState<Record<string, string>>({})
   const [careersPageUrl, setCareersPageUrl] = useState<string | null>(null)
+  const [showPreview, setShowPreview] = useState(false)
 
   useEffect(() => {
     fetch('/api/settings/company')
@@ -122,6 +137,19 @@ export function RejectionModal({
   }, [selectedTemplateId, templates, autoVars])
 
   const hasUnfilled = manualVars.some(v => !manualVarValues[v]?.trim())
+
+  // Live preview: apply all known vars; unfilled ones stay as {{...}} and get highlighted
+  const previewData = useMemo(() => {
+    if (!selectedTemplateId) return null
+    const t = templates.find(t => t.id === selectedTemplateId)
+    if (!t) return null
+    const skipVarMap = Object.fromEntries(REJECTION_SKIP_VARS.map(v => [v, '']))
+    const allVars = { ...skipVarMap, ...autoVars, ...manualVarValues }
+    return {
+      subject: applyVars(t.subject, allVars),
+      body: applyVars(t.body, allVars),
+    }
+  }, [selectedTemplateId, templates, autoVars, manualVarValues])
 
   const handleConfirm = async () => {
     if (!rejectionReason) {
@@ -297,6 +325,39 @@ export function RejectionModal({
                       />
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* Message preview */}
+              {previewData && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPreview(v => !v)}
+                    className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    {showPreview ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    {showPreview ? 'Hide preview' : 'Preview message'}
+                  </button>
+                  {showPreview && (
+                    <div className="mt-2 rounded-xl border border-gray-200 bg-gray-50 overflow-hidden">
+                      <div className="px-4 py-2.5 border-b border-gray-200 bg-white">
+                        <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5">Subject</p>
+                        <p className="text-sm font-medium text-gray-800">{previewData.subject}</p>
+                      </div>
+                      <div className="px-4 py-3 max-h-64 overflow-y-auto">
+                        <PreviewBody text={previewData.body} />
+                      </div>
+                      {hasUnfilled && (
+                        <div className="px-4 py-2 bg-amber-50 border-t border-amber-100">
+                          <p className="text-xs text-amber-700">
+                            <mark className="bg-amber-200 text-amber-800 rounded px-0.5 font-medium not-italic">{'{{highlighted}}'}</mark>
+                            {' '}fields above still need to be filled in.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
