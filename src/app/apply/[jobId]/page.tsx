@@ -277,7 +277,7 @@ export default function PublicApplyPage() {
               </label>
               <input type="tel" name="phone" value={form.phone} onChange={handleChange}
                 autoComplete="tel" inputMode="tel"
-                className="input w-full !text-base" placeholder="+1 (555) 000-0000" />
+                className="input w-full !text-base" placeholder="555-123-4567" />
             </div>
 
             {/* Address */}
@@ -287,7 +287,7 @@ export default function PublicApplyPage() {
               </label>
               <input name="address" value={form.address} onChange={handleChange}
                 autoComplete="street-address" inputMode="text"
-                className="input w-full !text-base" placeholder="123 Main St, City, State, ZIP" />
+                className="input w-full !text-base" placeholder="123 Main St, City, State ZIP" />
             </div>
 
             {/* LinkedIn */}
@@ -295,9 +295,9 @@ export default function PublicApplyPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 LinkedIn profile URL <span className="text-red-500">*</span>
               </label>
-              <input type="url" name="linkedInUrl" value={form.linkedInUrl} onChange={handleChange}
+              <input type="text" name="linkedInUrl" value={form.linkedInUrl} onChange={handleChange}
                 autoComplete="url" inputMode="url"
-                className="input w-full !text-base" placeholder="https://linkedin.com/in/yourname" />
+                className="input w-full !text-base" placeholder="linkedin.com/in/yourname" />
             </div>
 
             {/* Resume upload */}

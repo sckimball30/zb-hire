@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { put } from '@vercel/blob'
 import { sendNewApplicationEmail } from '@/lib/email'
 import { sendApplicationConfirmation } from '@/lib/automations'
+import { normalizeUrl } from '@/lib/utils'
 
 // Public GET — returns job info for the apply page (no auth required)
 export async function GET(
@@ -95,7 +96,7 @@ export async function POST(
       email: email.trim().toLowerCase(),
       phone: phone || null,
       address: address || null,
-      linkedInUrl: linkedInUrl || null,
+      linkedInUrl: normalizeUrl(linkedInUrl) || null,
       resumeUrl: resumeUrl,
       notes: coverLetter || null,
       source: source || 'Direct Apply',
@@ -103,7 +104,7 @@ export async function POST(
     update: {
       phone: phone || undefined,
       address: address || undefined,
-      linkedInUrl: linkedInUrl || undefined,
+      linkedInUrl: normalizeUrl(linkedInUrl) || undefined,
       ...(resumeUrl ? { resumeUrl } : {}),
     },
   })
