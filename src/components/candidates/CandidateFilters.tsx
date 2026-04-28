@@ -15,9 +15,20 @@ interface Props {
   currentDateFrom: string
   currentDateTo: string
   currentTagId: string
+  currentStage: string
 }
 
-export function CandidateFilters({ jobs, tags, currentQ, currentJobId, currentDateFrom, currentDateTo, currentTagId }: Props) {
+const STAGES = [
+  { value: 'APPLIED',      label: 'Applied' },
+  { value: 'PHONE_SCREEN', label: 'Phone Screen' },
+  { value: 'INTERVIEWING', label: 'Interviewing' },
+  { value: 'ONSITE',       label: 'Onsite' },
+  { value: 'OFFER',        label: 'Offer' },
+  { value: 'HIRED',        label: 'Hired' },
+  { value: 'REJECTED',     label: 'Rejected' },
+]
+
+export function CandidateFilters({ jobs, tags, currentQ, currentJobId, currentDateFrom, currentDateTo, currentTagId, currentStage }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -30,7 +41,7 @@ export function CandidateFilters({ jobs, tags, currentQ, currentJobId, currentDa
   }, [router, pathname, searchParams])
 
   const clearAll = () => router.replace(pathname)
-  const hasFilters = currentQ || currentJobId || currentDateFrom || currentDateTo || currentTagId
+  const hasFilters = currentQ || currentJobId || currentDateFrom || currentDateTo || currentTagId || currentStage
 
   return (
     <div className="space-y-2 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
@@ -56,6 +67,17 @@ export function CandidateFilters({ jobs, tags, currentQ, currentJobId, currentDa
           <option value="">All roles</option>
           {jobs.map(j => (
             <option key={j.id} value={j.id}>{j.title}</option>
+          ))}
+        </select>
+
+        <select
+          value={currentStage}
+          onChange={e => update('stage', e.target.value)}
+          className="flex-1 sm:flex-none px-3 py-2.5 sm:py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4AFFD2]/40 focus:border-[#4AFFD2] bg-white text-gray-700"
+        >
+          <option value="">All stages</option>
+          {STAGES.map(s => (
+            <option key={s.value} value={s.value}>{s.label}</option>
           ))}
         </select>
 
