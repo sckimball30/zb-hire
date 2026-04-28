@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sendInterviewAssignmentEmail } from '@/lib/email'
 import { INTERVIEW_TYPE_LABELS } from '@/lib/constants'
-import { createCalendarEvent, buildEventDescription } from '@/lib/google-calendar'
+import { generateICS, icsAttachment } from '@/lib/ics'
 
 export async function POST(
   req: NextRequest,
@@ -66,43 +66,44 @@ export async function POST(
     },
   })
 
-  const candidateName = `${application.candidate.firstName} ${application.candidate.lastName}`
-  const jobTitle = application.job.title
-  const typeLabel = INTERVIEW_TYPE_LABELS[type as keyof typeof INTERVIEW_TYPE_LABELS] ?? type
-  const baseUrl = process.env.NEXTAUTH_URL ?? 'https://zb-hires.vercel.app'
-
-  // Google Calendar event — fire-and-forget, only when time is set
-  if (!isWorkingInterview && interviewer?.email && scheduledAt) {
-    const startTime = new Date(scheduledAt)
-    const endTime = new Date(startTime.getTime() + (durationMins ?? 60) * 60 * 1000)
-
-    createCalendarEvent({
-      interviewerEmail: interviewer.email,
-      summary: `Interview: ${candidateName} — ${jobTitle}`,
-      description: buildEventDescription({
-        candidateName,
-        jobTitle,
-        interviewType: typeLabel,
-        scorecardUrl: `${baseUrl}/interviewer/${event.id}`,
-        notes: notes ?? null,
-      }),
-      location: location ?? null,
-      startTime,
-      endTime,
-    })
-      .then(async (googleCalendarEventId) => {
-        if (googleCalendarEventId) {
-          await prisma.interviewEvent.update({
-            where: { id: event.id },
-            data: { googleCalendarEventId },
-          })
-        }
-      })
-      .catch(err => console.error('[events] Google Calendar create failed:', err))
-  }
-
-  // Send assignment notification email — fire-and-forget
+  // Send assignment notification email with calendar invite — fire-and-forget
   if (!isWorkingInterview && interviewer?.email) {
+    const candidateName = `${application.candidate.firstName} ${application.candidate.lastName}`
+    const jobTitle = application.job.title
+    const typeLabel = INTERVIEW_TYPE_LABELS[type as keyof typeof INTERVIEW_TYPE_LABELS] ?? type
+    const baseUrl = process.env.NEXTAUTH_URL ?? 'https://zb-hires.vercel.app'
+    const organizerEmail = process.env.SMTP_USER ?? process.env.EMAIL_FROM ?? 'hiring@wigglitz.com'
+    const organizerName = 'ZB Hire'
+
+    // Build ICS calendar invite if a time is set
+    let calInvite: ReturnType<typeof icsAttachment> | undefined
+    if (scheduledAt) {
+      const startTime = new Date(scheduledAt)
+      const endTime = new Date(startTime.getTime() + (durationMins ?? 60) * 60 * 1000)
+      const ics = generateICS({
+        uid: `interview-${event.id}@zbhire`,
+        summary: `Interview: ${candidateName} — ${jobTitle}`,
+        description: [
+          `Candidate: ${candidateName}`,
+          `Role: ${jobTitle}`,
+          `Type: ${typeLabel}`,
+          ``,
+          `Scorecard: ${baseUrl}/interviewer/${event.id}`,
+          notes ? `\nNotes: ${notes}` : '',
+        ].join('\n').trim(),
+        location: location ?? null,
+        startTime,
+        endTime,
+        organizerEmail,
+        organizerName,
+        attendeeEmail: interviewer.email,
+        attendeeName: interviewer.name,
+        method: 'REQUEST',
+        sequence: 0,
+      })
+      calInvite = icsAttachment(ics, 'REQUEST')
+    }
+
     sendInterviewAssignmentEmail({
       to: interviewer.email,
       interviewerName: interviewer.name,
@@ -113,6 +114,7 @@ export async function POST(
       location: location ?? null,
       notes: notes ?? null,
       eventId: event.id,
+      icsAttachment: calInvite,
     }).catch(err => console.error('[events] assignment email failed:', err))
   }
 

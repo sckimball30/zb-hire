@@ -29,11 +29,13 @@ export async function sendEmail({
   subject,
   html,
   text,
+  attachments,
 }: {
   to: string
   subject: string
   html: string
   text?: string
+  attachments?: nodemailer.SendMailOptions['attachments']
 }) {
   const t = getTransporter()
   const info = await t.sendMail({
@@ -42,6 +44,7 @@ export async function sendEmail({
     subject,
     html,
     text: text ?? html.replace(/<[^>]*>/g, ''),
+    attachments,
   })
   console.log('[email] Sent:', info.messageId)
   return info
@@ -57,6 +60,7 @@ export async function sendInterviewAssignmentEmail({
   location,
   notes,
   eventId,
+  icsAttachment,
 }: {
   to: string
   interviewerName: string
@@ -67,6 +71,7 @@ export async function sendInterviewAssignmentEmail({
   location?: string | null
   notes?: string | null
   eventId: string
+  icsAttachment?: nodemailer.SendMailOptions['attachments'][0]
 }) {
   const baseUrl = process.env.NEXTAUTH_URL ?? 'https://zb-hires.vercel.app'
   const link = `${baseUrl}/interviewer/${eventId}`
@@ -91,6 +96,7 @@ export async function sendInterviewAssignmentEmail({
     await sendEmail({
       to,
       subject: `Interview assigned: ${candidateName} — ${jobTitle}`,
+      attachments: icsAttachment ? [icsAttachment] : undefined,
       html: `
         <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #111;">
           <div style="background: #111111; padding: 20px 28px; border-radius: 8px 8px 0 0;">
@@ -175,6 +181,132 @@ export async function sendInterviewReminderEmail({
     })
   } catch (err) {
     console.error('[email] Failed to send interview reminder:', err)
+  }
+}
+
+export async function sendInterviewUpdateEmail({
+  to,
+  interviewerName,
+  candidateName,
+  jobTitle,
+  interviewType,
+  scheduledAt,
+  location,
+  notes,
+  eventId,
+  icsAttachment,
+}: {
+  to: string
+  interviewerName: string
+  candidateName: string
+  jobTitle: string
+  interviewType: string
+  scheduledAt?: string | null
+  location?: string | null
+  notes?: string | null
+  eventId: string
+  icsAttachment?: nodemailer.SendMailOptions['attachments'][0]
+}) {
+  const baseUrl = process.env.NEXTAUTH_URL ?? 'https://zb-hires.vercel.app'
+  const link = `${baseUrl}/interviewer/${eventId}`
+
+  const timeLabel = scheduledAt
+    ? new Date(scheduledAt).toLocaleString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric',
+        year: 'numeric', hour: 'numeric', minute: '2-digit',
+      })
+    : 'Time TBD — your recruiter will confirm shortly'
+
+  const detailRows = [
+    { label: 'Candidate', value: candidateName },
+    { label: 'Role', value: jobTitle },
+    { label: 'Type', value: interviewType },
+    { label: 'When', value: timeLabel },
+    ...(location ? [{ label: 'Where', value: location }] : []),
+    ...(notes ? [{ label: 'Notes', value: notes }] : []),
+  ]
+
+  try {
+    await sendEmail({
+      to,
+      subject: `Interview updated: ${candidateName} — ${jobTitle}`,
+      attachments: icsAttachment ? [icsAttachment] : undefined,
+      html: `
+        <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #111;">
+          <div style="background: #111111; padding: 20px 28px; border-radius: 8px 8px 0 0;">
+            <span style="color: white; font-weight: 900; font-size: 18px; letter-spacing: -0.5px;">ZB Hire</span>
+            <span style="color: rgba(255,255,255,0.4); font-size: 13px; margin-left: 10px;">Interviewer Portal</span>
+          </div>
+          <div style="border: 1px solid #e5e7eb; border-top: none; padding: 28px 32px; border-radius: 0 0 8px 8px;">
+            <p style="margin: 0 0 6px; color: #6b7280; font-size: 14px;">Hi ${interviewerName},</p>
+            <h2 style="margin: 0 0 4px; font-size: 20px; font-weight: 700;">Your interview has been updated</h2>
+            <p style="margin: 0 0 20px; color: #6b7280; font-size: 14px;">Here are the latest details — your calendar invite has been updated too.</p>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+              ${detailRows.map(r => `
+                <tr>
+                  <td style="padding: 8px 12px; background: #f9fafb; border: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; width: 80px; white-space: nowrap;">${r.label}</td>
+                  <td style="padding: 8px 12px; border: 1px solid #e5e7eb; font-size: 14px; color: #111827;">${r.value}</td>
+                </tr>
+              `).join('')}
+            </table>
+            <a href="${link}" style="display:inline-block; background:#4AFFD2; color:#111111; font-weight:700; font-size:14px; padding:12px 24px; border-radius:6px; text-decoration:none;">
+              View Interview Details →
+            </a>
+          </div>
+        </div>
+      `,
+    })
+  } catch (err) {
+    console.error('[email] Failed to send interview update notification:', err)
+  }
+}
+
+export async function sendInterviewCancellationEmail({
+  to,
+  interviewerName,
+  candidateName,
+  jobTitle,
+  scheduledAt,
+  icsAttachment,
+}: {
+  to: string
+  interviewerName: string
+  candidateName: string
+  jobTitle: string
+  scheduledAt?: string | null
+  icsAttachment?: nodemailer.SendMailOptions['attachments'][0]
+}) {
+  const timeLabel = scheduledAt
+    ? new Date(scheduledAt).toLocaleString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric',
+        year: 'numeric', hour: 'numeric', minute: '2-digit',
+      })
+    : null
+
+  try {
+    await sendEmail({
+      to,
+      subject: `Interview cancelled: ${candidateName} — ${jobTitle}`,
+      attachments: icsAttachment ? [icsAttachment] : undefined,
+      html: `
+        <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #111;">
+          <div style="background: #111111; padding: 20px 28px; border-radius: 8px 8px 0 0;">
+            <span style="color: white; font-weight: 900; font-size: 18px; letter-spacing: -0.5px;">ZB Hire</span>
+            <span style="color: rgba(255,255,255,0.4); font-size: 13px; margin-left: 10px;">Interviewer Portal</span>
+          </div>
+          <div style="border: 1px solid #e5e7eb; border-top: none; padding: 28px 32px; border-radius: 0 0 8px 8px;">
+            <p style="margin: 0 0 6px; color: #6b7280; font-size: 14px;">Hi ${interviewerName},</p>
+            <h2 style="margin: 0 0 4px; font-size: 20px; font-weight: 700;">Interview cancelled</h2>
+            <p style="margin: 0 0 20px; color: #6b7280; font-size: 14px;">
+              The interview with <strong>${candidateName}</strong> for <strong>${jobTitle}</strong>${timeLabel ? ` scheduled for ${timeLabel}` : ''} has been cancelled.
+              Your calendar invite has been removed.
+            </p>
+          </div>
+        </div>
+      `,
+    })
+  } catch (err) {
+    console.error('[email] Failed to send interview cancellation notification:', err)
   }
 }
 

@@ -3,7 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { INTERVIEW_TYPE_LABELS } from '@/lib/constants'
-import { updateCalendarEvent, deleteCalendarEvent, buildEventDescription } from '@/lib/google-calendar'
+import { sendInterviewUpdateEmail, sendInterviewCancellationEmail } from '@/lib/email'
+import { generateICS, icsAttachment } from '@/lib/ics'
 
 export async function PATCH(
   req: NextRequest,
@@ -55,33 +56,58 @@ export async function PATCH(
     },
   })
 
-  // Update Google Calendar event if one was previously created and time is set
-  const effectiveScheduledAt = scheduledAt !== undefined ? scheduledAt : existing.scheduledAt?.toISOString()
-  const effectiveDurationMins = durationMins ?? existing.durationMins
-  const effectiveInterviewer = updated.interviewer
-  const googleEventId = existing.googleCalendarEventId
-
-  if (googleEventId && effectiveInterviewer?.email && effectiveScheduledAt) {
-    const baseUrl = process.env.NEXTAUTH_URL ?? 'https://zb-hires.vercel.app'
+  // Send update email with refreshed calendar invite — fire-and-forget
+  if (!isWorkingInterview && updated.interviewer?.email) {
     const candidateName = `${updated.application.candidate.firstName} ${updated.application.candidate.lastName}`
     const jobTitle = updated.application.job.title
     const typeLabel = INTERVIEW_TYPE_LABELS[updated.type as keyof typeof INTERVIEW_TYPE_LABELS] ?? updated.type
-    const startTime = new Date(effectiveScheduledAt)
-    const endTime = new Date(startTime.getTime() + effectiveDurationMins * 60 * 1000)
+    const baseUrl = process.env.NEXTAUTH_URL ?? 'https://zb-hires.vercel.app'
+    const organizerEmail = process.env.SMTP_USER ?? 'hiring@wigglitz.com'
+    const organizerName = 'ZB Hire'
 
-    updateCalendarEvent(effectiveInterviewer.email, googleEventId, {
-      summary: `Interview: ${candidateName} — ${jobTitle}`,
-      description: buildEventDescription({
-        candidateName,
-        jobTitle,
-        interviewType: typeLabel,
-        scorecardUrl: `${baseUrl}/interviewer/${eventId}`,
-        notes: updated.notes ?? null,
-      }),
+    const effectiveScheduledAt = scheduledAt !== undefined ? scheduledAt : existing.scheduledAt?.toISOString() ?? null
+    const effectiveDurationMins = durationMins ?? existing.durationMins
+
+    let calInvite: ReturnType<typeof icsAttachment> | undefined
+    if (effectiveScheduledAt) {
+      const startTime = new Date(effectiveScheduledAt)
+      const endTime = new Date(startTime.getTime() + effectiveDurationMins * 60 * 1000)
+      const ics = generateICS({
+        uid: `interview-${eventId}@zbhire`,
+        summary: `Interview: ${candidateName} — ${jobTitle}`,
+        description: [
+          `Candidate: ${candidateName}`,
+          `Role: ${jobTitle}`,
+          `Type: ${typeLabel}`,
+          ``,
+          `Scorecard: ${baseUrl}/interviewer/${eventId}`,
+          updated.notes ? `\nNotes: ${updated.notes}` : '',
+        ].join('\n').trim(),
+        location: updated.location ?? null,
+        startTime,
+        endTime,
+        organizerEmail,
+        organizerName,
+        attendeeEmail: updated.interviewer.email,
+        attendeeName: updated.interviewer.name,
+        method: 'REQUEST',
+        sequence: 1,
+      })
+      calInvite = icsAttachment(ics, 'REQUEST')
+    }
+
+    sendInterviewUpdateEmail({
+      to: updated.interviewer.email,
+      interviewerName: updated.interviewer.name,
+      candidateName,
+      jobTitle,
+      interviewType: typeLabel,
+      scheduledAt: effectiveScheduledAt,
       location: updated.location ?? null,
-      startTime,
-      endTime,
-    }).catch(err => console.error('[events] Google Calendar update failed:', err))
+      notes: updated.notes ?? null,
+      eventId,
+      icsAttachment: calInvite,
+    }).catch(err => console.error('[events] update email failed:', err))
   }
 
   return NextResponse.json(updated)
@@ -98,7 +124,15 @@ export async function DELETE(
 
   const existing = await prisma.interviewEvent.findUnique({
     where: { id: eventId },
-    include: { interviewer: true },
+    include: {
+      interviewer: true,
+      application: {
+        include: {
+          candidate: { select: { firstName: true, lastName: true } },
+          job: { select: { title: true } },
+        },
+      },
+    },
   })
   if (!existing || existing.applicationId !== applicationId) {
     return NextResponse.json({ error: 'Event not found' }, { status: 404 })
@@ -114,10 +148,41 @@ export async function DELETE(
     },
   })
 
-  // Delete Google Calendar event — fire-and-forget
-  if (existing.googleCalendarEventId && existing.interviewer?.email) {
-    deleteCalendarEvent(existing.interviewer.email, existing.googleCalendarEventId)
-      .catch(err => console.error('[events] Google Calendar delete failed:', err))
+  // Send cancellation email with CANCEL ICS — fire-and-forget
+  if (existing.interviewer?.email) {
+    const candidateName = `${existing.application.candidate.firstName} ${existing.application.candidate.lastName}`
+    const jobTitle = existing.application.job.title
+    const organizerEmail = process.env.SMTP_USER ?? 'hiring@wigglitz.com'
+    const organizerName = 'ZB Hire'
+
+    let calInvite: ReturnType<typeof icsAttachment> | undefined
+    if (existing.scheduledAt) {
+      const startTime = new Date(existing.scheduledAt)
+      const endTime = new Date(startTime.getTime() + existing.durationMins * 60 * 1000)
+      const ics = generateICS({
+        uid: `interview-${eventId}@zbhire`,
+        summary: `Interview: ${candidateName} — ${jobTitle}`,
+        location: existing.location ?? null,
+        startTime,
+        endTime,
+        organizerEmail,
+        organizerName,
+        attendeeEmail: existing.interviewer.email,
+        attendeeName: existing.interviewer.name,
+        method: 'CANCEL',
+        sequence: 99,
+      })
+      calInvite = icsAttachment(ics, 'CANCEL')
+    }
+
+    sendInterviewCancellationEmail({
+      to: existing.interviewer.email,
+      interviewerName: existing.interviewer.name,
+      candidateName,
+      jobTitle,
+      scheduledAt: existing.scheduledAt?.toISOString() ?? null,
+      icsAttachment: calInvite,
+    }).catch(err => console.error('[events] cancellation email failed:', err))
   }
 
   return NextResponse.json({ ok: true })
