@@ -162,7 +162,7 @@ Start Date: {{Start Date}}
 Work Location: {{Office / Remote / Hybrid details}}
 
 COMPENSATION
-Base Salary: ${{Annual Salary}} per year, paid {{bi-weekly / semi-monthly}}, subject to applicable taxes and withholdings.
+Base Salary: \${{Annual Salary}} per year, paid {{bi-weekly / semi-monthly}}, subject to applicable taxes and withholdings.
 {{Bonus (if applicable): You will be eligible for a discretionary annual bonus of up to {{Bonus % or Amount}}, based on individual and company performance.}}
 {{Equity (if applicable): Subject to approval by the Board of Directors, you will be granted {{Equity Amount}} of {{Stock Options / RSUs}}, vesting over {{Vesting Schedule}} with a {{Cliff}} cliff.}}
 
