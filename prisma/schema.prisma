@@ -495,6 +495,7 @@ model MessageTemplate {
   name        String
   subject     String
   body        String
+  category    String       @default("General")
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   messageLogs MessageLog[]

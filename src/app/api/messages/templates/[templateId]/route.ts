@@ -15,6 +15,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { templateId
       ...(data.name !== undefined && { name: data.name }),
       ...(data.subject !== undefined && { subject: data.subject }),
       ...(data.body !== undefined && { body: data.body }),
+      ...(data.category !== undefined && { category: data.category }),
     },
   })
   return NextResponse.json(template)
