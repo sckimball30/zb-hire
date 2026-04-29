@@ -135,7 +135,7 @@ export function Sidebar() {
   }, [])
 
   const isAuthPage       = pathname?.startsWith('/auth')
-  const isPublicPage     = pathname?.startsWith('/apply') || pathname?.startsWith('/offers')
+  const isPublicPage     = pathname?.startsWith('/apply') || pathname?.startsWith('/offers') || pathname?.startsWith('/careers')
   const isInterviewerHub = pathname?.startsWith('/interviewer')
   const isHMHub          = pathname?.startsWith('/hiring-manager')
 

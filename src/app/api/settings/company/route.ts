@@ -5,14 +5,20 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   const settings = await prisma.companySettings.findUnique({ where: { id: 'singleton' } })
-  return NextResponse.json(settings ?? { careersPageUrl: null, companyName: null })
+  return NextResponse.json(settings ?? {
+    careersPageUrl: null,
+    companyName: null,
+    heroHeadline: null,
+    heroTagline: null,
+    careersHeroImageUrl: null,
+  })
 }
 
 export async function PUT(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { careersPageUrl, companyName } = await req.json()
+  const { careersPageUrl, companyName, heroHeadline, heroTagline, careersHeroImageUrl } = await req.json()
 
   const settings = await prisma.companySettings.upsert({
     where: { id: 'singleton' },
@@ -20,10 +26,16 @@ export async function PUT(req: Request) {
       id: 'singleton',
       careersPageUrl: careersPageUrl?.trim() || null,
       companyName: companyName?.trim() || null,
+      heroHeadline: heroHeadline?.trim() || null,
+      heroTagline: heroTagline?.trim() || null,
+      careersHeroImageUrl: careersHeroImageUrl?.trim() || null,
     },
     update: {
       careersPageUrl: careersPageUrl?.trim() || null,
       companyName: companyName?.trim() || null,
+      heroHeadline: heroHeadline?.trim() || null,
+      heroTagline: heroTagline?.trim() || null,
+      careersHeroImageUrl: careersHeroImageUrl?.trim() || null,
     },
   })
 
