@@ -128,30 +128,41 @@
 }
 
 /* Tiptap / ProseMirror rich text editor styles
-   Must live outside @layer so they beat Tailwind Preflight's list reset */
+   Must live outside @layer so they beat Tailwind Preflight's list reset.
+   .job-description is the same ruleset used for rendering stored HTML outside the editor
+   (e.g. the public apply page job description). */
 .tiptap p,
-.ProseMirror p { margin-top: 0.25rem; margin-bottom: 0.25rem; }
+.ProseMirror p,
+.job-description p { margin-top: 0.25rem; margin-bottom: 0.25rem; }
 
 .tiptap h2,
-.ProseMirror h2 { font-size: 1rem; font-weight: 600; color: #111827; margin-top: 1rem; margin-bottom: 0.375rem; }
+.ProseMirror h2,
+.job-description h2 { font-size: 1rem; font-weight: 600; color: #111827; margin-top: 1rem; margin-bottom: 0.375rem; }
 
 .tiptap h3,
-.ProseMirror h3 { font-size: 0.875rem; font-weight: 600; color: #1f2937; margin-top: 0.75rem; margin-bottom: 0.25rem; }
+.ProseMirror h3,
+.job-description h3 { font-size: 0.875rem; font-weight: 600; color: #1f2937; margin-top: 0.75rem; margin-bottom: 0.25rem; }
 
 .tiptap ul,
-.ProseMirror ul { list-style-type: disc !important; padding-left: 1.25rem; margin-top: 0.375rem; margin-bottom: 0.375rem; }
+.ProseMirror ul,
+.job-description ul { list-style-type: disc !important; padding-left: 1.25rem; margin-top: 0.375rem; margin-bottom: 0.375rem; }
 
 .tiptap ol,
-.ProseMirror ol { list-style-type: decimal !important; padding-left: 1.25rem; margin-top: 0.375rem; margin-bottom: 0.375rem; }
+.ProseMirror ol,
+.job-description ol { list-style-type: decimal !important; padding-left: 1.25rem; margin-top: 0.375rem; margin-bottom: 0.375rem; }
 
 .tiptap li,
-.ProseMirror li { font-size: 0.875rem; margin-top: 0.125rem; margin-bottom: 0.125rem; display: list-item !important; }
+.ProseMirror li,
+.job-description li { font-size: 0.875rem; margin-top: 0.125rem; margin-bottom: 0.125rem; display: list-item !important; }
 
 .tiptap strong,
-.ProseMirror strong { font-weight: 600; }
+.ProseMirror strong,
+.job-description strong { font-weight: 600; }
 
 .tiptap em,
-.ProseMirror em { font-style: italic; }
+.ProseMirror em,
+.job-description em { font-style: italic; }
 
 .tiptap hr,
-.ProseMirror hr { border-color: #e5e7eb; margin-top: 0.75rem; margin-bottom: 0.75rem; }
+.ProseMirror hr,
+.job-description hr { border-color: #e5e7eb; margin-top: 0.75rem; margin-bottom: 0.75rem; }

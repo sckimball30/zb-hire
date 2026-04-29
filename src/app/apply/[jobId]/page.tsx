@@ -222,7 +222,7 @@ export default function PublicApplyPage() {
           <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-4">
             <h2 className="text-base font-semibold text-gray-900 mb-3">About this role</h2>
             <div
-              className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
+              className="text-sm text-gray-600 leading-relaxed job-description"
               dangerouslySetInnerHTML={{ __html: job.description }}
             />
           </div>
