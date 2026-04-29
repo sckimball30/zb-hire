@@ -126,6 +126,7 @@ export const REJECTION_REASONS: { value: string; label: string; color: string }[
   { value: 'SALARY_MISMATCH',   label: 'Salary mismatch',    color: 'bg-orange-100 text-orange-700' },
   { value: 'OVERQUALIFIED',     label: 'Overqualified',      color: 'bg-purple-100 text-purple-700' },
   { value: 'SILVER_MEDALIST',    label: 'Silver medalist',    color: 'bg-yellow-100 text-yellow-700' },
+  { value: 'NOT_REVIEWED',        label: 'Application not reviewed', color: 'bg-gray-100 text-gray-500' },
   { value: 'NO_RESPONSE',        label: 'No response',        color: 'bg-slate-100 text-slate-600' },
   { value: 'NO_CALL_NO_SHOW',    label: 'No call no show',    color: 'bg-orange-100 text-orange-700' },
   { value: 'POSITION_CLOSED',    label: 'Position closed',    color: 'bg-slate-100 text-slate-600' },
