@@ -43,6 +43,24 @@ Hiring Team — Wigglitz`,
   // ── Interviews ────────────────────────────────────────────────────────────
   {
     category: 'Interviews',
+    name: 'Video Call Interview Invitation',
+    subject: "You're Invited to a Video Interview — {{Job Title}}",
+    body: `Hi {{First Name}},
+
+Great news — we'd love to move you forward in our process for the {{Job Title}} role!
+
+We'd like to set up a video call with {{Interviewer Name}}, {{Interviewer Title}}. The conversation will run about {{Duration}} and you can expect it to cover your background and experience as it relates to this role.
+
+Go ahead and book a time that works for you using {{Interviewer Name}}'s scheduling link below — a video call link will be included in your confirmation:
+
+{{Calendly Link}}
+
+Make sure you're in a quiet spot with a good connection. Looking forward to it — reach out if you have any questions before then!
+
+Hiring Team — Wigglitz`,
+  },
+  {
+    category: 'Interviews',
     name: 'Interview Invitation (with Calendly)',
     subject: 'Moving Forward — {{Job Title}} Interview',
     body: `Hi {{First Name}},
