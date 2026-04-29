@@ -488,6 +488,12 @@ function SectionCard({
   const [localAvailableStart, setLocalAvailableStart] = useState(availableStart ?? '')
   const [localSalaryExpectation, setLocalSalaryExpectation] = useState(salaryExpectation ?? '')
 
+  // ── Section-level general notes ────────────────────────────────────────────
+  const [sectionNotes, setSectionNotes] = useState<string>(() => {
+    if (!draftEntry) return ''
+    try { return (JSON.parse(draftEntry.responses) as any).__sectionNotes__ ?? '' } catch { return '' }
+  })
+
   // ── Custom questions (screening only) ──────────────────────────────────────
   const [customQuestions, setCustomQuestions] = useState<{ id: string; text: string; rating: ABC; notes: string }[]>(() => {
     if (!draftEntry || !isScreening) return []
@@ -541,6 +547,7 @@ function SectionCard({
             ])
           ),
         })),
+        ...(sectionNotes.trim() ? { __sectionNotes__: sectionNotes } : {}),
       }
     }
     const out: Record<string, any> = {}
@@ -549,6 +556,9 @@ function SectionCard({
     }
     if (isScreening && customQuestions.length > 0) {
       out.__customQuestions__ = customQuestions
+    }
+    if (sectionNotes.trim()) {
+      out.__sectionNotes__ = sectionNotes
     }
     return out
   }
@@ -905,6 +915,21 @@ function SectionCard({
             </div>
           </div>
         )}
+
+        {/* General notes */}
+        <div className="mb-4">
+          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5 flex items-center gap-1">
+            <FileText className="w-3.5 h-3.5" />
+            Notes
+          </label>
+          <textarea
+            className="input h-auto text-sm resize-none"
+            rows={3}
+            placeholder="General notes for this section…"
+            value={sectionNotes}
+            onChange={e => setSectionNotes(e.target.value)}
+          />
+        </div>
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 pt-1">
