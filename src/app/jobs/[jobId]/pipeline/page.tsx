@@ -9,18 +9,23 @@ import type { CandidateStage, ApplicationWithRelations } from '@/types'
 import { KanbanBoard } from '@/components/pipeline/KanbanBoard'
 
 export default async function JobPipelinePage({ params }: { params: { jobId: string } }) {
-  const job = await prisma.job.findUnique({
-    where: { id: params.jobId },
-    include: {
-      applications: {
-        include: {
-          candidate: true,
-          _count: { select: { scorecards: true } },
+  const [job, templates] = await Promise.all([
+    prisma.job.findUnique({
+      where: { id: params.jobId },
+      include: {
+        applications: {
+          include: {
+            candidate: true,
+            _count: { select: { scorecards: true } },
+          },
+          orderBy: { stageOrder: 'asc' },
         },
-        orderBy: { stageOrder: 'asc' },
       },
-    },
-  })
+    }),
+    prisma.messageTemplate.findMany({
+      orderBy: [{ category: 'asc' }, { name: 'asc' }],
+    }),
+  ])
 
   if (!job) notFound()
 
@@ -74,7 +79,13 @@ export default async function JobPipelinePage({ params }: { params: { jobId: str
 
       {/* Kanban board */}
       <div className="flex-1 overflow-auto px-8 py-6">
-        <KanbanBoard groupedApplications={grouped} jobId={job.id} jobTitle={job.title} contactedCandidateIds={contactedCandidateIds} />
+        <KanbanBoard
+          groupedApplications={grouped}
+          jobId={job.id}
+          jobTitle={job.title}
+          contactedCandidateIds={contactedCandidateIds}
+          templates={templates}
+        />
       </div>
     </div>
   )

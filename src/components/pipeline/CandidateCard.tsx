@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, FileText, Mail } from 'lucide-react'
+import { GripVertical, FileText, Mail, Check } from 'lucide-react'
 import { cn, initials, isNewApplicant } from '@/lib/utils'
 import { StarRating } from '@/components/shared/StarRating'
 import { useState } from 'react'
@@ -14,9 +14,19 @@ interface CandidateCardProps {
   application: ApplicationWithRelations
   isDragging?: boolean
   contacted?: boolean
+  selectMode?: boolean
+  isSelected?: boolean
+  onToggleSelect?: () => void
 }
 
-export function CandidateCard({ application, isDragging = false, contacted = false }: CandidateCardProps) {
+export function CandidateCard({
+  application,
+  isDragging = false,
+  contacted = false,
+  selectMode = false,
+  isSelected = false,
+  onToggleSelect,
+}: CandidateCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging: isSortableDragging } =
     useSortable({ id: application.id })
 
@@ -47,38 +57,60 @@ export function CandidateCard({ application, isDragging = false, contacted = fal
     <div
       ref={setNodeRef}
       style={style}
+      onClick={selectMode ? onToggleSelect : undefined}
       className={cn(
-        'bg-white rounded-lg border border-gray-200 shadow-sm p-3 cursor-pointer select-none',
-        'hover:shadow-md hover:border-blue-200 transition-all',
+        'bg-white rounded-lg border border-gray-200 shadow-sm p-3 select-none transition-all',
+        !selectMode && 'cursor-default hover:shadow-md hover:border-blue-200',
+        selectMode && 'cursor-pointer',
         isSortableDragging && 'opacity-40',
-        isDragging && 'shadow-xl border-blue-300'
+        isDragging && 'shadow-xl border-blue-300',
+        selectMode && isSelected && 'border-blue-500 ring-2 ring-blue-400/30 bg-blue-50/40',
+        selectMode && !isSelected && 'hover:border-gray-300 hover:bg-gray-50/60',
       )}
     >
       <div className="flex items-start gap-2">
-        <button
-          {...attributes}
-          {...listeners}
-          className="flex-shrink-0 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 mt-0.5 p-0.5 rounded"
-          onClick={e => e.preventDefault()}
-        >
-          <GripVertical className="w-3.5 h-3.5" />
-        </button>
+        {/* Checkbox in select mode, drag handle otherwise */}
+        {selectMode ? (
+          <div
+            className={cn(
+              'flex-shrink-0 w-5 h-5 mt-0.5 rounded border-2 flex items-center justify-center transition-colors',
+              isSelected ? 'bg-blue-600 border-blue-600' : 'border-gray-300 bg-white'
+            )}
+          >
+            {isSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+          </div>
+        ) : (
+          <button
+            {...attributes}
+            {...listeners}
+            className="flex-shrink-0 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 mt-0.5 p-0.5 rounded"
+            onClick={e => e.preventDefault()}
+          >
+            <GripVertical className="w-3.5 h-3.5" />
+          </button>
+        )}
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold flex-shrink-0">
               {initials(candidate.firstName, candidate.lastName)}
             </div>
-            <Link
-              href={`/applications/${application.id}?jobId=${(application as any).jobId ?? ''}`}
-              className="text-sm font-medium text-gray-900 hover:text-blue-600 truncate leading-tight"
-              onClick={e => e.stopPropagation()}
-            >
-              {candidate.firstName} {candidate.lastName}
-            </Link>
+            {selectMode ? (
+              <span className="text-sm font-medium text-gray-900 truncate leading-tight">
+                {candidate.firstName} {candidate.lastName}
+              </span>
+            ) : (
+              <Link
+                href={`/applications/${application.id}?jobId=${(application as any).jobId ?? ''}`}
+                className="text-sm font-medium text-gray-900 hover:text-blue-600 truncate leading-tight"
+                onClick={e => e.stopPropagation()}
+              >
+                {candidate.firstName} {candidate.lastName}
+              </Link>
+            )}
           </div>
 
-          <StarRating value={starRating} onChange={handleStarChange} size="sm" />
+          {!selectMode && <StarRating value={starRating} onChange={handleStarChange} size="sm" />}
 
           {isNew && (
             <span className="inline-flex items-center mt-1 mb-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wide">

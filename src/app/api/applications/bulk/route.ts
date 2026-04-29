@@ -9,7 +9,7 @@ export async function PATCH(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { applicationIds, stage } = await req.json()
+  const { applicationIds, stage, rejectionReason } = await req.json()
 
   if (!Array.isArray(applicationIds) || applicationIds.length === 0) {
     return NextResponse.json({ error: 'applicationIds is required' }, { status: 400 })
@@ -23,7 +23,10 @@ export async function PATCH(req: NextRequest) {
   const [updated] = await prisma.$transaction([
     prisma.application.updateMany({
       where: { id: { in: applicationIds } },
-      data: { stage },
+      data: {
+        stage,
+        ...(rejectionReason ? { rejectionReason } : {}),
+      },
     }),
   ])
 
