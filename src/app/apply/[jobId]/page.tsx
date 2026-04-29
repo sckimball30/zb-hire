@@ -221,8 +221,20 @@ export default function PublicApplyPage() {
         {job.description && (
           <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-4">
             <h2 className="text-base font-semibold text-gray-900 mb-3">About this role</h2>
+            <style>{`
+              .jd-body ul { list-style-type: disc !important; padding-left: 1.25rem !important; margin: 0.5rem 0 !important; }
+              .jd-body ol { list-style-type: decimal !important; padding-left: 1.25rem !important; margin: 0.5rem 0 !important; }
+              .jd-body li { display: list-item !important; margin: 0.15rem 0 !important; }
+              .jd-body li p { margin: 0 !important; }
+              .jd-body strong, .jd-body b { font-weight: 600 !important; }
+              .jd-body em, .jd-body i { font-style: italic !important; }
+              .jd-body p { margin-bottom: 0.5rem; }
+              .jd-body h2 { font-size: 1rem; font-weight: 600; color: #111827; margin: 1rem 0 0.375rem; }
+              .jd-body h3 { font-size: 0.875rem; font-weight: 600; color: #1f2937; margin: 0.75rem 0 0.25rem; }
+              .jd-body hr { border-color: #e5e7eb; margin: 0.75rem 0; }
+            `}</style>
             <div
-              className="text-sm text-gray-600 leading-relaxed [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2 [&_li]:mb-1 [&_li]:ml-1 [&_strong]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_h2]:mt-4 [&_h2]:mb-1 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-3 [&_h3]:mb-1 [&_hr]:border-gray-200 [&_hr]:my-3"
+              className="jd-body text-sm text-gray-600 leading-relaxed"
               dangerouslySetInnerHTML={{ __html: job.description }}
             />
           </div>
