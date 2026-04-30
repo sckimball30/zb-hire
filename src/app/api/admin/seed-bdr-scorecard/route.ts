@@ -31,14 +31,19 @@ const BDR_SECOND_INTERVIEW_QUESTIONS = [
 export async function POST() {
   const results: string[] = []
 
-  // Find the BDR job
+  // Find the Business Development Representative job
   const job = await prisma.job.findFirst({
-    where: { title: { contains: 'BDR', mode: 'insensitive' } },
+    where: {
+      OR: [
+        { title: { contains: 'Business Development Representative', mode: 'insensitive' } },
+        { title: { contains: 'BDR', mode: 'insensitive' } },
+      ],
+    },
     include: { scorecardTemplate: true },
   })
 
   if (!job) {
-    return NextResponse.json({ ok: false, error: 'BDR job not found' }, { status: 404 })
+    return NextResponse.json({ ok: false, error: 'Business Development Representative job not found' }, { status: 404 })
   }
 
   results.push(`Found job: "${job.title}" (${job.id})`)
