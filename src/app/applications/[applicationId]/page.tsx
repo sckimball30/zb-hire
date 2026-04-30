@@ -123,6 +123,7 @@ export default async function ApplicationPage({
   // Build a map of questionId → question text from the scorecard template
   const questionMap: Record<string, string> = {}
   const template = (job as any).scorecardTemplate
+  const scorecardSections: { id: string; title: string }[] = template?.sections?.map((s: any) => ({ id: s.id, title: s.title })) ?? []
   if (template?.sections) {
     for (const section of template.sections) {
       for (const tq of section.questions) {
@@ -313,6 +314,7 @@ export default async function ApplicationPage({
           <ScheduleInterviewButton
             applicationId={application.id}
             interviewers={jobInterviewers}
+            sections={scorecardSections}
             candidateId={candidate.id}
             candidateEmail={candidate.email}
             candidateFirstName={candidate.firstName}
@@ -527,6 +529,7 @@ export default async function ApplicationPage({
                           <EditInterviewButton
                             applicationId={application.id}
                             interviewers={jobInterviewers}
+                            sections={scorecardSections}
                             event={{
                               id: event.id,
                               interviewerId: event.interviewerId ?? null,
@@ -535,6 +538,7 @@ export default async function ApplicationPage({
                               durationMins: event.durationMins,
                               location: event.location ?? null,
                               notes: event.notes ?? null,
+                              scorecardSections: (event as any).scorecardSections ?? null,
                             }}
                           />
                         </div>

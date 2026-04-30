@@ -15,7 +15,7 @@ export async function POST(
 
   const { applicationId } = params
   const body = await req.json()
-  const { interviewerId, type, scheduledAt, durationMins, location, notes, calendlyEventUrl } = body
+  const { interviewerId, type, scheduledAt, durationMins, location, notes, calendlyEventUrl, scorecardSections } = body
 
   if (!type) {
     return NextResponse.json({ error: 'type is required' }, { status: 400 })
@@ -52,6 +52,7 @@ export async function POST(
       location: location ?? null,
       notes: notes ?? null,
       calendlyEventUrl: calendlyEventUrl ?? null,
+      scorecardSections: scorecardSections ? JSON.stringify(scorecardSections) : null,
     },
     include: { interviewer: true },
   })

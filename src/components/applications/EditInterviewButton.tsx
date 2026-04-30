@@ -11,9 +11,15 @@ interface Interviewer {
   calendlyUrl: string | null
 }
 
+interface ScorecardSection {
+  id: string
+  title: string
+}
+
 interface Props {
   applicationId: string
   interviewers: Interviewer[]
+  sections?: ScorecardSection[]
   event: {
     id: string
     interviewerId: string | null
@@ -22,10 +28,11 @@ interface Props {
     durationMins: number
     location: string | null
     notes: string | null
+    scorecardSections: string | null
   }
 }
 
-export function EditInterviewButton({ applicationId, interviewers, event }: Props) {
+export function EditInterviewButton({ applicationId, interviewers, sections, event }: Props) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -42,6 +49,7 @@ export function EditInterviewButton({ applicationId, interviewers, event }: Prop
         <ScheduleInterviewModal
           applicationId={applicationId}
           interviewers={interviewers}
+          sections={sections}
           existingEvent={event}
           onClose={() => setOpen(false)}
         />

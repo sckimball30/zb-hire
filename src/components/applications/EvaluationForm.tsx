@@ -60,6 +60,8 @@ interface EvaluationFormProps {
   candidateId?: string
   resumeUrl?: string | null
   candidateName?: string
+  /** When set, only show these section IDs (assigned via the interview event) */
+  scopedSectionIds?: string[] | null
 }
 
 type ABC = 'A' | 'B' | 'C' | null
@@ -1319,6 +1321,7 @@ export function EvaluationForm({
   salaryExpectation,
   currentUserName,
   currentUserId,
+  scopedSectionIds,
 }: EvaluationFormProps) {
   const [entries, setEntries] = useState<ScorecardEntry[]>(initialEntries)
 
@@ -1344,14 +1347,16 @@ export function EvaluationForm({
   const getDraftForSection = (title: string) =>
     getEntriesForSection(title).find((e) => e.status === 'DRAFT') ?? null
 
-  // Sort so Screening always appears first
-  const sections = [...(template?.sections ?? [])].sort((a, b) => {
-    const aScreen = a.title.toLowerCase().includes('screen')
-    const bScreen = b.title.toLowerCase().includes('screen')
-    if (aScreen && !bScreen) return -1
-    if (!aScreen && bScreen) return 1
-    return 0
-  })
+  // Filter to scoped sections if provided (assigned via the interview event), then sort Screening first
+  const sections = [...(template?.sections ?? [])]
+    .filter(s => !scopedSectionIds || scopedSectionIds.includes(s.id))
+    .sort((a, b) => {
+      const aScreen = a.title.toLowerCase().includes('screen')
+      const bScreen = b.title.toLowerCase().includes('screen')
+      if (aScreen && !bScreen) return -1
+      if (!aScreen && bScreen) return 1
+      return 0
+    })
 
   return (
     <div className="space-y-6">

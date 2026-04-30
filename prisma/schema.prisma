@@ -348,6 +348,7 @@ model InterviewEvent {
   durationMins         Int           @default(60)
   location             String?
   notes                String?
+  scorecardSections    String?   // JSON array of ScorecardTemplateSection IDs assigned to this event
   calendlyEventUrl     String?
   googleCalendarEventId String?
   createdAt            DateTime      @default(now())

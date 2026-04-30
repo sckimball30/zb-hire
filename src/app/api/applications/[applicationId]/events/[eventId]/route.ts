@@ -15,7 +15,7 @@ export async function PATCH(
 
   const { applicationId, eventId } = params
   const body = await req.json()
-  const { interviewerId, type, scheduledAt, durationMins, location, notes } = body
+  const { interviewerId, type, scheduledAt, durationMins, location, notes, scorecardSections } = body
 
   const existing = await prisma.interviewEvent.findUnique({
     where: { id: eventId },
@@ -36,6 +36,9 @@ export async function PATCH(
       durationMins: durationMins ?? existing.durationMins,
       location: location !== undefined ? (location || null) : existing.location,
       notes: notes !== undefined ? (notes || null) : existing.notes,
+      scorecardSections: scorecardSections !== undefined
+        ? (scorecardSections ? JSON.stringify(scorecardSections) : null)
+        : existing.scorecardSections,
     },
     include: {
       interviewer: true,

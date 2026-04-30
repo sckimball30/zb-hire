@@ -10,8 +10,10 @@ import { authOptions } from '@/lib/auth'
 
 export default async function NewEvaluationPage({
   params,
+  searchParams,
 }: {
   params: { applicationId: string }
+  searchParams: { sections?: string }
 }) {
   const session = await getServerSession(authOptions)
   const role = (session?.user as any)?.role as string | undefined
@@ -47,6 +49,11 @@ export default async function NewEvaluationPage({
   })
 
   if (!application) notFound()
+
+  // Section filter — passed when launched from an interviewer event with assigned sections
+  const scopedSectionIds = searchParams.sections
+    ? searchParams.sections.split(',').filter(Boolean)
+    : null
 
   const entries = await prisma.scorecardEntry.findMany({
     where: { applicationId: params.applicationId },
@@ -125,6 +132,7 @@ export default async function NewEvaluationPage({
               salaryExpectation={(application as any).salaryExpectation ?? null}
               currentUserName={currentUserName}
               currentUserId={currentUserId}
+              scopedSectionIds={scopedSectionIds}
             />
           </div>
         </div>

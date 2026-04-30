@@ -72,7 +72,21 @@ export default async function InterviewerEventPage({
   const typeLabel = INTERVIEW_TYPE_LABELS[event.type] ?? event.type
   const isUpcoming = event.scheduledAt ? new Date(event.scheduledAt) > new Date() : false
   const template = job.scorecardTemplate
-  const templateSections = template?.sections ?? []
+  const allSections = template?.sections ?? []
+
+  // Filter to only the sections assigned to this specific interview event (if any were assigned)
+  let assignedSectionIds: string[] | null = null
+  if ((event as any).scorecardSections) {
+    try { assignedSectionIds = JSON.parse((event as any).scorecardSections) } catch {}
+  }
+  const templateSections = assignedSectionIds
+    ? allSections.filter(s => assignedSectionIds!.includes(s.id))
+    : allSections
+
+  // Build the scorecard URL — append section filter if sections are assigned
+  const scorecardHref = assignedSectionIds && assignedSectionIds.length > 0
+    ? `/applications/${application.id}/scorecard/new?sections=${assignedSectionIds.join(',')}`
+    : `/applications/${application.id}/scorecard/new`
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -178,11 +192,11 @@ export default async function InterviewerEventPage({
               </p>
               {!isSubmitted && (
                 <Link
-                  href={`/applications/${application.id}/scorecard/new`}
+                  href={scorecardHref}
                   className={`inline-flex items-center gap-2 mt-3 px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors ${isUpcoming ? 'bg-blue-600 hover:bg-blue-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}
                 >
                   <ClipboardCheck className="w-4 h-4" />
-                  {isUpcoming ? 'Open scorecard' : 'Open scorecard'}
+                  Open scorecard
                 </Link>
               )}
             </div>

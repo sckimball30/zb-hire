@@ -11,9 +11,15 @@ interface Interviewer {
   calendlyUrl: string | null
 }
 
+interface ScorecardSection {
+  id: string
+  title: string
+}
+
 interface Props {
   applicationId: string
   interviewers: Interviewer[]
+  sections?: ScorecardSection[]
   candidateId?: string
   candidateEmail?: string
   candidateFirstName?: string
@@ -23,6 +29,7 @@ interface Props {
 export function ScheduleInterviewButton({
   applicationId,
   interviewers,
+  sections,
   candidateId,
   candidateEmail,
   candidateFirstName,
@@ -44,6 +51,7 @@ export function ScheduleInterviewButton({
         <ScheduleInterviewModal
           applicationId={applicationId}
           interviewers={interviewers}
+          sections={sections}
           candidateId={candidateId}
           candidateEmail={candidateEmail}
           candidateFirstName={candidateFirstName}

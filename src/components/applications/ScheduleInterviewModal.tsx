@@ -29,6 +29,11 @@ interface Interviewer {
   calendlyUrl: string | null
 }
 
+interface ScorecardSection {
+  id: string
+  title: string
+}
+
 interface ExistingEvent {
   id: string
   interviewerId: string | null
@@ -37,11 +42,13 @@ interface ExistingEvent {
   durationMins: number
   location: string | null
   notes: string | null
+  scorecardSections: string | null
 }
 
 interface Props {
   applicationId: string
   interviewers: Interviewer[]
+  sections?: ScorecardSection[]
   candidateId?: string
   candidateEmail?: string
   candidateFirstName?: string
@@ -61,6 +68,7 @@ function toDatetimeLocal(iso: string | null): string {
 export function ScheduleInterviewModal({
   applicationId,
   interviewers,
+  sections = [],
   existingEvent,
   onClose,
 }: Props) {
@@ -83,6 +91,10 @@ export function ScheduleInterviewModal({
   const [scheduledAt, setScheduledAt] = useState(toDatetimeLocal(existingEvent?.scheduledAt ?? null))
   const [notes, setNotes] = useState(existingEvent?.notes ?? '')
   const [showNotes, setShowNotes] = useState(!!(existingEvent?.notes))
+  const [selectedSections, setSelectedSections] = useState<string[]>(() => {
+    if (!existingEvent?.scorecardSections) return []
+    try { return JSON.parse(existingEvent.scorecardSections) } catch { return [] }
+  })
   const [loading, setLoading] = useState(false)
 
   const effectiveLocation = location === '__custom__' ? customLocation : location
@@ -108,6 +120,7 @@ export function ScheduleInterviewModal({
           scheduledAt: scheduledAt || null,
           location: effectiveLocation || null,
           notes: notes || null,
+          scorecardSections: selectedSections.length > 0 ? selectedSections : null,
         }),
       })
       if (!res.ok) {
@@ -266,6 +279,40 @@ export function ScheduleInterviewModal({
               </p>
             )}
           </div>
+
+          {/* Scorecard sections — only shown when job has multiple sections */}
+          {sections.length > 1 && (
+            <div>
+              <label className="label mb-1.5">
+                Question Banks for this Interview
+                <span className="ml-1.5 text-xs font-normal text-gray-400">— leave blank to show all</span>
+              </label>
+              <div className="space-y-1.5">
+                {sections.map(sec => (
+                  <label key={sec.id} className="flex items-center gap-2.5 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      checked={selectedSections.includes(sec.id)}
+                      onChange={e => {
+                        setSelectedSections(prev =>
+                          e.target.checked
+                            ? [...prev, sec.id]
+                            : prev.filter(id => id !== sec.id)
+                        )
+                      }}
+                    />
+                    <span className="text-sm text-gray-700 group-hover:text-gray-900">{sec.title}</span>
+                  </label>
+                ))}
+              </div>
+              {selectedSections.length > 0 && (
+                <p className="text-xs text-blue-600 mt-1.5">
+                  Interviewer will only see {selectedSections.length} section{selectedSections.length !== 1 ? 's' : ''}.
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Notes — collapsed by default */}
           <div>
