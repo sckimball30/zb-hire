@@ -150,11 +150,11 @@ export function MessagesCard({ candidateId, initialMessages, scheduledMessages, 
                       <p className={`text-xs font-medium truncate ${isInbound ? 'text-blue-800' : 'text-gray-800'}`}>
                         {msg.subject || '(no subject)'}
                       </p>
-                      <span className="text-xs text-gray-400 flex-shrink-0">{dateStr}</span>
+                      {!isScheduled && <span className="text-xs text-gray-400 flex-shrink-0">{dateStr}</span>}
                     </div>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {isScheduled ? (
-                        <span className="text-amber-500">Scheduled</span>
+                        <span className="text-amber-500">Scheduled for {dateStr}</span>
                       ) : isInbound ? (
                         <span className="text-blue-600 font-medium">Candidate reply</span>
                       ) : (
