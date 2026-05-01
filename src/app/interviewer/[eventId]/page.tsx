@@ -83,8 +83,9 @@ export default async function InterviewerEventPage({
     ? allSections.filter(s => assignedSectionIds!.includes(s.id))
     : allSections
 
-  // Build the scorecard URL — append section filter if sections are assigned
-  const scorecardHref = assignedSectionIds && assignedSectionIds.length > 0
+  // Build the scorecard URL — append section filter if sections are assigned.
+  // null = no filter (show all), [] = final assessment only, [...ids] = specific sections
+  const scorecardHref = assignedSectionIds !== null
     ? `/applications/${application.id}/scorecard/new?sections=${assignedSectionIds.join(',')}`
     : `/applications/${application.id}/scorecard/new`
 

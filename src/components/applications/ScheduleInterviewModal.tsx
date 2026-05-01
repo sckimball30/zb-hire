@@ -95,6 +95,13 @@ export function ScheduleInterviewModal({
     if (!existingEvent?.scorecardSections) return []
     try { return JSON.parse(existingEvent.scorecardSections) } catch { return [] }
   })
+  const [finalAssessmentOnly, setFinalAssessmentOnly] = useState<boolean>(() => {
+    if (!existingEvent?.scorecardSections) return false
+    try {
+      const parsed = JSON.parse(existingEvent.scorecardSections)
+      return Array.isArray(parsed) && parsed.length === 0
+    } catch { return false }
+  })
   const [loading, setLoading] = useState(false)
 
   const effectiveLocation = location === '__custom__' ? customLocation : location
@@ -120,7 +127,7 @@ export function ScheduleInterviewModal({
           scheduledAt: scheduledAt || null,
           location: effectiveLocation || null,
           notes: notes || null,
-          scorecardSections: selectedSections.length > 0 ? selectedSections : null,
+          scorecardSections: finalAssessmentOnly ? [] : (selectedSections.length > 0 ? selectedSections : null),
         }),
       })
       if (!res.ok) {
@@ -280,8 +287,8 @@ export function ScheduleInterviewModal({
             )}
           </div>
 
-          {/* Scorecard sections — only shown when job has multiple sections */}
-          {sections.length > 1 && (
+          {/* Scorecard sections — only shown when job has at least one section */}
+          {sections.length > 0 && (
             <div>
               <label className="label mb-1.5">
                 Question Banks for this Interview
@@ -289,11 +296,15 @@ export function ScheduleInterviewModal({
               </label>
               <div className="space-y-1.5">
                 {sections.map(sec => (
-                  <label key={sec.id} className="flex items-center gap-2.5 cursor-pointer group">
+                  <label
+                    key={sec.id}
+                    className={`flex items-center gap-2.5 cursor-pointer group ${finalAssessmentOnly ? 'opacity-40 pointer-events-none' : ''}`}
+                  >
                     <input
                       type="checkbox"
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       checked={selectedSections.includes(sec.id)}
+                      disabled={finalAssessmentOnly}
                       onChange={e => {
                         setSelectedSections(prev =>
                           e.target.checked
@@ -305,12 +316,33 @@ export function ScheduleInterviewModal({
                     <span className="text-sm text-gray-700 group-hover:text-gray-900">{sec.title}</span>
                   </label>
                 ))}
+                <div className="border-t border-gray-100 pt-1.5">
+                  <label className="flex items-center gap-2.5 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      checked={finalAssessmentOnly}
+                      onChange={e => {
+                        setFinalAssessmentOnly(e.target.checked)
+                        if (e.target.checked) setSelectedSections([])
+                      }}
+                    />
+                    <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
+                      Final assessment only
+                    </span>
+                    <span className="text-xs text-gray-400">— no question banks</span>
+                  </label>
+                </div>
               </div>
-              {selectedSections.length > 0 && (
+              {finalAssessmentOnly ? (
+                <p className="text-xs text-indigo-600 mt-1.5">
+                  Interviewer will only see the final assessment — no question banks.
+                </p>
+              ) : selectedSections.length > 0 ? (
                 <p className="text-xs text-blue-600 mt-1.5">
                   Interviewer will only see {selectedSections.length} section{selectedSections.length !== 1 ? 's' : ''}.
                 </p>
-              )}
+              ) : null}
             </div>
           )}
 

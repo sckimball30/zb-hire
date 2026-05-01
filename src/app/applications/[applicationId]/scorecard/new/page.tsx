@@ -50,8 +50,9 @@ export default async function NewEvaluationPage({
 
   if (!application) notFound()
 
-  // Section filter — passed when launched from an interviewer event with assigned sections
-  const scopedSectionIds = searchParams.sections
+  // Section filter — passed when launched from an interviewer event with assigned sections.
+  // undefined (no param) = show all; "" or "id1,id2" = show only those (empty string = none)
+  const scopedSectionIds = searchParams.sections !== undefined
     ? searchParams.sections.split(',').filter(Boolean)
     : null
 
