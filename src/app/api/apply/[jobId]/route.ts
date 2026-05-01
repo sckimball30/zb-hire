@@ -54,9 +54,16 @@ export async function POST(
       try {
         const token = process.env.BLOB_READ_WRITE_TOKEN ?? process.env.BLOB2_READ_WRITE_TOKEN
         console.log('Resume upload attempt — token present:', !!token, '| file:', resumeFile.name, resumeFile.size, 'bytes')
-        const safeName = resumeFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+        const rawName = resumeFile.name || 'resume.pdf'
+        const safeName = rawName.replace(/[^a-zA-Z0-9._-]/g, '_')
         const filename = `resumes/${Date.now()}-${safeName}`
-        const blob = await put(filename, resumeFile, { access: 'public', token })
+        // Convert to Buffer for maximum compatibility with @vercel/blob across all runtimes
+        const buffer = Buffer.from(await resumeFile.arrayBuffer())
+        const blob = await put(filename, buffer, {
+          access: 'public',
+          token,
+          contentType: resumeFile.type || 'application/pdf',
+        })
         resumeUrl = blob.url
         console.log('Resume upload success:', resumeUrl)
       } catch (uploadErr: any) {
