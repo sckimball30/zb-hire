@@ -382,12 +382,14 @@ const REMOVED_TEMPLATE_NAMES = [
 export async function POST() {
   const results: string[] = []
 
-  // Delete any templates that have been retired
+  // Delete any templates that have been retired (uses contains for resilience)
   for (const name of REMOVED_TEMPLATE_NAMES) {
-    const existing = await prisma.messageTemplate.findFirst({ where: { name } })
-    if (existing) {
-      await prisma.messageTemplate.delete({ where: { id: existing.id } })
-      results.push(`Deleted retired template: ${name}`)
+    const matches = await prisma.messageTemplate.findMany({
+      where: { name: { contains: name, mode: 'insensitive' } },
+    })
+    for (const m of matches) {
+      await prisma.messageTemplate.delete({ where: { id: m.id } })
+      results.push(`Deleted retired template: ${m.name}`)
     }
   }
 
