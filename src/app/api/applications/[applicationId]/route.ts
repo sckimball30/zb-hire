@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { STAGE_ORDER, STAGE_LABELS } from '@/lib/constants'
+import { sendHiredConfirmation } from '@/lib/automations'
 import type { CandidateStage } from '@/types'
 
 export async function GET(
@@ -49,7 +50,11 @@ export async function PATCH(
 
     const current = await prisma.application.findUnique({
       where: { id: params.applicationId },
-      select: { stage: true },
+      select: {
+        stage: true,
+        candidate: { select: { email: true, firstName: true, lastName: true } },
+        job: { select: { title: true, department: true } },
+      },
     })
 
     if (!current) {
@@ -97,6 +102,17 @@ export async function PATCH(
           actorName: body.actorName || 'User',
         },
       })
+
+      // Fire hired confirmation email — fire-and-forget
+      if (stage === 'HIRED' && current.candidate && current.job) {
+        sendHiredConfirmation({
+          candidateEmail: current.candidate.email,
+          firstName: current.candidate.firstName,
+          fullName: `${current.candidate.firstName} ${current.candidate.lastName}`,
+          jobTitle: current.job.title,
+          department: current.job.department,
+        }).catch(err => console.error('[hired confirmation email]', err))
+      }
     }
 
     return NextResponse.json(application)
