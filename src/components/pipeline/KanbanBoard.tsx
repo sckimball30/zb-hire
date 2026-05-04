@@ -525,6 +525,20 @@ export function KanbanBoard({
     })
   }
 
+  function selectAllInStage(stage: CandidateStage) {
+    const stageIds = groups[stage].map(a => a.id)
+    const allSelected = stageIds.length > 0 && stageIds.every(id => selectedAppIds.has(id))
+    setSelectedAppIds(prev => {
+      const next = new Set(prev)
+      if (allSelected) {
+        stageIds.forEach(id => next.delete(id))
+      } else {
+        stageIds.forEach(id => next.add(id))
+      }
+      return next
+    })
+  }
+
   // ── Bulk move ─────────────────────────────────────────────────────────────
 
   async function handleBulkMove() {
@@ -821,6 +835,8 @@ export function KanbanBoard({
               selectMode={selectMode}
               selectedAppIds={selectedAppIds}
               onToggleApp={toggleApp}
+              onSelectAll={() => selectAllInStage(stage)}
+              allSelected={groups[stage].length > 0 && groups[stage].every(a => selectedAppIds.has(a.id))}
             />
           ))}
         </div>
@@ -954,6 +970,8 @@ function KanbanColumn({
   selectMode,
   selectedAppIds,
   onToggleApp,
+  onSelectAll,
+  allSelected,
 }: {
   stage: CandidateStage
   applications: ApplicationWithRelations[]
@@ -961,6 +979,8 @@ function KanbanColumn({
   selectMode: boolean
   selectedAppIds: Set<string>
   onToggleApp: (appId: string) => void
+  onSelectAll: () => void
+  allSelected: boolean
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage })
   const ids = applications.map((a) => a.id)
@@ -974,9 +994,19 @@ function KanbanColumn({
       <div className="px-3 py-3 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-gray-700">{STAGE_LABELS[stage]}</span>
-          <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${STAGE_COLORS[stage]}`}>
-            {applications.length}
-          </span>
+          <div className="flex items-center gap-1.5">
+            {selectMode && applications.length > 0 && (
+              <button
+                onClick={onSelectAll}
+                className="text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+              >
+                {allSelected ? 'Deselect' : 'All'}
+              </button>
+            )}
+            <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${STAGE_COLORS[stage]}`}>
+              {applications.length}
+            </span>
+          </div>
         </div>
       </div>
 
