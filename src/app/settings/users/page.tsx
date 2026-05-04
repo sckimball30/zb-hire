@@ -27,7 +27,7 @@ const ROLE_LABELS: Record<string, string> = {
   HIRING_MANAGER: 'Hiring Manager',
   INTERVIEWER: 'Interviewer',
 }
-const PROFILE_ROLES = ['INTERVIEWER', 'HIRING_MANAGER']
+const PROFILE_ROLES = ['RECRUITER', 'INTERVIEWER', 'HIRING_MANAGER']
 
 function roleColor(role: string) {
   if (role === 'ADMIN') return 'bg-purple-100 text-purple-700'

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/requireAdmin'
 
-const PROFILE_ROLES = ['INTERVIEWER', 'HIRING_MANAGER']
+const PROFILE_ROLES = ['RECRUITER', 'INTERVIEWER', 'HIRING_MANAGER']
 
 export async function PATCH(req: NextRequest, { params }: { params: { userId: string } }) {
   const result = await requireAdmin(req)
