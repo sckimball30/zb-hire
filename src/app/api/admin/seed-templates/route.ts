@@ -6,7 +6,7 @@ const templates = [
   {
     category: 'Outreach',
     name: 'Phone Screen Request',
-    subject: "We'd love to connect — {{Job Title}} at Wigglitz",
+    subject: "We'd love to connect - {{Job Title}} at Wigglitz",
     body: `Hi {{First Name}},
 
 Thank you for applying to the {{Job Title}} role at Wigglitz — we've reviewed your application and we're excited to learn more about you!
@@ -24,7 +24,7 @@ Hiring Team — Wigglitz`,
   {
     category: 'Outreach',
     name: 'Phone Screen Follow-Up (No Response)',
-    subject: 'Still Interested? — {{Job Title}} at Wigglitz',
+    subject: 'Still Interested? - {{Job Title}} at Wigglitz',
     body: `Hi {{First Name}},
 
 Just wanted to follow up on my note from a few days ago about the {{Job Title}} role at Wigglitz. I know things get busy and emails get buried, so I didn't want this to fall through the cracks.
@@ -44,7 +44,7 @@ Hiring Team — Wigglitz`,
   {
     category: 'Interviews',
     name: 'Video Call Interview Invitation',
-    subject: "You're Invited to a Video Interview — {{Job Title}}",
+    subject: "You're Invited to a Video Interview - {{Job Title}}",
     body: `Hi {{First Name}},
 
 Great news — we'd love to move you forward in our process for the {{Job Title}} role!
@@ -62,7 +62,7 @@ Hiring Team — Wigglitz`,
   {
     category: 'Interviews',
     name: 'Interview Invitation (with Calendly)',
-    subject: 'Moving Forward — {{Job Title}} Interview',
+    subject: 'Moving Forward - {{Job Title}} Interview',
     body: `Hi {{First Name}},
 
 Great news — we'd love to move you forward in our process for the {{Job Title}} role!
@@ -80,7 +80,7 @@ Hiring Team — Wigglitz`,
   {
     category: 'Interviews',
     name: 'Interview Invitation (Request Availability)',
-    subject: 'Moving Forward — {{Job Title}} Interview',
+    subject: 'Moving Forward - {{Job Title}} Interview',
     body: `Hi {{First Name}},
 
 Exciting news — we'd love to move you forward for the {{Job Title}} role!
@@ -96,7 +96,7 @@ Hiring Team — Wigglitz`,
   {
     category: 'Interviews',
     name: 'On-Site Interview Invitation',
-    subject: "You're Invited to an On-Site Interview — {{Job Title}}",
+    subject: "You're Invited to an On-Site Interview - {{Job Title}}",
     body: `Hi {{First Name}},
 
 We've really enjoyed getting to know you throughout this process and we're excited to invite you to an onsite interview for the {{Job Title}} role!
@@ -117,7 +117,7 @@ Hiring Team — Wigglitz`,
   {
     category: 'Interviews',
     name: 'Interview Confirmation / Reminder',
-    subject: '{{Interview Type}} Confirmed — {{Job Title}} at Wigglitz',
+    subject: '{{Interview Type}} Confirmed - {{Job Title}} at Wigglitz',
     body: `Hi {{First Name}},
 
 Just confirming your {{Interview Type}} for the {{Job Title}} role. Here are the details:
@@ -142,7 +142,7 @@ Hiring Team — Wigglitz`,
   {
     category: 'Offers',
     name: 'Verbal Offer',
-    subject: 'Great News — Your Offer for {{Job Title}} at Wigglitz',
+    subject: 'Great News - Your Offer for {{Job Title}} at Wigglitz',
     body: `Hi {{First Name}},
 
 It was great talking with you today. As we discussed, we'd love to officially welcome you to the team as our {{Job Title}}.
@@ -162,7 +162,7 @@ Hiring Team — Wigglitz`,
   {
     category: 'Offers',
     name: 'Offer Letter',
-    subject: 'Your Offer of Employment — {{Job Title}} at Wigglitz',
+    subject: 'Your Offer of Employment - {{Job Title}} at Wigglitz',
     body: `{{Date}}
 
 {{First Name}} {{Last Name}}
@@ -215,7 +215,7 @@ Signature: ___________________________   Date: ____________`,
   {
     category: 'Offers',
     name: 'Offer Letter Follow-Up',
-    subject: 'Following Up — Offer Letter for {{Job Title}}',
+    subject: 'Following Up - Offer Letter for {{Job Title}}',
     body: `Hi {{First Name}},
 
 Just checking in on the offer letter we sent over for the {{Job Title}} role. We know it's a big decision and we want to make sure you have everything you need.
@@ -233,7 +233,7 @@ Hiring Team — Wigglitz`,
   {
     category: 'Rejections',
     name: 'Rejection — Pre-Screening (Resume Review)',
-    subject: 'Your Application to Wigglitz — {{Job Title}}',
+    subject: 'Your Application to Wigglitz - {{Job Title}}',
     body: `Hi {{First Name}},
 
 Thank you for your interest in the {{Job Title}} role at Wigglitz and for taking the time to apply.
@@ -249,7 +249,7 @@ Hiring Team — Wigglitz`,
   {
     category: 'Rejections',
     name: 'Rejection — Post Phone Screen',
-    subject: 'Your Application to Wigglitz — {{Job Title}}',
+    subject: 'Your Application to Wigglitz - {{Job Title}}',
     body: `Hi {{First Name}},
 
 Thank you so much for taking the time to speak with us about the {{Job Title}} role at Wigglitz — it was genuinely a pleasure getting to know you.
@@ -265,7 +265,7 @@ Hiring Team — Wigglitz`,
   {
     category: 'Rejections',
     name: 'Rejection — Post On-Site',
-    subject: 'Your Application to Wigglitz — {{Job Title}}',
+    subject: 'Your Application to Wigglitz - {{Job Title}}',
     body: `Hi {{First Name}},
 
 I wanted to personally reach out and thank you for the time and energy you invested in our process for the {{Job Title}} role. Getting to the onsite stage is a real accomplishment and we don't take lightly the commitment that represents.
@@ -281,7 +281,7 @@ Hiring Team — Wigglitz`,
   {
     category: 'Rejections',
     name: 'Keeping You in Mind (Silver Medalist)',
-    subject: 'Staying in Touch — {{Job Title}} at Wigglitz',
+    subject: 'Staying in Touch - {{Job Title}} at Wigglitz',
     body: `Hi {{First Name}},
 
 I wanted to reach out personally to let you know that we've moved forward with another candidate for the {{Job Title}} role. This was a genuinely tough call — you stood out throughout the process and we have a lot of respect for your background.
@@ -297,7 +297,7 @@ Hiring Team — Wigglitz`,
   {
     category: 'General',
     name: 'Application Received',
-    subject: 'We Got Your Application — {{Job Title}} at Wigglitz',
+    subject: 'We Got Your Application - {{Job Title}} at Wigglitz',
     body: `Hi {{First Name}},
 
 Thanks for applying for the {{Job Title}} role at Wigglitz. We received your application and our team will be reviewing it shortly.
@@ -311,7 +311,7 @@ Hiring Team — Wigglitz`,
   {
     category: 'General',
     name: 'Reference Check Request',
-    subject: 'Reference Request — {{Candidate Full Name}}, {{Job Title}} at Wigglitz',
+    subject: 'Reference Request - {{Candidate Full Name}}, {{Job Title}} at Wigglitz',
     body: `Hi {{Reference First Name}},
 
 My name is {{Your Name}} and I'm on the talent team at Wigglitz. {{Candidate First Name}} listed you as a reference as part of their application for our {{Job Title}} opening, and I was hoping to connect with you briefly.
