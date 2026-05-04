@@ -248,33 +248,17 @@ Hiring Team — Wigglitz`,
   },
   {
     category: 'Rejections',
-    name: 'Rejection — Post-Screening (Pre On-Site)',
-    subject: 'Your Application to Wigglitz — {{Job Title}}',
-    body: `Hi {{First Name}},
-
-Thank you so much for the time you've invested in our process for the {{Job Title}} role — it has been a pleasure getting to know you.
-
-After careful consideration, we've decided not to move forward to the next stage at this time. This was not an easy decision — {{Specific Positive}}, and that genuinely stood out to us.
-
-We'd love to stay connected. We'll keep your information on file and will reach out if we think a future role could be a strong match.
-
-Thank you again for your time and energy — we're rooting for you.
-
-Hiring Team — Wigglitz`,
-  },
-  {
-    category: 'Rejections',
     name: 'Rejection — Post Phone Screen',
     subject: 'Your Application to Wigglitz — {{Job Title}}',
     body: `Hi {{First Name}},
 
-Thank you so much for taking the time to speak with us and for your interest in the {{Job Title}} role at Wigglitz.
+Thank you so much for taking the time to speak with us about the {{Job Title}} role at Wigglitz — it was genuinely a pleasure getting to know you.
 
-After careful consideration, we've decided to move forward with other candidates whose experience more closely aligns with what we're looking for at this stage. This was a genuinely difficult decision — we were impressed by {{Specific Positive}}.
+After careful consideration, we've decided to move forward with other candidates at this time. This was not an easy call, and we really appreciate the time and energy you put into the conversation.
 
-We'd love to stay in touch. If a role opens up that feels like a stronger match, we'll be sure to reach out.
+We'd love to stay in touch. We'll keep your information on file and will reach out if we think a future role could be a strong match.
 
-Thanks again for your time and enthusiasm — we wish you all the best in your search.
+Thanks again, and we wish you all the best in your search.
 
 Hiring Team — Wigglitz`,
   },
@@ -286,7 +270,7 @@ Hiring Team — Wigglitz`,
 
 I wanted to personally reach out and thank you for the time and energy you invested in our process for the {{Job Title}} role. Getting to the onsite stage is a real accomplishment and we don't take lightly the commitment that represents.
 
-After thoughtful discussion, we've decided to move forward with another candidate. This was a close call — the team was genuinely impressed by {{Specific Positive}}, and we want you to know this decision was not easy.
+After thoughtful discussion, we've decided to move forward with another candidate. This was a genuinely close call, and we want you to know this decision was not easy.
 
 We hope our paths cross again. We'll keep your information on file and reach out if we think there's a future opportunity worth exploring.
 
@@ -390,8 +374,22 @@ function stripSchedulingVars(text: string): string {
   return out
 }
 
+// Templates that have been removed and should be deleted from the DB on next seed run
+const REMOVED_TEMPLATE_NAMES = [
+  'Rejection — Post-Screening (Pre On-Site)',
+]
+
 export async function POST() {
   const results: string[] = []
+
+  // Delete any templates that have been retired
+  for (const name of REMOVED_TEMPLATE_NAMES) {
+    const existing = await prisma.messageTemplate.findFirst({ where: { name } })
+    if (existing) {
+      await prisma.messageTemplate.delete({ where: { id: existing.id } })
+      results.push(`Deleted retired template: ${name}`)
+    }
+  }
 
   for (const t of templates) {
     const existing = await prisma.messageTemplate.findFirst({ where: { name: t.name } })
