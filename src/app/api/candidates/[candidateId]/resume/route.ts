@@ -34,8 +34,9 @@ export async function POST(
     })
 
     return NextResponse.json({ resumeUrl: blob.url })
-  } catch (err) {
-    console.error('[resume upload]', err)
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
+  } catch (err: any) {
+    const msg = err?.message ?? String(err)
+    console.error('[resume upload]', msg)
+    return NextResponse.json({ error: `Upload failed: ${msg}` }, { status: 500 })
   }
 }
