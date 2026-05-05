@@ -20,10 +20,12 @@ export async function POST(
 
   try {
     const token = process.env.BLOB_READ_WRITE_TOKEN ?? process.env.BLOB2_READ_WRITE_TOKEN
+    const safeName = (file.name || 'resume.pdf').replace(/[^a-zA-Z0-9._-]/g, '_')
+    const buffer = Buffer.from(await file.arrayBuffer())
     const blob = await put(
-      `resumes/${params.candidateId}-${Date.now()}-${file.name}`,
-      file,
-      { access: 'public', token }
+      `resumes/${params.candidateId}-${Date.now()}-${safeName}`,
+      buffer,
+      { access: 'public', token, contentType: file.type || 'application/pdf' }
     )
 
     await prisma.candidate.update({

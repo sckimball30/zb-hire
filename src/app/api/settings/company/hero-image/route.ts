@@ -17,8 +17,13 @@ export async function POST(req: NextRequest) {
   }
 
   const token = process.env.BLOB_READ_WRITE_TOKEN ?? process.env.BLOB2_READ_WRITE_TOKEN
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-  const blob = await put(`careers-hero/${Date.now()}-${safeName}`, file, { access: 'public', token })
+  const safeName = (file.name || 'image').replace(/[^a-zA-Z0-9._-]/g, '_')
+  const buffer = Buffer.from(await file.arrayBuffer())
+  const blob = await put(`careers-hero/${Date.now()}-${safeName}`, buffer, {
+    access: 'public',
+    token,
+    contentType: file.type || 'application/octet-stream',
+  })
 
   return NextResponse.json({ url: blob.url })
 }
