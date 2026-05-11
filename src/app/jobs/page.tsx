@@ -1,6 +1,8 @@
 export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Plus } from 'lucide-react'
 import { JOB_STATUS_LABELS, JOB_STATUS_COLORS, EMPLOYMENT_TYPE_LABELS } from '@/lib/constants'
@@ -10,7 +12,17 @@ function formatSalary(amount: number, currency = 'USD') {
 }
 
 export default async function JobsPage() {
+  const session = await getServerSession(authOptions)
+  const userRole = (session?.user as any)?.role as string | undefined
+  const userId = (session?.user as any)?.id as string | undefined
+  const isRecruiter = userRole === 'RECRUITER'
+
+  const where = isRecruiter && userId
+    ? { recruiters: { some: { userId } } }
+    : {}
+
   const jobs = await prisma.job.findMany({
+    where,
     include: {
       _count: {
         select: { applications: true, interviewers: true },
@@ -26,19 +38,27 @@ export default async function JobsPage() {
           <h1 className="page-title">Jobs</h1>
           <p className="text-sm text-gray-500 mt-1">Manage open positions and hiring pipelines</p>
         </div>
-        <Link href="/jobs/new" className="btn-primary">
-          <Plus className="w-4 h-4" />
-          New Job
-        </Link>
+        {!isRecruiter && (
+          <Link href="/jobs/new" className="btn-primary">
+            <Plus className="w-4 h-4" />
+            New Job
+          </Link>
+        )}
       </div>
 
       {jobs.length === 0 ? (
         <div className="card py-16 text-center">
-          <p className="text-gray-500">No jobs found. Create your first job to get started.</p>
-          <Link href="/jobs/new" className="btn-primary mt-4 inline-flex">
-            <Plus className="w-4 h-4" />
-            New Job
-          </Link>
+          <p className="text-gray-500">
+            {isRecruiter
+              ? "You haven't been assigned to any jobs yet. Contact an admin to get assigned."
+              : 'No jobs found. Create your first job to get started.'}
+          </p>
+          {!isRecruiter && (
+            <Link href="/jobs/new" className="btn-primary mt-4 inline-flex">
+              <Plus className="w-4 h-4" />
+              New Job
+            </Link>
+          )}
         </div>
       ) : (
         <>

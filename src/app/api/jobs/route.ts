@@ -1,10 +1,21 @@
 import { NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import type { JobStatus } from '@/types'
 
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions)
+    const userRole = (session?.user as any)?.role as string | undefined
+    const userId = (session?.user as any)?.id as string | undefined
+
+    const where = userRole === 'RECRUITER' && userId
+      ? { recruiters: { some: { userId } } }
+      : {}
+
     const jobs = await prisma.job.findMany({
+      where,
       include: {
         _count: {
           select: { applications: true, interviewers: true },
