@@ -256,7 +256,7 @@ export default function AutomationsPage() {
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="p-4 md:p-8">
         <div className="h-6 w-48 bg-gray-100 rounded animate-pulse mb-2" />
         <div className="h-4 w-72 bg-gray-100 rounded animate-pulse" />
       </div>
@@ -264,7 +264,7 @@ export default function AutomationsPage() {
   }
 
   return (
-    <div className="p-8 max-w-screen-xl space-y-10">
+    <div className="p-4 md:p-8 max-w-screen-xl space-y-10">
       <div className="mb-2">
         <h1 className="text-xl font-bold text-gray-900">Email Automations</h1>
         <p className="text-sm text-gray-500 mt-1">Configure automated emails sent to candidates at key moments.</p>

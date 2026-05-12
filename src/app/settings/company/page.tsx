@@ -78,7 +78,7 @@ export default function CompanySettingsPage() {
   const inputCls = 'w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent'
 
   return (
-    <div className="p-8 max-w-2xl">
+    <div className="p-4 md:p-8 max-w-2xl">
       <div className="mb-6">
         <h1 className="text-xl font-bold text-gray-900">Company Settings</h1>
         <p className="text-sm text-gray-500 mt-1">

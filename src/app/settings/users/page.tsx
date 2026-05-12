@@ -400,11 +400,11 @@ export default function UsersSettingsPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  if (loading) return <div className="p-8 text-sm text-gray-400">Loading…</div>
+  if (loading) return <div className="p-4 md:p-8 text-sm text-gray-400">Loading…</div>
 
   if (!isAdmin) {
     return (
-      <div className="p-8 max-w-lg">
+      <div className="p-4 md:p-8 max-w-lg">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Team & Users</h1>
         <div className="card p-6 flex flex-col items-center gap-4 text-center">
           <ShieldAlert className="w-10 h-10 text-yellow-500" />
@@ -426,7 +426,7 @@ export default function UsersSettingsPage() {
   const pendingInvites = invitations.filter(i => !i.acceptedAt && new Date(i.expiresAt) > new Date())
 
   return (
-    <div className="p-8 max-w-3xl space-y-8">
+    <div className="p-4 md:p-8 max-w-3xl space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Team & Users</h1>
         <p className="text-sm text-gray-500 mt-1">

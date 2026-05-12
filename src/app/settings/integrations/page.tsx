@@ -12,7 +12,7 @@ export default async function IntegrationsPage({
   const gmailConn = await prisma.gmailConnection.findFirst()
 
   return (
-    <div className="p-8 max-w-2xl">
+    <div className="p-4 md:p-8 max-w-2xl">
       <h1 className="text-2xl font-bold text-gray-900 mb-1">Integrations</h1>
       <p className="text-sm text-gray-500 mb-8">Connect external services to ZB Hire.</p>
 

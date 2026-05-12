@@ -235,54 +235,92 @@ export default async function DashboardPage() {
 
       {/* Recent Applications */}
       <div className="card overflow-hidden mt-4 md:mt-6">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="px-4 sm:px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <h2 className="text-base font-semibold text-gray-900">Recent Applications</h2>
           <Link href="/jobs" className="text-sm text-blue-600 hover:underline">View all jobs</Link>
         </div>
         {recentApplications.length === 0 ? (
           <div className="px-6 py-8 text-center text-sm text-gray-400">No applications yet.</div>
         ) : (
-          <div className="overflow-x-auto">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Candidate</th>
-                <th className="hidden sm:table-cell">Role</th>
-                <th>Stage</th>
-                <th className="hidden sm:table-cell">Applied</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            {/* Mobile card list */}
+            <ul className="sm:hidden divide-y divide-gray-50">
               {recentApplications.map(app => (
-                <tr key={app.id}>
-                  <td className="font-medium text-gray-900">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {app.candidate.firstName} {app.candidate.lastName}
-                      {isNewApplicant(app.createdAt) && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wide">
-                          New
-                        </span>
-                      )}
+                <li key={app.id}>
+                  <Link
+                    href={`/applications/${app.id}`}
+                    className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 flex-shrink-0">
+                      {initials(app.candidate.firstName, app.candidate.lastName)}
                     </div>
-                  </td>
-                  <td className="hidden sm:table-cell text-gray-600">{app.job.title}</td>
-                  <td>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STAGE_COLORS[app.stage]}`}>
-                      {STAGE_LABELS[app.stage]}
-                    </span>
-                  </td>
-                  <td className="hidden sm:table-cell text-gray-500 text-sm">{formatDate(app.createdAt)}</td>
-                  <td>
-                    <Link href={`/applications/${app.id}`} className="text-blue-600 hover:underline text-sm">
-                      View
-                    </Link>
-                  </td>
-                </tr>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="text-sm font-semibold text-gray-900 truncate">
+                          {app.candidate.firstName} {app.candidate.lastName}
+                        </span>
+                        {isNewApplicant(app.createdAt) && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wide flex-shrink-0">
+                            New
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 truncate">{app.job.title}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STAGE_COLORS[app.stage]}`}>
+                        {STAGE_LABELS[app.stage]}
+                      </span>
+                      <span className="text-xs text-gray-400">{timeAgo(app.createdAt)}</span>
+                    </div>
+                  </Link>
+                </li>
               ))}
-            </tbody>
-          </table>
-          </div>
+            </ul>
+
+            {/* Desktop table */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Candidate</th>
+                    <th>Role</th>
+                    <th>Stage</th>
+                    <th>Applied</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentApplications.map(app => (
+                    <tr key={app.id}>
+                      <td className="font-medium text-gray-900">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {app.candidate.firstName} {app.candidate.lastName}
+                          {isNewApplicant(app.createdAt) && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wide">
+                              New
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="text-gray-600">{app.job.title}</td>
+                      <td>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STAGE_COLORS[app.stage]}`}>
+                          {STAGE_LABELS[app.stage]}
+                        </span>
+                      </td>
+                      <td className="text-gray-500 text-sm">{formatDate(app.createdAt)}</td>
+                      <td>
+                        <Link href={`/applications/${app.id}`} className="text-blue-600 hover:underline text-sm">
+                          View
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

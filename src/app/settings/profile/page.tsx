@@ -71,10 +71,10 @@ export default function ProfileSettingsPage() {
     }
   }
 
-  if (loading) return <div className="p-8 text-sm text-gray-400">Loading…</div>
+  if (loading) return <div className="p-4 md:p-8 text-sm text-gray-400">Loading…</div>
 
   return (
-    <div className="p-8 max-w-2xl space-y-8">
+    <div className="p-4 md:p-8 max-w-2xl space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
         <p className="text-sm text-gray-500 mt-1">Update your personal information and password</p>
