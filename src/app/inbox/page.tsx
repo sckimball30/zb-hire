@@ -11,20 +11,38 @@ export default async function InboxPage() {
   if (!session) redirect('/auth/login')
 
   const userId = (session.user as any)?.id as string | undefined
+  const userRole = (session.user as any)?.role as string | undefined
+  const isRecruiter = userRole === 'RECRUITER'
 
-  // Find candidates this user has messaged
-  const myOutbound = userId
-    ? await prisma.messageLog.findMany({
-        where: { sentById: userId, direction: 'OUTBOUND' },
+  // Determine candidate scope: recruiters see candidates in their assigned jobs,
+  // admins/others see all candidates with messages.
+  let scopedCandidateIds: string[] | null = null
+
+  if (isRecruiter && userId) {
+    const assignedJobs = await prisma.jobRecruiter.findMany({
+      where: { userId },
+      select: { jobId: true },
+    })
+    const jobIds = assignedJobs.map(j => j.jobId)
+    if (jobIds.length > 0) {
+      const apps = await prisma.application.findMany({
+        where: { jobId: { in: jobIds } },
         select: { candidateId: true },
         distinct: ['candidateId'],
       })
-    : []
-  const myCandidateIds = myOutbound.map(l => l.candidateId)
+      scopedCandidateIds = apps.map(a => a.candidateId)
+    } else {
+      scopedCandidateIds = []
+    }
+  }
 
-  // Fetch all messages (inbound + outbound) for those candidates
+  const candidateFilter = scopedCandidateIds !== null
+    ? (scopedCandidateIds.length > 0 ? { candidateId: { in: scopedCandidateIds } } : { id: 'none' })
+    : {}
+
+  // Fetch all messages for scoped candidates
   const logs = await prisma.messageLog.findMany({
-    where: myCandidateIds.length > 0 ? { candidateId: { in: myCandidateIds } } : { id: 'none' },
+    where: { ...candidateFilter },
     orderBy: { sentAt: 'desc' },
     include: {
       candidate: { select: { id: true, firstName: true, lastName: true, email: true } },

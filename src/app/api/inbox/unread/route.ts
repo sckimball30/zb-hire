@@ -8,23 +8,40 @@ export async function GET() {
   if (!session) return NextResponse.json({ count: 0 })
 
   const userId = (session.user as any)?.id as string | undefined
+  const userRole = (session.user as any)?.role as string | undefined
+  const isRecruiter = userRole === 'RECRUITER'
 
-  // Get candidateIds this user has messaged
-  const myOutbound = userId
-    ? await prisma.messageLog.findMany({
-        where: { sentById: userId, direction: 'OUTBOUND' },
+  // Determine candidate scope (mirrors /api/inbox logic)
+  let scopedCandidateIds: string[] | null = null
+
+  if (isRecruiter && userId) {
+    const assignedJobs = await prisma.jobRecruiter.findMany({
+      where: { userId },
+      select: { jobId: true },
+    })
+    const jobIds = assignedJobs.map(j => j.jobId)
+    if (jobIds.length > 0) {
+      const apps = await prisma.application.findMany({
+        where: { jobId: { in: jobIds } },
         select: { candidateId: true },
         distinct: ['candidateId'],
       })
-    : []
-  const myCandidateIds = myOutbound.map(l => l.candidateId)
+      scopedCandidateIds = apps.map(a => a.candidateId)
+    } else {
+      scopedCandidateIds = []
+    }
+  }
 
-  const count = myCandidateIds.length > 0
+  const candidateFilter = scopedCandidateIds !== null
+    ? (scopedCandidateIds.length > 0 ? { candidateId: { in: scopedCandidateIds } } : null)
+    : {}
+
+  const count = candidateFilter !== null
     ? await prisma.messageLog.count({
         where: {
           direction: 'INBOUND',
           read: false,
-          candidateId: { in: myCandidateIds },
+          ...candidateFilter,
           candidate: { blocked: false },
         },
       })

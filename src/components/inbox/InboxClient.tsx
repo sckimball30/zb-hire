@@ -234,7 +234,9 @@ export function InboxClient({ initialConversations }: Props) {
                       </span>
                     </div>
                     <p className={`text-xs truncate mt-0.5 ${isUnread ? 'text-gray-800 font-medium' : 'text-gray-500'}`}>
-                      {conv.lastMessage.direction === 'OUTBOUND' ? 'You: ' : ''}
+                      {conv.lastMessage.direction === 'OUTBOUND'
+                        ? `${conv.lastMessage.sentByName ?? 'Team'}: `
+                        : ''}
                       {stripEmailQuote(conv.lastMessage.body).slice(0, 60)}
                     </p>
                     {isUnread && (
