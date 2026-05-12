@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getGmailStatus, syncThreadReplies } from '@/lib/gmail'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -18,6 +19,16 @@ export async function GET() {
       })
     : []
   const myCandidateIds = myOutbound.map(l => l.candidateId)
+
+  // Sync Gmail replies for all conversations so unread counts are fresh
+  try {
+    const gmailStatus = await getGmailStatus()
+    if (gmailStatus.connected && myCandidateIds.length > 0) {
+      await Promise.all(myCandidateIds.map(id => syncThreadReplies(id).catch(() => null)))
+    }
+  } catch {
+    // Non-fatal — continue with whatever is in the DB
+  }
 
   // Fetch all messages (inbound + outbound) for those candidates, excluding blocked ones
   const logs = await prisma.messageLog.findMany({

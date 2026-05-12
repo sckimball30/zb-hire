@@ -52,6 +52,31 @@ export function InboxClient({ initialConversations }: Props) {
   const [mobileView, setMobileView] = useState<'list' | 'thread'>('list')
   const threadEndRef = useRef<HTMLDivElement>(null)
 
+  // Sync Gmail and refresh conversation list — called on mount and every 30s
+  const refreshConversations = useCallback(async () => {
+    try {
+      const res = await fetch('/api/inbox')
+      if (!res.ok) return
+      const data: Conversation[] = await res.json()
+      setConversations(prev => {
+        // Merge: keep unreadCount = 0 for any conversation the user has already opened
+        return data.map(fresh => {
+          const existing = prev.find(c => c.candidateId === fresh.candidateId)
+          if (existing && existing.unreadCount === 0) return { ...fresh, unreadCount: 0 }
+          return fresh
+        })
+      })
+    } catch {
+      // Silently ignore — stale data is fine
+    }
+  }, [])
+
+  useEffect(() => {
+    refreshConversations()
+    const interval = setInterval(refreshConversations, 30_000)
+    return () => clearInterval(interval)
+  }, [refreshConversations])
+
   const scrollToBottom = useCallback(() => {
     threadEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [])
