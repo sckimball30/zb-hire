@@ -13,7 +13,7 @@ export function JobTabNav({ jobId }: { jobId: string }) {
   ]
 
   return (
-    <div className="flex gap-0 mt-4 -mb-px">
+    <div className="flex gap-0 mt-4 -mb-px overflow-x-auto scrollbar-none">
       {tabs.map(tab => {
         // Active logic: exact match for overview, startsWith for others
         const isOverview = tab.href === `/jobs/${jobId}` && (pathname === `/jobs/${jobId}` || pathname === `/jobs/${jobId}/`)

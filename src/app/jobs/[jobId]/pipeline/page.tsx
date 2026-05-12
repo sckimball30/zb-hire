@@ -7,6 +7,7 @@ import { ALL_STAGES, STAGE_LABELS } from '@/lib/constants'
 import { Download, Plus } from 'lucide-react'
 import type { CandidateStage, ApplicationWithRelations } from '@/types'
 import { KanbanBoard } from '@/components/pipeline/KanbanBoard'
+import { MobilePipelineView } from '@/components/pipeline/MobilePipelineView'
 
 export default async function JobPipelinePage({ params }: { params: { jobId: string } }) {
   const [job, templates] = await Promise.all([
@@ -37,7 +38,6 @@ export default async function JobPipelinePage({ params }: { params: { jobId: str
     {} as Record<CandidateStage, ApplicationWithRelations[]>
   )
 
-  // Candidates who have received at least one non-rejection message
   const candidateIds = job.applications.map(a => (a as any).candidate?.id as string).filter(Boolean)
   const contactedLogs = candidateIds.length > 0
     ? await prisma.messageLog.findMany({
@@ -52,34 +52,43 @@ export default async function JobPipelinePage({ params }: { params: { jobId: str
   const contactedCandidateIds = contactedLogs.map(l => l.candidateId)
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Pipeline action bar */}
-      <div className="px-4 md:px-8 py-3 md:py-4 bg-white border-b border-gray-100 flex items-center justify-between gap-3 flex-shrink-0">
-        {/* Stage summary — scrollable on mobile */}
-        <div className="flex items-center gap-3 md:gap-4 overflow-x-auto scrollbar-none flex-1 min-w-0">
+    // md:flex md:flex-col md:h-full — on desktop this fills the layout height for the kanban
+    // on mobile it's a plain block so content scrolls naturally
+    <div className="md:flex md:flex-col md:h-full">
+
+      {/* Desktop-only action bar */}
+      <div className="hidden md:flex px-8 py-4 bg-white border-b border-gray-100 items-center justify-between gap-4 flex-shrink-0">
+        <div className="flex items-center gap-5">
           {ALL_STAGES.map(stage => (
-            <div key={stage} className="text-center flex-shrink-0">
+            <div key={stage} className="text-center">
               <div className="text-sm font-semibold text-gray-900">{grouped[stage].length}</div>
               <div className="text-xs text-gray-500">{STAGE_LABELS[stage]}</div>
             </div>
           ))}
         </div>
-
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <a href={`/api/export/applications?jobId=${job.id}`} className="btn-outline hidden sm:inline-flex">
+        <div className="flex items-center gap-2">
+          <a href={`/api/export/applications?jobId=${job.id}`} className="btn-outline">
             <Download className="w-4 h-4" />
             Export CSV
           </a>
           <Link href={`/candidates/new?jobId=${job.id}`} className="btn-primary">
             <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Add Candidate</span>
-            <span className="sm:hidden">Add</span>
+            Add Candidate
           </Link>
         </div>
       </div>
 
-      {/* Kanban board */}
-      <div className="flex-1 overflow-auto px-3 md:px-8 py-4 md:py-6">
+      {/* Mobile: stage tabs + vertical list */}
+      <div className="md:hidden">
+        <MobilePipelineView
+          groupedApplications={grouped}
+          jobId={job.id}
+          contactedCandidateIds={contactedCandidateIds}
+        />
+      </div>
+
+      {/* Desktop: kanban board */}
+      <div className="hidden md:block md:flex-1 md:overflow-auto px-8 py-6">
         <KanbanBoard
           groupedApplications={grouped}
           jobId={job.id}

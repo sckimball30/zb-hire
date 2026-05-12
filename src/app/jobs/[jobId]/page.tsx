@@ -64,7 +64,7 @@ export default async function JobOverviewPage({ params }: { params: { jobId: str
   const applyUrl = `${process.env.NEXTAUTH_URL || 'https://zb-hires.vercel.app'}/apply/${job.id}`
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-4 md:p-8 max-w-4xl">
       {/* Action bar */}
       <div className="flex items-center justify-between mb-6">
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${JOB_STATUS_COLORS[job.status]}`}>
@@ -99,7 +99,7 @@ export default async function JobOverviewPage({ params }: { params: { jobId: str
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
         {[
           { label: 'Days Open', value: daysOpen, icon: Clock, color: 'text-blue-600', bg: 'bg-blue-50' },
           { label: 'Total Applications', value: job._count.applications, icon: Users, color: 'text-purple-600', bg: 'bg-purple-50' },
@@ -116,9 +116,9 @@ export default async function JobOverviewPage({ params }: { params: { jobId: str
         ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         {/* Left: job details */}
-        <div className="col-span-2 space-y-6">
+        <div className="md:col-span-2 space-y-4 md:space-y-6">
           {/* Apply link */}
           <div className="card p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Public Apply Link</h3>
