@@ -102,26 +102,26 @@ export default async function CandidatePage({ params }: { params: { candidateId:
   return (
     <div className="p-4 md:p-8 max-w-5xl">
       {/* Back */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+      <div className="mb-4">
+        <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
           <Link href="/candidates" className="hover:text-gray-700">Candidates</Link>
           <span>/</span>
           <span className="text-gray-700">{candidate.firstName} {candidate.lastName}</span>
         </div>
       </div>
 
-      {/* ── Header — same format as application page ─────────────────── */}
-      <div className="card p-6 mb-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-4">
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <div className="card p-4 md:p-6 mb-4 md:mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex items-start gap-3 md:gap-4">
             {/* Avatar */}
-            <div className="flex items-center justify-center w-14 h-14 rounded-full bg-blue-100 text-blue-700 text-xl font-bold flex-shrink-0">
+            <div className="flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-blue-100 text-blue-700 text-lg md:text-xl font-bold flex-shrink-0">
               {candidate.firstName[0]}{candidate.lastName[0]}
             </div>
 
             <div>
               <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-xl md:text-2xl font-bold text-gray-900">
                   {candidate.firstName} {candidate.lastName}
                 </h1>
                 {latestApp && (
@@ -188,9 +188,9 @@ export default async function CandidatePage({ params }: { params: { candidateId:
           </div>
 
           {/* Actions */}
-          <div className="flex flex-col items-end gap-3 flex-shrink-0">
+          <div className="flex flex-col sm:items-end gap-2 sm:flex-shrink-0">
             <span className="text-xs text-gray-400">Added {formatDate(candidate.createdAt)}</span>
-            <div className="flex items-center gap-2 flex-wrap justify-end">
+            <div className="flex items-center gap-2 flex-wrap">
               <EditCandidateButton
                 candidate={{
                   id: candidate.id,
@@ -276,13 +276,34 @@ export default async function CandidatePage({ params }: { params: { candidateId:
               </div>
             </div>
             {candidate.resumeUrl ? (
-              <div className="w-full bg-gray-50" style={{ height: 700 }}>
-                <iframe
-                  src={`/api/resume/${candidate.id}`}
-                  className="w-full h-full border-0"
-                  title="Resume"
-                />
-              </div>
+              <>
+                {/* Mobile: open in new tab (PDF iframes unreliable on mobile) */}
+                <div className="md:hidden px-6 py-5 flex gap-3">
+                  <a
+                    href={`/api/resume/${candidate.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 btn-primary justify-center text-sm"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    View Resume
+                  </a>
+                  <a
+                    href={`/api/resume/${candidate.id}?download=1`}
+                    className="btn-outline text-sm"
+                  >
+                    <Download className="w-4 h-4" />
+                  </a>
+                </div>
+                {/* Desktop: inline iframe */}
+                <div className="hidden md:block w-full bg-gray-50" style={{ height: 700 }}>
+                  <iframe
+                    src={`/api/resume/${candidate.id}`}
+                    className="w-full h-full border-0"
+                    title="Resume"
+                  />
+                </div>
+              </>
             ) : (
               <div className="px-6 py-10 text-center">
                 <FileText className="w-8 h-8 text-gray-200 mx-auto mb-2" />
