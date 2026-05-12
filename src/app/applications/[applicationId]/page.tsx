@@ -389,10 +389,11 @@ export default async function ApplicationPage({
                     <Download className="w-4 h-4" />
                   </a>
                 </div>
-                {/* Desktop: inline iframe */}
+                {/* Desktop: inline iframe — ?v= busts cache when resume is replaced */}
                 <div className="hidden md:block w-full bg-gray-50" style={{ height: 700 }}>
                   <iframe
-                    src={`/api/resume/${candidate.id}`}
+                    key={(candidate as any).resumeUrl ?? 'none'}
+                    src={`/api/resume/${candidate.id}?v=${encodeURIComponent(((candidate as any).resumeUrl ?? '').slice(-12))}`}
                     className="w-full h-full border-0"
                     title="Resume"
                   />

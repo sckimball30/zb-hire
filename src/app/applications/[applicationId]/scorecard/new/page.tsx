@@ -108,7 +108,8 @@ export default async function NewEvaluationPage({
                 </a>
               </div>
               <iframe
-                src={`/api/resume/${candidate.id}`}
+                key={resumeUrl ?? 'none'}
+                src={`/api/resume/${candidate.id}?v=${encodeURIComponent((resumeUrl ?? '').slice(-12))}`}
                 className="flex-1 w-full border-0"
                 title="Resume"
               />
