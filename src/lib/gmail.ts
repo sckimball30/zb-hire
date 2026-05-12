@@ -208,6 +208,17 @@ export async function syncThreadReplies(candidateId: string): Promise<number> {
         const { fromEmail } = await getGmailClient()
         if (from.toLowerCase().includes(fromEmail.toLowerCase())) continue
 
+        // Skip mailer-daemon bounce notifications (delivery failure reports)
+        const fromLower = from.toLowerCase()
+        if (
+          fromLower.includes('mailer-daemon') ||
+          fromLower.includes('postmaster') ||
+          fromLower.includes('mail delivery') ||
+          subject.toLowerCase().includes('delivery incomplete') ||
+          subject.toLowerCase().includes('delivery status notification') ||
+          subject.toLowerCase().includes('undeliverable')
+        ) continue
+
         const sentAt = dateStr ? new Date(dateStr) : new Date()
 
         await prisma.messageLog.create({
