@@ -825,7 +825,7 @@ export function KanbanBoard({
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className={`flex gap-4 h-full ${showActionBar ? 'pb-20' : ''}`}>
+        <div className={`flex gap-3 md:gap-4 h-full snap-x snap-mandatory md:snap-none ${showActionBar ? 'pb-20' : ''}`}>
           {ALL_STAGES.map((stage) => (
             <KanbanColumn
               key={stage}
@@ -987,7 +987,7 @@ function KanbanColumn({
 
   return (
     <div
-      className={`flex flex-col w-56 flex-shrink-0 rounded-xl border-t-4 transition-colors ${STAGE_COLUMN_COLORS[stage]} ${
+      className={`flex flex-col w-[80vw] sm:w-56 flex-shrink-0 snap-start rounded-xl border-t-4 transition-colors ${STAGE_COLUMN_COLORS[stage]} ${
         isOver ? 'bg-blue-50' : 'bg-gray-50'
       }`}
     >

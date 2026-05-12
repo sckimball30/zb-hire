@@ -218,24 +218,53 @@ export function Sidebar() {
     </>
   )
 
+  // Bottom tab items — same for all non-interviewer roles
+  const BOTTOM_TABS = [
+    { href: '/dashboard', icon: LayoutDashboard, label: 'Home' },
+    { href: '/jobs',      icon: Briefcase,       label: 'Jobs' },
+    { href: '/candidates',icon: Users,           label: 'People' },
+    { href: '/inbox',     icon: Inbox,           label: 'Inbox' },
+  ]
+
   return (
     <>
-      {/* ── Mobile top bar ── */}
-      <div className="md:hidden flex items-center justify-between bg-[#111111] px-4 pb-3 flex-shrink-0 z-30 safe-top">
-        <div className="flex items-center gap-2.5 pt-3">
-          <div className="flex items-center justify-center w-8 h-8 rounded-md bg-white/10 flex-shrink-0">
-            <span className="text-white font-black text-sm tracking-tighter leading-none">ZB</span>
-          </div>
-          <span className="text-white font-bold text-sm">ZB Hire</span>
-        </div>
+      {/* ── Mobile bottom tab bar ── */}
+      <nav
+        className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#111111] border-t border-white/10 flex items-stretch"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        {BOTTOM_TABS.map(({ href, icon: Icon, label }) => {
+          const active = pathname === href || (href !== '/dashboard' && pathname?.startsWith(href))
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors relative ${
+                active ? 'text-[#4AFFD2]' : 'text-white/50'
+              }`}
+            >
+              <div className="relative">
+                <Icon className={`w-5 h-5 ${active ? 'text-[#4AFFD2]' : 'text-white/50'}`} />
+                {href === '/inbox' && unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-2 inline-flex items-center justify-center min-w-[14px] h-3.5 px-0.5 rounded-full text-[9px] font-bold bg-blue-500 text-white leading-none">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </div>
+              <span>{label}</span>
+            </Link>
+          )
+        })}
+        {/* More — opens slide-out drawer */}
         <button
           onClick={() => setMobileOpen(true)}
-          className="p-2.5 mt-3 rounded-md text-white/60 hover:text-white hover:bg-white/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium text-white/50"
           aria-label="Open navigation"
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="w-5 h-5 text-white/50" />
+          <span>More</span>
         </button>
-      </div>
+      </nav>
 
       {/* ── Mobile backdrop ── */}
       {mobileOpen && (

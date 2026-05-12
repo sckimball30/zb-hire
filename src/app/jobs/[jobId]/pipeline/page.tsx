@@ -54,31 +54,32 @@ export default async function JobPipelinePage({ params }: { params: { jobId: str
   return (
     <div className="flex flex-col h-full">
       {/* Pipeline action bar */}
-      <div className="px-8 py-4 bg-white border-b border-gray-100 flex items-center justify-between flex-shrink-0">
-        {/* Stage summary */}
-        <div className="flex items-center gap-4">
+      <div className="px-4 md:px-8 py-3 md:py-4 bg-white border-b border-gray-100 flex items-center justify-between gap-3 flex-shrink-0">
+        {/* Stage summary — scrollable on mobile */}
+        <div className="flex items-center gap-3 md:gap-4 overflow-x-auto scrollbar-none flex-1 min-w-0">
           {ALL_STAGES.map(stage => (
-            <div key={stage} className="text-center">
+            <div key={stage} className="text-center flex-shrink-0">
               <div className="text-sm font-semibold text-gray-900">{grouped[stage].length}</div>
               <div className="text-xs text-gray-500">{STAGE_LABELS[stage]}</div>
             </div>
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
-          <a href={`/api/export/applications?jobId=${job.id}`} className="btn-outline">
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <a href={`/api/export/applications?jobId=${job.id}`} className="btn-outline hidden sm:inline-flex">
             <Download className="w-4 h-4" />
             Export CSV
           </a>
           <Link href={`/candidates/new?jobId=${job.id}`} className="btn-primary">
             <Plus className="w-4 h-4" />
-            Add Candidate
+            <span className="hidden sm:inline">Add Candidate</span>
+            <span className="sm:hidden">Add</span>
           </Link>
         </div>
       </div>
 
       {/* Kanban board */}
-      <div className="flex-1 overflow-auto px-8 py-6">
+      <div className="flex-1 overflow-auto px-3 md:px-8 py-4 md:py-6">
         <KanbanBoard
           groupedApplications={grouped}
           jobId={job.id}
