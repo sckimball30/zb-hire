@@ -222,7 +222,7 @@ export function Sidebar() {
   const BOTTOM_TABS = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Home' },
     { href: '/jobs',      icon: Briefcase,       label: 'Jobs' },
-    { href: '/candidates',icon: Users,           label: 'People' },
+    { href: '/candidates',icon: Users,           label: 'Candidates' },
     { href: '/inbox',     icon: Inbox,           label: 'Inbox' },
   ]
 
