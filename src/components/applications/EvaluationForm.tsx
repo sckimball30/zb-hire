@@ -514,7 +514,9 @@ function SectionCard({
     setCustomQuestions(prev => prev.filter(q => q.id !== id))
 
   const [saving, setSaving] = useState(false)
-  const [collapsed, setCollapsed] = useState(submittedEntries.length > 0)
+  // Auto-collapse only when the current user has already submitted this section
+  const mySubmitted = submittedEntries.find(e => e.interviewerName === currentUserName)
+  const [collapsed, setCollapsed] = useState(!!mySubmitted)
 
   const getInterviewerName = () => {
     if (autoUser) return currentUserName!
@@ -1031,7 +1033,9 @@ function FinalAssessmentCard({
   })
 
   const [saving, setSaving] = useState(false)
-  const [collapsed, setCollapsed] = useState(submittedEntries.length > 0)
+  // Auto-collapse only if the current user has already submitted (not just anyone)
+  const mySubmitted = submittedEntries.find(e => e.interviewerName === currentUserName)
+  const [collapsed, setCollapsed] = useState(!!mySubmitted)
 
   const getInterviewerName = () => {
     if (autoUser) return currentUserName!
@@ -1343,9 +1347,11 @@ export function EvaluationForm({
   const getSubmittedForSection = (title: string) =>
     getEntriesForSection(title).filter((e) => e.status === 'SUBMITTED')
 
-  // Draft: the most recent DRAFT entry for this section (simplified: one draft per section)
+  // Draft: the current user's DRAFT for this section only (each user has their own)
   const getDraftForSection = (title: string) =>
-    getEntriesForSection(title).find((e) => e.status === 'DRAFT') ?? null
+    getEntriesForSection(title).find(
+      (e) => e.status === 'DRAFT' && e.interviewerName === currentUserName
+    ) ?? null
 
   // Filter to scoped sections if provided (assigned via the interview event), then sort Screening first
   const sections = [...(template?.sections ?? [])]
