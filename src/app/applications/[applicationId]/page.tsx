@@ -195,17 +195,18 @@ export default async function ApplicationPage({
       </div>
 
       {/* Candidate Header */}
-      <div className="card p-6 mb-6">
+      <div className="card p-4 md:p-6 mb-4 md:mb-6">
         {/* Top row: avatar + info + stage selector */}
-        <div className="flex items-start gap-4">
-          <div className="flex items-center justify-center w-14 h-14 rounded-full bg-blue-100 text-blue-700 text-xl font-bold flex-shrink-0">
+        <div className="flex items-start gap-3 md:gap-4">
+          <div className="flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-blue-100 text-blue-700 text-lg md:text-xl font-bold flex-shrink-0">
             {candidate.firstName[0]}{candidate.lastName[0]}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-3 flex-wrap">
+            {/* On mobile: name/info stacks above stage selector */}
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <h1 className="text-2xl font-bold text-gray-900">
+                  <h1 className="text-xl md:text-2xl font-bold text-gray-900">
                     {candidate.firstName} {candidate.lastName}
                   </h1>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STAGE_COLORS[application.stage]}`}>
@@ -372,13 +373,31 @@ export default async function ApplicationPage({
               </div>
             </div>
             {candidate.resumeUrl ? (
-              <div className="w-full bg-gray-50" style={{ height: 700 }}>
-                <iframe
-                  src={`/api/resume/${candidate.id}`}
-                  className="w-full h-full border-0"
-                  title="Resume"
-                />
-              </div>
+              <>
+                {/* Mobile: open in new tab */}
+                <div className="md:hidden px-6 py-5 flex gap-3">
+                  <a
+                    href={`/api/resume/${candidate.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 btn-primary justify-center text-sm"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    View Resume
+                  </a>
+                  <a href={`/api/resume/${candidate.id}?download=1`} className="btn-outline text-sm">
+                    <Download className="w-4 h-4" />
+                  </a>
+                </div>
+                {/* Desktop: inline iframe */}
+                <div className="hidden md:block w-full bg-gray-50" style={{ height: 700 }}>
+                  <iframe
+                    src={`/api/resume/${candidate.id}`}
+                    className="w-full h-full border-0"
+                    title="Resume"
+                  />
+                </div>
+              </>
             ) : (
               <div className="px-6 py-10 text-center">
                 <FileText className="w-8 h-8 text-gray-200 mx-auto mb-2" />

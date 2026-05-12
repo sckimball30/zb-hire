@@ -84,10 +84,10 @@ function ABCButtons({
   ]
   const base =
     size === 'lg'
-      ? 'px-5 py-2 text-base min-w-[52px]'
-      : 'px-3 py-1.5 text-sm min-w-[36px]'
+      ? 'px-5 py-2.5 text-base min-w-[52px]'
+      : 'px-4 py-2.5 text-base min-w-[48px] sm:px-3 sm:py-1.5 sm:text-sm sm:min-w-[36px]'
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-2 sm:gap-1.5">
       {opts.map((o) => (
         <button
           key={o.val as string}
@@ -114,13 +114,13 @@ function YesNoButtons({
   onChange: (v: string | null) => void
 }) {
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-2 sm:gap-1.5">
       {['Yes', 'No'].map((opt) => (
         <button
           key={opt}
           type="button"
           onClick={() => onChange(value === opt ? null : opt)}
-          className={`px-3 py-1.5 text-sm font-medium border rounded-md transition-all ${
+          className={`px-5 py-2.5 sm:px-3 sm:py-1.5 text-base sm:text-sm font-medium border rounded-md transition-all min-w-[64px] sm:min-w-0 ${
             value === opt
               ? opt === 'Yes'
                 ? 'bg-green-600 text-white border-green-600'

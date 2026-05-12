@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { ArrowLeft, FileText } from 'lucide-react'
+import { ArrowLeft, FileText, ExternalLink } from 'lucide-react'
 import { EvaluationForm } from '@/components/applications/EvaluationForm'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -68,7 +68,7 @@ export default async function NewEvaluationPage({
   return (
     <div className="flex flex-col h-full">
       {/* Top bar */}
-      <div className="flex-shrink-0 px-6 py-3 bg-white border-b border-gray-100 flex items-center gap-4">
+      <div className="flex-shrink-0 px-4 md:px-6 py-3 bg-white border-b border-gray-100 flex items-center gap-3">
         <Link
           href={isInterviewer ? '/interviewer' : `/applications/${application.id}`}
           className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 flex-shrink-0"
@@ -76,12 +76,15 @@ export default async function NewEvaluationPage({
           <ArrowLeft className="w-4 h-4" />
           {isInterviewer ? 'My interviews' : 'Back'}
         </Link>
-        <div className="h-4 w-px bg-gray-200" />
+        <div className="h-4 w-px bg-gray-200 flex-shrink-0" />
         <div className="min-w-0">
-          <span className="text-sm font-semibold text-gray-900">Submit Evaluation</span>
-          <span className="text-sm text-gray-400 ml-2">
-            {candidate.firstName} {candidate.lastName} — {job.title}
+          <span className="text-sm font-semibold text-gray-900">Evaluation</span>
+          <span className="text-sm text-gray-400 ml-1.5 truncate hidden sm:inline">
+            · {candidate.firstName} {candidate.lastName} — {job.title}
           </span>
+          <p className="text-xs text-gray-400 sm:hidden truncate">
+            {candidate.firstName} {candidate.lastName} · {job.title}
+          </p>
         </div>
       </div>
 
@@ -123,7 +126,22 @@ export default async function NewEvaluationPage({
 
         {/* Right — Evaluation form */}
         <div className="flex-1 overflow-y-auto">
-          <div className="p-6 max-w-2xl">
+          <div className="p-4 md:p-6 max-w-2xl">
+            {/* Mobile: resume quick-access link (resume panel is hidden on mobile) */}
+            {resumeUrl && (
+              <a
+                href={`/api/resume/${candidate.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="lg:hidden flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-600 hover:text-gray-900 hover:border-gray-300 transition-colors"
+              >
+                <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <span className="flex-1 truncate">
+                  {candidate.firstName} {candidate.lastName} — Resume
+                </span>
+                <ExternalLink className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+              </a>
+            )}
             <EvaluationForm
               applicationId={application.id}
               interviewers={interviewers}
