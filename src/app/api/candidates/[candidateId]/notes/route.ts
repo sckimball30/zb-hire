@@ -13,8 +13,10 @@ export async function GET(_: NextRequest, { params }: { params: { candidateId: s
 
 export async function POST(req: NextRequest, { params }: { params: { candidateId: string } }) {
   const session = await getServerSession(authOptions)
-  const { content } = await req.json()
+  const { content, type } = await req.json()
   if (!content?.trim()) return NextResponse.json({ error: 'Content required' }, { status: 400 })
+
+  const VALID_TYPES = ['LINKEDIN', 'PHONE', 'EMAIL', 'MEETING', 'OTHER']
 
   const note = await prisma.candidateNote.create({
     data: {
@@ -22,6 +24,7 @@ export async function POST(req: NextRequest, { params }: { params: { candidateId
       content: content.trim(),
       authorId: (session?.user as any)?.id ?? null,
       authorName: session?.user?.name ?? session?.user?.email ?? 'Anonymous',
+      type: type && VALID_TYPES.includes(type) ? type : null,
     },
   })
   return NextResponse.json(note, { status: 201 })

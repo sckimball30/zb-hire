@@ -19,6 +19,7 @@ import { ResumeUploadButton } from '@/components/candidates/ResumeUploadButton'
 import { AddToJobButton } from '@/components/candidates/AddToJobButton'
 import { EditCandidateButton } from '@/components/candidates/EditCandidateButton'
 import { EvaluationEntryRow } from '@/components/applications/EvaluationEntryRow'
+import { InteractionsLog } from '@/components/candidates/InteractionsLog'
 
 export default async function CandidatePage({ params }: { params: { candidateId: string } }) {
   const candidate = await prisma.candidate.findUnique({
@@ -57,10 +58,22 @@ export default async function CandidatePage({ params }: { params: { candidateId:
 
   if (!candidate) notFound()
 
-  const serializedNotes = candidate.candidateNotes.map(n => ({
+  // Split notes vs interactions (type = null → note, type set → logged interaction)
+  const plainNotes = candidate.candidateNotes.filter(n => !(n as any).type)
+  const interactions = candidate.candidateNotes.filter(n => !!(n as any).type)
+
+  const serializedNotes = plainNotes.map(n => ({
     ...n,
     createdAt: n.createdAt.toISOString(),
     updatedAt: n.updatedAt.toISOString(),
+  }))
+
+  const serializedInteractions = interactions.map(n => ({
+    id: n.id,
+    content: n.content,
+    type: (n as any).type as string,
+    authorName: n.authorName,
+    createdAt: n.createdAt.toISOString(),
   }))
 
   const allEvents = candidate.applications.flatMap(app =>
@@ -459,6 +472,9 @@ export default async function CandidatePage({ params }: { params: { candidateId:
               </ul>
             </div>
           )}
+
+          {/* Interactions */}
+          <InteractionsLog candidateId={candidate.id} initialInteractions={serializedInteractions} />
 
           {/* Notes */}
           <NotesPanel candidateId={candidate.id} initialNotes={serializedNotes} />

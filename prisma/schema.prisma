@@ -141,6 +141,8 @@ model CandidateNote {
   content     String
   authorId    String?
   authorName  String?
+  /// null = plain note; 'LINKEDIN' | 'PHONE' | 'EMAIL' | 'MEETING' | 'OTHER' = logged interaction
+  type        String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
