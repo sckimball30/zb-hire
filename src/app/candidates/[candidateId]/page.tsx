@@ -22,39 +22,45 @@ import { EvaluationEntryRow } from '@/components/applications/EvaluationEntryRow
 import { InteractionsLog } from '@/components/candidates/InteractionsLog'
 
 export default async function CandidatePage({ params }: { params: { candidateId: string } }) {
-  const candidate = await prisma.candidate.findUnique({
-    where: { id: params.candidateId },
-    include: {
-      applications: {
-        include: {
-          job: {
-            include: {
-              scorecardTemplate: {
-                include: {
-                  sections: {
-                    include: {
-                      questions: { include: { question: true } },
-                    },
+  // Run light candidate info + heavy applications in parallel
+  const [candidateBase, applications] = await Promise.all([
+    prisma.candidate.findUnique({
+      where: { id: params.candidateId },
+      include: {
+        candidateNotes: { orderBy: { createdAt: 'desc' } },
+        messageLogs: { orderBy: { sentAt: 'desc' }, take: 10 },
+        tags: { include: { tag: true } },
+        scheduledMessages: {
+          where: { sentAt: null },
+          orderBy: { scheduledFor: 'asc' },
+        },
+      },
+    }),
+    prisma.application.findMany({
+      where: { candidateId: params.candidateId },
+      include: {
+        job: {
+          include: {
+            scorecardTemplate: {
+              include: {
+                sections: {
+                  include: {
+                    questions: { include: { question: true } },
                   },
                 },
               },
             },
           },
-          events: { include: { interviewer: true }, orderBy: { scheduledAt: 'desc' } },
-          scorecardEntries: { orderBy: { createdAt: 'asc' } },
-          activityLog: { orderBy: { createdAt: 'desc' }, take: 10 },
         },
-        orderBy: { createdAt: 'desc' },
+        events: { include: { interviewer: true }, orderBy: { scheduledAt: 'desc' } },
+        scorecardEntries: { orderBy: { createdAt: 'asc' } },
+        activityLog: { orderBy: { createdAt: 'desc' }, take: 10 },
       },
-      candidateNotes: { orderBy: { createdAt: 'desc' } },
-      messageLogs: { orderBy: { sentAt: 'desc' }, take: 10 },
-      tags: { include: { tag: true } },
-      scheduledMessages: {
-        where: { sentAt: null },
-        orderBy: { scheduledFor: 'asc' },
-      },
-    },
-  })
+      orderBy: { createdAt: 'desc' },
+    }),
+  ])
+
+  const candidate = candidateBase ? { ...candidateBase, applications } : null
 
   if (!candidate) notFound()
 

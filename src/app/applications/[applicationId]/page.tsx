@@ -30,68 +30,75 @@ export default async function ApplicationPage({
   params: { applicationId: string }
   searchParams: { jobId?: string }
 }) {
-  const application = await prisma.application.findUnique({
-    where: { id: params.applicationId },
-    include: {
-      candidate: {
-        include: {
-          tags: { include: { tag: true } },
-          messageLogs: {
-            include: { template: { select: { name: true } } },
-            orderBy: { sentAt: 'desc' },
-          },
-          scheduledMessages: {
-            where: { sentAt: null },
-            orderBy: { scheduledFor: 'asc' },
+  // Run session + gmail check in parallel with the main application fetch
+  const [application, session, { connected: gmailConnected }] = await Promise.all([
+    prisma.application.findUnique({
+      where: { id: params.applicationId },
+      include: {
+        candidate: {
+          include: {
+            tags: { include: { tag: true } },
+            messageLogs: {
+              include: { template: { select: { name: true } } },
+              orderBy: { sentAt: 'desc' },
+              take: 20,
+            },
+            scheduledMessages: {
+              where: { sentAt: null },
+              orderBy: { scheduledFor: 'asc' },
+            },
           },
         },
-      },
-      job: {
-        include: {
-          interviewers: {
-            include: { interviewer: { select: { id: true, name: true, title: true, calendlyUrl: true } } },
-          },
-          recruiters: { select: { userId: true } },
-          scorecardTemplate: {
-            include: {
-              sections: {
-                include: {
-                  questions: { include: { question: true } },
+        job: {
+          include: {
+            interviewers: {
+              include: { interviewer: { select: { id: true, name: true, title: true, calendlyUrl: true } } },
+            },
+            recruiters: { select: { userId: true } },
+            scorecardTemplate: {
+              include: {
+                sections: {
+                  include: {
+                    questions: { include: { question: true } },
+                  },
                 },
               },
             },
           },
         },
-      },
-      events: {
-        include: { interviewer: true, scorecard: true },
-        orderBy: { scheduledAt: 'desc' },
-      },
-      scorecards: {
-        include: {
-          interviewer: true,
-          responses: { include: { question: true } },
+        events: {
+          include: { interviewer: true, scorecard: true },
+          orderBy: { scheduledAt: 'desc' },
         },
-        orderBy: { createdAt: 'desc' },
+        // Only fetch submitted scorecards and only what we need (just a count)
+        scorecards: {
+          where: { submittedAt: { not: null } },
+          select: { id: true, submittedAt: true },
+          orderBy: { createdAt: 'desc' },
+        },
+        scorecardEntries: {
+          orderBy: { createdAt: 'asc' },
+        },
+        activityLog: {
+          orderBy: { createdAt: 'desc' },
+          take: 30,
+        },
+        offer: true,
+        hireDecisions: {
+          orderBy: { createdAt: 'desc' },
+        },
       },
-      scorecardEntries: {
-        orderBy: { createdAt: 'asc' },
-      },
-      activityLog: {
-        orderBy: { createdAt: 'desc' },
-      },
-      offer: true,
-      hireDecisions: {
-        orderBy: { createdAt: 'desc' },
-      },
-    },
-  })
+    }),
+    getServerSession(authOptions),
+    getGmailStatus(),
+  ])
 
   if (!application) notFound()
 
   const { candidate, job } = application
+  const currentUserId = (session?.user as any)?.id ?? null
 
-  // Prev/next navigation — scoped to the same job AND same stage
+  // Siblings query — runs after application (needs stage), but session/gmail ran in parallel above
   const pipelineJobId = searchParams.jobId ?? application.jobId
   const siblings = await prisma.application.findMany({
     where: { jobId: pipelineJobId, stage: application.stage },
@@ -101,9 +108,6 @@ export default async function ApplicationPage({
   const siblingIdx = siblings.findIndex(s => s.id === application.id)
   const prevApp = siblingIdx > 0 ? siblings[siblingIdx - 1] : null
   const nextApp = siblingIdx < siblings.length - 1 ? siblings[siblingIdx + 1] : null
-  const { connected: gmailConnected } = await getGmailStatus()
-  const session = await getServerSession(authOptions)
-  const currentUserId = (session?.user as any)?.id ?? null
 
   // Only the hiring manager and assigned recruiters can see hire decisions
   const userRole = (session?.user as any)?.role as string | undefined
