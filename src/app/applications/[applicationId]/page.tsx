@@ -91,10 +91,10 @@ export default async function ApplicationPage({
 
   const { candidate, job } = application
 
-  // Prev/next navigation within the same job pipeline
+  // Prev/next navigation — scoped to the same job AND same stage
   const pipelineJobId = searchParams.jobId ?? application.jobId
   const siblings = await prisma.application.findMany({
-    where: { jobId: pipelineJobId },
+    where: { jobId: pipelineJobId, stage: application.stage },
     select: { id: true },
     orderBy: { stageOrder: 'asc' },
   })
@@ -162,7 +162,7 @@ export default async function ApplicationPage({
         {siblings.length > 1 && (
           <div className="flex items-center gap-1">
             <span className="text-xs text-gray-400 mr-2">
-              {siblingIdx + 1} / {siblings.length}
+              {STAGE_LABELS[application.stage as keyof typeof STAGE_LABELS] ?? application.stage}: {siblingIdx + 1} / {siblings.length}
             </span>
             {prevApp ? (
               <Link
