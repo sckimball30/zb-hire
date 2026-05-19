@@ -28,10 +28,22 @@ export default async function ApplicationPage({
   searchParams,
 }: {
   params: { applicationId: string }
-  searchParams: { jobId?: string }
+  searchParams: { jobId?: string; stage?: string }
 }) {
+  // If the caller passed jobId + stage (from prev/next links), run siblings in parallel.
+  // Otherwise fall back to a sequential fetch after we know the stage.
+  const urlJobId = searchParams.jobId
+  const urlStage = searchParams.stage
+
+  const siblingsQuery = (jobId: string, stage: string) =>
+    prisma.application.findMany({
+      where: { jobId, stage },
+      select: { id: true },
+      orderBy: [{ stageOrder: 'asc' }, { createdAt: 'asc' }],
+    })
+
   // Run session + gmail check in parallel with the main application fetch
-  const [application, session, { connected: gmailConnected }] = await Promise.all([
+  const [application, session, { connected: gmailConnected }, earlyS] = await Promise.all([
     prisma.application.findUnique({
       where: { id: params.applicationId },
       include: {
@@ -91,6 +103,8 @@ export default async function ApplicationPage({
     }),
     getServerSession(authOptions),
     getGmailStatus(),
+    // Run siblings in parallel when stage + jobId are known from URL params
+    urlJobId && urlStage ? siblingsQuery(urlJobId, urlStage) : Promise.resolve(null),
   ])
 
   if (!application) notFound()
@@ -98,13 +112,13 @@ export default async function ApplicationPage({
   const { candidate, job } = application
   const currentUserId = (session?.user as any)?.id ?? null
 
-  // Siblings query — runs after application (needs stage), but session/gmail ran in parallel above
-  const pipelineJobId = searchParams.jobId ?? application.jobId
-  const siblings = await prisma.application.findMany({
-    where: { jobId: pipelineJobId, stage: application.stage },
-    select: { id: true },
-    orderBy: { stageOrder: 'asc' },
-  })
+  const pipelineJobId = urlJobId ?? application.jobId
+
+  // Use the parallel siblings result if the stage matches (it won't if stage changed since click)
+  const siblings =
+    earlyS && urlStage === application.stage
+      ? earlyS
+      : await siblingsQuery(pipelineJobId, application.stage)
   const siblingIdx = siblings.findIndex(s => s.id === application.id)
   const prevApp = siblingIdx > 0 ? siblings[siblingIdx - 1] : null
   const nextApp = siblingIdx < siblings.length - 1 ? siblings[siblingIdx + 1] : null
@@ -170,7 +184,7 @@ export default async function ApplicationPage({
             </span>
             {prevApp ? (
               <Link
-                href={`/applications/${prevApp.id}?jobId=${pipelineJobId}`}
+                href={`/applications/${prevApp.id}?jobId=${pipelineJobId}&stage=${application.stage}`}
                 className="p-1.5 rounded-md border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-gray-700 transition-colors"
                 title="Previous applicant"
               >
@@ -183,7 +197,7 @@ export default async function ApplicationPage({
             )}
             {nextApp ? (
               <Link
-                href={`/applications/${nextApp.id}?jobId=${pipelineJobId}`}
+                href={`/applications/${nextApp.id}?jobId=${pipelineJobId}&stage=${application.stage}`}
                 className="p-1.5 rounded-md border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-gray-700 transition-colors"
                 title="Next applicant"
               >

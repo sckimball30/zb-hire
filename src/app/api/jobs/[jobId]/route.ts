@@ -26,7 +26,7 @@ export async function GET(
         },
         applications: {
           include: { candidate: true },
-          orderBy: { stageOrder: 'asc' },
+          orderBy: [{ stageOrder: 'asc' }, { createdAt: 'asc' }],
         },
         _count: { select: { applications: true } },
       },

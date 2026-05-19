@@ -19,7 +19,7 @@ export default async function JobPipelinePage({ params }: { params: { jobId: str
             candidate: true,
             _count: { select: { scorecards: true } },
           },
-          orderBy: { stageOrder: 'asc' },
+          orderBy: [{ stageOrder: 'asc' }, { createdAt: 'asc' }],
         },
       },
     }),
