@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Mail, Send, Clock, RefreshCw, ArrowDownLeft } from 'lucide-react'
+import { Mail, Send, Clock, RefreshCw, ArrowDownLeft, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { stripEmailQuote } from '@/lib/utils'
 
@@ -26,6 +26,7 @@ interface Props {
 
 export function MessagesCard({ candidateId, initialMessages, scheduledMessages, gmailConnected }: Props) {
   const [messages, setMessages] = useState<MessageEntry[]>(initialMessages)
+  const [pending, setPending] = useState<MessageEntry[]>(scheduledMessages)
   const [syncing, setSyncing] = useState(false)
   const [lastSynced, setLastSynced] = useState<Date | null>(null)
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
@@ -62,6 +63,18 @@ export function MessagesCard({ candidateId, initialMessages, scheduledMessages, 
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  async function cancelScheduled(e: React.MouseEvent, id: string) {
+    e.stopPropagation()
+    const res = await fetch(`/api/messages/scheduled/${id}`, { method: 'DELETE' })
+    if (res.ok) {
+      setPending(prev => prev.filter(m => m.id !== id))
+      toast.success('Scheduled message cancelled.')
+    } else {
+      const d = await res.json().catch(() => ({}))
+      toast.error(d.error || 'Failed to cancel.')
+    }
+  }
+
   function toggleExpand(id: string) {
     setExpanded(prev => {
       const next = new Set(prev)
@@ -73,7 +86,7 @@ export function MessagesCard({ candidateId, initialMessages, scheduledMessages, 
 
   const allItems = [
     ...messages.map(m => ({ ...m, kind: 'log' as const })),
-    ...scheduledMessages.map(m => ({ ...m, kind: 'scheduled' as const })),
+    ...pending.map(m => ({ ...m, kind: 'scheduled' as const })),
   ].sort((a, b) => {
     const aDate = new Date(a.kind === 'scheduled' ? (a.scheduledFor ?? a.sentAt) : a.sentAt).getTime()
     const bDate = new Date(b.kind === 'scheduled' ? (b.scheduledFor ?? b.sentAt) : b.sentAt).getTime()
@@ -168,9 +181,19 @@ export function MessagesCard({ candidateId, initialMessages, scheduledMessages, 
                       </div>
                     )}
                   </div>
-                  <span className="text-xs text-gray-300 flex-shrink-0 mt-0.5">
-                    {isOpen ? '▾' : '▸'}
-                  </span>
+                  {isScheduled ? (
+                    <button
+                      onClick={e => cancelScheduled(e, msg.id)}
+                      title="Cancel scheduled message"
+                      className="flex-shrink-0 mt-0.5 text-gray-300 hover:text-red-500 transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  ) : (
+                    <span className="text-xs text-gray-300 flex-shrink-0 mt-0.5">
+                      {isOpen ? '▾' : '▸'}
+                    </span>
+                  )}
                 </div>
               </li>
             )
