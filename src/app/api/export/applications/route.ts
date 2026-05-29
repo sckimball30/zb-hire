@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 function escapeCsv(value: string | null | undefined) {
   if (value == null) return ''
   const s = String(value)
