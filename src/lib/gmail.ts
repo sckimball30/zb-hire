@@ -1,5 +1,4 @@
 import { google } from 'googleapis'
-import { unstable_cache } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { stripEmailQuote } from '@/lib/utils'
 
@@ -53,15 +52,11 @@ export async function getGmailClient() {
   return { gmail: google.gmail({ version: 'v1', auth: client }), fromEmail: conn.email }
 }
 
-export const getGmailStatus = unstable_cache(
-  async (): Promise<{ connected: boolean; email?: string }> => {
-    const conn = await prisma.gmailConnection.findFirst()
-    if (!conn) return { connected: false }
-    return { connected: true, email: conn.email }
-  },
-  ['gmail-status'],
-  { revalidate: 300 }
-)
+export async function getGmailStatus(): Promise<{ connected: boolean; email?: string }> {
+  const conn = await prisma.gmailConnection.findFirst()
+  if (!conn) return { connected: false }
+  return { connected: true, email: conn.email }
+}
 
 function makeRawEmail({
   from,
