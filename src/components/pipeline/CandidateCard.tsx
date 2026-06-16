@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, FileText, Mail, Check } from 'lucide-react'
+import { GripVertical, FileText, Mail, Check, Layers } from 'lucide-react'
 import { cn, initials, isNewApplicant } from '@/lib/utils'
 import { StarRating } from '@/components/shared/StarRating'
 import { useState } from 'react'
@@ -35,6 +35,7 @@ export function CandidateCard({
   const style = { transform: CSS.Transform.toString(transform), transition }
   const { candidate } = application
   const scorecardCount = (application as any)._count?.scorecards ?? 0
+  const roleCount = (candidate as any)._count?.applications ?? 1
   const daysInStage = Math.floor(
     (Date.now() - new Date(application.updatedAt).getTime()) / (1000 * 60 * 60 * 24)
   )
@@ -123,6 +124,12 @@ export function CandidateCard({
               {daysInStage === 0 ? 'Today' : `${daysInStage}d`}
             </span>
             <div className="flex items-center gap-1">
+              {roleCount > 1 && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-medium bg-violet-100 text-violet-700">
+                  <Layers className="w-2.5 h-2.5" />
+                  {roleCount} roles
+                </span>
+              )}
               {contacted && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
                   <Mail className="w-2.5 h-2.5" />

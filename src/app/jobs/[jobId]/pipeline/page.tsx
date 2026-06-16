@@ -16,7 +16,9 @@ export default async function JobPipelinePage({ params }: { params: { jobId: str
       include: {
         applications: {
           include: {
-            candidate: true,
+            candidate: {
+              include: { _count: { select: { applications: true } } },
+            },
             _count: { select: { scorecards: true } },
           },
           orderBy: [{ stageOrder: 'asc' }, { createdAt: 'asc' }],

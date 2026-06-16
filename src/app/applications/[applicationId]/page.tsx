@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { getGmailStatus } from '@/lib/gmail'
-import { ChevronLeft, ChevronRight, Plus, Calendar, Clock, FileText, Download, ClipboardCheck, Linkedin, ExternalLink, MapPin, User, Video, Phone, Users, Briefcase, Ban } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Calendar, Clock, FileText, Download, ClipboardCheck, Linkedin, ExternalLink, MapPin, User, Video, Phone, Users, Briefcase, Ban, Layers } from 'lucide-react'
 import { STAGE_LABELS, STAGE_COLORS, INTERVIEW_TYPE_LABELS, REJECTION_REASONS } from '@/lib/constants'
 import { formatDate, formatDateTime, timeAgo, isNewApplicant, normalizeUrl } from '@/lib/utils'
 import { StageSelector } from '@/components/applications/StageSelector'
@@ -58,6 +58,14 @@ export default async function ApplicationPage({
             scheduledMessages: {
               where: { sentAt: null },
               orderBy: { scheduledFor: 'asc' },
+            },
+            applications: {
+              select: {
+                id: true,
+                stage: true,
+                job: { select: { id: true, title: true } },
+              },
+              orderBy: { createdAt: 'asc' },
             },
           },
         },
@@ -114,11 +122,36 @@ export default async function ApplicationPage({
 
   const pipelineJobId = urlJobId ?? application.jobId
 
-  // Use the parallel siblings result if the stage matches (it won't if stage changed since click)
-  const siblings =
+  // Run siblings + duplicate-candidate cross-reference in parallel
+  const [siblings, duplicateCandidates] = await Promise.all([
     earlyS && urlStage === application.stage
-      ? earlyS
-      : await siblingsQuery(pipelineJobId, application.stage)
+      ? Promise.resolve(earlyS)
+      : siblingsQuery(pipelineJobId, application.stage),
+    // Find other candidate records with the same email or phone (entered twice)
+    (candidate.email || (candidate as any).phone)
+      ? prisma.candidate.findMany({
+          where: {
+            id: { not: candidate.id },
+            OR: [
+              ...(candidate.email ? [{ email: candidate.email }] : []),
+              ...((candidate as any).phone ? [{ phone: (candidate as any).phone }] : []),
+            ],
+          },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            applications: {
+              select: {
+                id: true,
+                stage: true,
+                job: { select: { id: true, title: true } },
+              },
+            },
+          },
+        })
+      : Promise.resolve([]),
+  ])
   const siblingIdx = siblings.findIndex(s => s.id === application.id)
   const prevApp = siblingIdx > 0 ? siblings[siblingIdx - 1] : null
   const nextApp = siblingIdx < siblings.length - 1 ? siblings[siblingIdx + 1] : null
@@ -497,6 +530,55 @@ export default async function ApplicationPage({
 
         {/* Sidebar - right 1/3 */}
         <div className="space-y-6">
+          {/* Other roles this candidate applied to */}
+          {(() => {
+            const allApps: { id: string; stage: string; job: { id: string; title: string } }[] =
+              (candidate as any).applications ?? []
+            const hasDupes = duplicateCandidates.length > 0
+            if (allApps.length <= 1 && !hasDupes) return null
+            return (
+              <div className="card overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-violet-500" />
+                  <h3 className="text-sm font-semibold text-gray-700">
+                    Applied to {allApps.length + duplicateCandidates.flatMap(d => (d as any).applications).length} role{allApps.length + duplicateCandidates.flatMap(d => (d as any).applications).length !== 1 ? 's' : ''}
+                  </h3>
+                </div>
+                <ul className="divide-y divide-gray-50">
+                  {allApps.map(a => (
+                    <li key={a.id} className="px-4 py-2.5 flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium text-gray-800 truncate">{a.job.title}</p>
+                        <p className="text-xs text-gray-400">{STAGE_LABELS[a.stage] ?? a.stage}</p>
+                      </div>
+                      {a.id === application.id ? (
+                        <span className="text-xs text-violet-600 font-medium flex-shrink-0">Current</span>
+                      ) : (
+                        <a href={`/applications/${a.id}`} className="text-xs text-gray-400 hover:text-blue-600 flex-shrink-0 transition-colors">
+                          View →
+                        </a>
+                      )}
+                    </li>
+                  ))}
+                  {duplicateCandidates.flatMap((dup: any) =>
+                    dup.applications.map((a: any) => (
+                      <li key={`dup-${a.id}`} className="px-4 py-2.5 flex items-center justify-between gap-2 bg-amber-50/50">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium text-gray-800 truncate">{a.job.title}</p>
+                          <p className="text-xs text-gray-400">{STAGE_LABELS[a.stage] ?? a.stage}</p>
+                          <p className="text-xs text-amber-600 mt-0.5">Duplicate record · {dup.firstName} {dup.lastName}</p>
+                        </div>
+                        <a href={`/applications/${a.id}`} className="text-xs text-gray-400 hover:text-blue-600 flex-shrink-0 transition-colors">
+                          View →
+                        </a>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
+            )
+          })()}
+
           {/* Quick stats */}
           <div className="card p-4">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Summary</h3>
