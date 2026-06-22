@@ -6,7 +6,20 @@ interface Props {
   data: { name: string; value: number }[]
 }
 
-const COLORS = ['#4AFFD2', '#F26D77', '#F5D020', '#3AADE0', '#a78bfa', '#fb923c', '#34d399', '#f472b6']
+const COLORS = [
+  '#ef4444', // red
+  '#f59e0b', // amber
+  '#3b82f6', // blue
+  '#14b8a6', // teal
+  '#22c55e', // green
+  '#6366f1', // indigo
+  '#8b5cf6', // purple
+  '#ec4899', // pink
+  '#f97316', // orange
+  '#78716c', // warm gray
+  '#0ea5e9', // sky blue
+  '#a3e635', // lime
+]
 
 export function SourceBreakdownChart({ data }: Props) {
   if (data.length === 0) {
