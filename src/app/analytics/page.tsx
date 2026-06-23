@@ -186,7 +186,7 @@ export default async function AnalyticsPage() {
       {/* Charts row */}
       <div className="grid grid-cols-3 gap-6 mb-8">
         {/* Application volume */}
-        <div className="col-span-2 card overflow-hidden">
+        <div className="col-span-1 card overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
             <h2 className="text-base font-semibold text-gray-900">Application Volume</h2>
             <p className="text-xs text-gray-400 mt-0.5">Weekly — last 12 weeks</p>
@@ -197,7 +197,7 @@ export default async function AnalyticsPage() {
         </div>
 
         {/* Source breakdown */}
-        <div className="card overflow-hidden">
+        <div className="col-span-2 card overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
             <h2 className="text-base font-semibold text-gray-900">Source of Hire</h2>
             <p className="text-xs text-gray-400 mt-0.5">Where candidates come from</p>

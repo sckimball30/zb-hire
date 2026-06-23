@@ -24,21 +24,21 @@ const COLORS = [
 export function SourceBreakdownChart({ data }: Props) {
   if (data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-[220px] text-sm text-gray-400">
+      <div className="flex items-center justify-center h-[300px] text-sm text-gray-400">
         No application data yet.
       </div>
     )
   }
 
   return (
-    <ResponsiveContainer width="100%" height={220}>
+    <ResponsiveContainer width="100%" height={300}>
       <PieChart>
         <Pie
           data={data}
           cx="50%"
           cy="45%"
-          innerRadius={55}
-          outerRadius={80}
+          innerRadius={70}
+          outerRadius={110}
           paddingAngle={3}
           dataKey="value"
         >
