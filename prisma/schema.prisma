@@ -313,6 +313,7 @@ model Application {
   offer             Offer?
   hireDecisions     HireDecision[]
   scorecardEntries  ScorecardEntry[]
+  onboardingRecord  OnboardingRecord?
 
   @@unique([candidateId, jobId])
 }
@@ -545,6 +546,26 @@ model CompanySettings {
   careersHeroImageUrl String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+}
+
+model OnboardingRecord {
+  id               String      @id @default(cuid())
+  firstName        String
+  lastName         String
+  role             String
+  location         String
+  startDate        DateTime?
+  i9               Boolean     @default(false)
+  bankInfo         Boolean     @default(false)
+  employeeHandbook Boolean     @default(false)
+  i9Verification   Boolean     @default(false)
+  notes            String?
+  source           String      @default("MANUAL")
+  applicationId    String?     @unique
+  candidateId      String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  application      Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
 }
 
 model GmailConnection {

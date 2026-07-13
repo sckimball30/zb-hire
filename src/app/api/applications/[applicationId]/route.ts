@@ -52,6 +52,7 @@ export async function PATCH(
       where: { id: params.applicationId },
       select: {
         stage: true,
+        candidateId: true,
         candidate: { select: { email: true, firstName: true, lastName: true } },
         job: { select: { title: true, department: true } },
       },
@@ -103,7 +104,7 @@ export async function PATCH(
         },
       })
 
-      // Fire hired confirmation email — fire-and-forget
+      // Fire hired confirmation email + auto-create onboarding record — fire-and-forget
       if (stage === 'HIRED' && current.candidate && current.job) {
         sendHiredConfirmation({
           candidateEmail: current.candidate.email,
@@ -112,6 +113,20 @@ export async function PATCH(
           jobTitle: current.job.title,
           department: current.job.department,
         }).catch(err => console.error('[hired confirmation email]', err))
+
+        prisma.onboardingRecord.upsert({
+          where: { applicationId: params.applicationId },
+          create: {
+            firstName: current.candidate.firstName,
+            lastName: current.candidate.lastName,
+            role: current.job.title,
+            location: 'HQ - 1069 Stewart Dr. Suite 8, Ogden UT',
+            source: 'ATS',
+            applicationId: params.applicationId,
+            candidateId: current.candidateId,
+          },
+          update: {},
+        }).catch(err => console.error('[onboarding record]', err))
       }
     }
 
