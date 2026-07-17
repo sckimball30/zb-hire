@@ -102,7 +102,7 @@ export function CandidateCard({
               </span>
             ) : (
               <Link
-                href={`/applications/${application.id}?jobId=${(application as any).jobId ?? ''}`}
+                href={`/applications/${application.id}?jobId=${(application as any).jobId ?? ''}&stage=${application.stage}`}
                 className="text-sm font-medium text-gray-900 hover:text-blue-600 truncate leading-tight"
                 onClick={e => e.stopPropagation()}
               >

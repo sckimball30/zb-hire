@@ -38,7 +38,7 @@ export default async function ApplicationPage({
   const siblingsQuery = (jobId: string, stage: string) =>
     prisma.application.findMany({
       where: { jobId, stage },
-      select: { id: true },
+      select: { id: true, createdAt: true },
       orderBy: [{ stageOrder: 'asc' }, { createdAt: 'asc' }],
     })
 
@@ -122,11 +122,16 @@ export default async function ApplicationPage({
 
   const pipelineJobId = urlJobId ?? application.jobId
 
+  // The column the user is browsing: prefer the stage from the URL so that
+  // changing a candidate's stage (e.g. rejecting) doesn't re-anchor the
+  // prev/next arrows to their new column.
+  const browsingStage = urlStage ?? application.stage
+
   // Run siblings + duplicate-candidate cross-reference in parallel
   const [siblings, duplicateCandidates] = await Promise.all([
-    earlyS && urlStage === application.stage
+    earlyS
       ? Promise.resolve(earlyS)
-      : siblingsQuery(pipelineJobId, application.stage),
+      : siblingsQuery(pipelineJobId, browsingStage),
     // Find other candidate records with the same email or phone (entered twice)
     (candidate.email || (candidate as any).phone)
       ? prisma.candidate.findMany({
@@ -153,8 +158,19 @@ export default async function ApplicationPage({
       : Promise.resolve([]),
   ])
   const siblingIdx = siblings.findIndex(s => s.id === application.id)
-  const prevApp = siblingIdx > 0 ? siblings[siblingIdx - 1] : null
-  const nextApp = siblingIdx < siblings.length - 1 ? siblings[siblingIdx + 1] : null
+  let prevApp: { id: string } | null = null
+  let nextApp: { id: string } | null = null
+  if (siblingIdx !== -1) {
+    prevApp = siblingIdx > 0 ? siblings[siblingIdx - 1] : null
+    nextApp = siblingIdx < siblings.length - 1 ? siblings[siblingIdx + 1] : null
+  } else {
+    // Candidate is no longer in the browsed column (e.g. just rejected).
+    // Keep the user's place by createdAt so the arrows continue through
+    // the column they were reviewing.
+    const insertIdx = siblings.filter(s => s.createdAt < application.createdAt).length
+    prevApp = insertIdx > 0 ? siblings[insertIdx - 1] : null
+    nextApp = insertIdx < siblings.length ? siblings[insertIdx] : null
+  }
 
   // Only the hiring manager and assigned recruiters can see hire decisions
   const userRole = (session?.user as any)?.role as string | undefined
@@ -210,14 +226,16 @@ export default async function ApplicationPage({
           <span className="text-gray-700">{candidate.firstName} {candidate.lastName}</span>
         </div>
 
-        {siblings.length > 1 && (
+        {(siblingIdx !== -1 ? siblings.length > 1 : siblings.length > 0) && (
           <div className="flex items-center gap-1">
             <span className="text-xs text-gray-400 mr-2">
-              {STAGE_LABELS[application.stage as keyof typeof STAGE_LABELS] ?? application.stage}: {siblingIdx + 1} / {siblings.length}
+              {siblingIdx !== -1
+                ? `${STAGE_LABELS[browsingStage as keyof typeof STAGE_LABELS] ?? browsingStage}: ${siblingIdx + 1} / ${siblings.length}`
+                : `${STAGE_LABELS[browsingStage as keyof typeof STAGE_LABELS] ?? browsingStage}: ${siblings.length} remaining`}
             </span>
             {prevApp ? (
               <Link
-                href={`/applications/${prevApp.id}?jobId=${pipelineJobId}&stage=${application.stage}`}
+                href={`/applications/${prevApp.id}?jobId=${pipelineJobId}&stage=${browsingStage}`}
                 className="p-1.5 rounded-md border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-gray-700 transition-colors"
                 title="Previous applicant"
               >
@@ -230,7 +248,7 @@ export default async function ApplicationPage({
             )}
             {nextApp ? (
               <Link
-                href={`/applications/${nextApp.id}?jobId=${pipelineJobId}&stage=${application.stage}`}
+                href={`/applications/${nextApp.id}?jobId=${pipelineJobId}&stage=${browsingStage}`}
                 className="p-1.5 rounded-md border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-gray-700 transition-colors"
                 title="Next applicant"
               >

@@ -80,7 +80,7 @@ export function MobilePipelineView({
             return (
               <li key={app.id}>
                 <Link
-                  href={`/applications/${app.id}`}
+                  href={`/applications/${app.id}?jobId=${jobId}&stage=${activeStage}`}
                   className="flex items-center gap-3 px-4 py-3.5 active:bg-gray-50 transition-colors"
                 >
                   {/* Avatar with "new" dot */}
