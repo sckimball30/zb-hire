@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft, Send, RefreshCw, User, ChevronRight, Search, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { initials, timeAgo, stripEmailQuote } from '@/lib/utils'
+import { useVisiblePolling } from '@/lib/useVisiblePolling'
 
 interface Candidate {
   id: string
@@ -71,11 +72,7 @@ export function InboxClient({ initialConversations }: Props) {
     }
   }, [])
 
-  useEffect(() => {
-    refreshConversations()
-    const interval = setInterval(refreshConversations, 30_000)
-    return () => clearInterval(interval)
-  }, [refreshConversations])
+  useVisiblePolling(refreshConversations, 60_000)
 
   const scrollToBottom = useCallback(() => {
     threadEndRef.current?.scrollIntoView({ behavior: 'smooth' })

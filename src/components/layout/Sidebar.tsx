@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback } from 'react'
+import { useVisiblePolling } from '@/lib/useVisiblePolling'
 
 const RECRUITER_NAV = [
   { href: '/dashboard',   label: 'Dashboard',  icon: LayoutDashboard },
@@ -127,13 +128,11 @@ export function Sidebar() {
   // Close mobile menu on route change
   useEffect(() => { setMobileOpen(false) }, [pathname])
 
-  useEffect(() => {
+  const fetchUnread = useCallback(() => {
     fetch('/api/inbox/unread').then(r => r.json()).then(d => setUnreadCount(d.count ?? 0)).catch(() => {})
-    const interval = setInterval(() => {
-      fetch('/api/inbox/unread').then(r => r.json()).then(d => setUnreadCount(d.count ?? 0)).catch(() => {})
-    }, 30000)
-    return () => clearInterval(interval)
   }, [])
+
+  useVisiblePolling(fetchUnread, 120_000, !!session?.user)
 
   const isAuthPage       = pathname?.startsWith('/auth')
   const isPublicPage     = pathname?.startsWith('/apply') || pathname?.startsWith('/offers') || pathname?.startsWith('/careers')
