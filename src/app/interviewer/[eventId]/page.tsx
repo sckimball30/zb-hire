@@ -18,6 +18,7 @@ import {
 import { INTERVIEW_TYPE_LABELS } from '@/lib/constants'
 import { formatDateTime, normalizeUrl } from '@/lib/utils'
 import { InterviewerSignOut } from '@/components/interviewer/InterviewerSignOut'
+import { ResumePreview } from '@/components/candidates/ResumePreview'
 
 export default async function InterviewerEventPage({
   params,
@@ -247,13 +248,12 @@ export default async function InterviewerEventPage({
             )}
           </div>
           {candidate.resumeUrl ? (
-            <div className="w-full bg-gray-50" style={{ height: 700 }}>
-              <iframe
-                src={`/api/resume/${candidate.id}`}
-                className="w-full h-full border-0"
-                title="Resume"
-              />
-            </div>
+            <ResumePreview
+              candidateId={candidate.id}
+              resumeUrl={candidate.resumeUrl}
+              height={700}
+              hideOnMobile={false}
+            />
           ) : (
             <div className="px-6 py-10 text-center">
               <FileText className="w-8 h-8 text-gray-200 mx-auto mb-2" />

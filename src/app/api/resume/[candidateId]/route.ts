@@ -26,16 +26,21 @@ export async function GET(
   }
 
   const isDownload = req.nextUrl.searchParams.get('download') === '1'
+  // ?raw=1 streams the bytes same-origin so the client can read them with
+  // fetch() — used to convert Word documents to HTML for inline preview.
+  // A cross-origin redirect to the blob would be blocked by CORS.
+  const isRaw = req.nextUrl.searchParams.get('raw') === '1'
 
   // For inline viewing, redirect the browser straight to the public blob URL.
   // This eliminates the server-side proxy hop and lets the browser/CDN serve
   // the PDF directly — no double-fetch, no content-type guessing issues.
-  if (!isDownload) {
+  if (!isDownload && !isRaw) {
     return NextResponse.redirect(resumeUrl, 302)
   }
 
-  // For downloads we still proxy so we can force Content-Disposition: attachment
-  // and give the file a clean filename regardless of the blob path.
+  // Downloads and raw reads both proxy the bytes: downloads so we can force
+  // Content-Disposition: attachment with a clean filename, raw so the fetch
+  // stays same-origin.
   const token = process.env.BLOB_READ_WRITE_TOKEN ?? process.env.BLOB2_READ_WRITE_TOKEN
 
   try {
@@ -72,7 +77,9 @@ export async function GET(
     return new NextResponse(buffer, {
       headers: {
         'Content-Type': contentType,
-        'Content-Disposition': `attachment; filename="resume.${ext}"`,
+        'Content-Disposition': isRaw
+          ? `inline; filename="resume.${ext}"`
+          : `attachment; filename="resume.${ext}"`,
         'Content-Length': buffer.byteLength.toString(),
         'Cache-Control': 'private, max-age=3600',
       },

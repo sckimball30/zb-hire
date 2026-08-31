@@ -18,6 +18,7 @@ import { HireDecisionPanel } from '@/components/applications/HireDecisionPanel'
 import { EditCandidateButton } from '@/components/candidates/EditCandidateButton'
 import { BlockCandidateButton } from '@/components/candidates/BlockCandidateButton'
 import { ResumeUploadButton } from '@/components/candidates/ResumeUploadButton'
+import { ResumePreview } from '@/components/candidates/ResumePreview'
 import { EvaluationEntryRow } from '@/components/applications/EvaluationEntryRow'
 import { EditInterviewButton } from '@/components/applications/EditInterviewButton'
 import { getServerSession } from 'next-auth'
@@ -458,15 +459,12 @@ export default async function ApplicationPage({
                     <Download className="w-4 h-4" />
                   </a>
                 </div>
-                {/* Desktop: inline iframe — ?v= busts cache when resume is replaced */}
-                <div className="hidden md:block w-full bg-gray-50" style={{ height: 700 }}>
-                  <iframe
-                    key={(candidate as any).resumeUrl ?? 'none'}
-                    src={`/api/resume/${candidate.id}?v=${encodeURIComponent(((candidate as any).resumeUrl ?? '').slice(-12))}`}
-                    className="w-full h-full border-0"
-                    title="Resume"
-                  />
-                </div>
+                {/* Desktop: inline preview (PDF iframe, or Word converted to HTML) */}
+                <ResumePreview
+                  candidateId={candidate.id}
+                  resumeUrl={(candidate as any).resumeUrl}
+                  height={700}
+                />
               </>
             ) : (
               <div className="px-6 py-10 text-center">

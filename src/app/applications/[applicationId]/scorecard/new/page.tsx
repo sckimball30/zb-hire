@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { ArrowLeft, FileText, ExternalLink } from 'lucide-react'
 import { EvaluationForm } from '@/components/applications/EvaluationForm'
+import { ResumePreview } from '@/components/candidates/ResumePreview'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -107,11 +108,10 @@ export default async function NewEvaluationPage({
                   Download
                 </a>
               </div>
-              <iframe
-                key={resumeUrl ?? 'none'}
-                src={`/api/resume/${candidate.id}?v=${encodeURIComponent((resumeUrl ?? '').slice(-12))}`}
-                className="flex-1 w-full border-0"
-                title="Resume"
+              <ResumePreview
+                candidateId={candidate.id}
+                resumeUrl={resumeUrl}
+                variant="fill"
               />
             </>
           ) : (
