@@ -290,9 +290,12 @@ export function Sidebar() {
           style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top))' }}
         >
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-md bg-white/10 flex-shrink-0">
-              <span className="text-white font-black text-base tracking-tighter leading-none">ZB</span>
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logos/zb-designs-mark-white.png"
+              alt="ZB Designs"
+              className="w-9 h-auto flex-shrink-0"
+            />
             <div className="min-w-0">
               <span className="text-white font-bold text-base leading-tight block">ZB Hire</span>
               <span className="text-white/40 text-xs leading-tight">by ZB Designs</span>

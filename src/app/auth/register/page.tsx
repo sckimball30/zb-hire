@@ -3,6 +3,7 @@
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { PasswordInput } from '@/components/auth/PasswordInput'
 
 function RegisterForm() {
   const router = useRouter()
@@ -37,7 +38,7 @@ function RegisterForm() {
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-8 lg:hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logos/zb-designs-icon.svg" alt="ZB Designs" width={48} height={48} />
+          <img src="/logos/zb-designs-mark.png" alt="ZB Designs" width={72} height={41} />
         </div>
 
         <div className="mb-8">
@@ -70,8 +71,14 @@ function RegisterForm() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-              required minLength={8} className="input w-full" placeholder="Min. 8 characters" />
+            <PasswordInput
+              value={password}
+              onChange={setPassword}
+              required
+              minLength={8}
+              autoComplete="new-password"
+              placeholder="Min. 8 characters"
+            />
           </div>
           <button type="submit" disabled={loading}
             className="w-full flex items-center justify-center px-4 py-2.5 rounded-lg bg-[#111111] text-white text-sm font-semibold hover:bg-[#2a2a2a] transition-colors disabled:opacity-50 disabled:pointer-events-none">
@@ -94,7 +101,7 @@ export default function RegisterPage() {
       <div className="hidden lg:flex flex-col justify-between w-80 xl:w-96 bg-[#111111] px-10 py-12 flex-shrink-0">
         <div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logos/zb-designs-wordmark.svg" alt="ZB Designs" width={220} height={110} className="mb-8" />
+          <img src="/logos/zb-designs-lockup-white.png" alt="ZB Designs" width={200} height={159} className="mb-8" />
           <h2 className="text-white text-xl font-bold mb-3">Join the team</h2>
           <p className="text-white/50 text-sm leading-relaxed">
             Create your ZB Hire account to start collaborating on hiring across ZB Designs.
