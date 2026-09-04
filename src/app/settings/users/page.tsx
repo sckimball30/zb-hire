@@ -320,6 +320,7 @@ export default function UsersSettingsPage() {
   const [invitations, setInvitations] = useState<Invitation[]>([])
   const [loading, setLoading] = useState(true)
   const [bootstrapping, setBootstrapping] = useState(false)
+  const [emailFailed, setEmailFailed] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState('RECRUITER')
   const [inviting, setInviting] = useState(false)
@@ -359,7 +360,15 @@ export default function UsersSettingsPage() {
     const data = await res.json()
     setInviting(false)
     if (res.ok) {
-      toast.success(`Invitation sent to ${inviteEmail}`)
+      if (data.emailSent === false) {
+        toast.error(
+          `Invite created, but the email could not be sent to ${inviteEmail}. Copy the link below and send it to them directly.`,
+          { duration: 12000 }
+        )
+      } else {
+        toast.success(`Invitation sent to ${inviteEmail}`)
+      }
+      setEmailFailed(data.emailSent === false)
       setNewLink(data.link)
       setInviteEmail('')
       await load()
@@ -385,10 +394,18 @@ export default function UsersSettingsPage() {
     })
     const data = await res.json()
     if (res.ok) {
+      setEmailFailed(data.emailSent === false)
       setNewLink(data.link)
       // Refresh so the new expiry shows
       await load()
-      toast.success(`Invite resent to ${email}`)
+      if (data.emailSent === false) {
+        toast.error(
+          `New link created, but the email could not be sent to ${email}. Copy the link below and send it directly.`,
+          { duration: 12000 }
+        )
+      } else {
+        toast.success(`Invite resent to ${email}. Any earlier link for them no longer works.`)
+      }
     } else {
       toast.error('Failed to resend invitation.')
     }
@@ -456,18 +473,36 @@ export default function UsersSettingsPage() {
         </div>
 
         {newLink && (
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <Mail className="w-4 h-4 text-blue-500 flex-shrink-0" />
-              <span className="text-xs text-blue-700 truncate">Invite link: {newLink}</span>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <button onClick={() => copyLink(newLink)} className="text-blue-600 hover:text-blue-800">
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              </button>
-              <button onClick={() => setNewLink('')} className="text-blue-400 hover:text-blue-600">
-                <X className="w-4 h-4" />
-              </button>
+          <div className={`mt-4 p-3 rounded-lg border ${
+            emailFailed ? 'bg-amber-50 border-amber-300' : 'bg-blue-50 border-blue-200'
+          }`}>
+            {emailFailed && (
+              <p className="text-xs font-semibold text-amber-800 mb-2">
+                The invitation email could not be delivered. Send this link to them directly — it works the same way.
+              </p>
+            )}
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <Mail className={`w-4 h-4 flex-shrink-0 ${emailFailed ? 'text-amber-500' : 'text-blue-500'}`} />
+                <span className={`text-xs truncate ${emailFailed ? 'text-amber-800' : 'text-blue-700'}`}>
+                  Invite link: {newLink}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={() => copyLink(newLink)}
+                  className={emailFailed ? 'text-amber-700 hover:text-amber-900' : 'text-blue-600 hover:text-blue-800'}
+                  title="Copy invite link"
+                >
+                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={() => { setNewLink(''); setEmailFailed(false) }}
+                  className={emailFailed ? 'text-amber-400 hover:text-amber-600' : 'text-blue-400 hover:text-blue-600'}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
         )}

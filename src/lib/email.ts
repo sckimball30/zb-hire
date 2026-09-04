@@ -50,6 +50,60 @@ export async function sendEmail({
   return info
 }
 
+const ROLE_BLURBS: Record<string, string> = {
+  ADMIN:          'full access to jobs, candidates, and team settings',
+  RECRUITER:      'access to manage jobs, candidates, and the hiring pipeline',
+  HIRING_MANAGER: 'access to review candidates and hiring decisions for your roles',
+  INTERVIEWER:    'access to your assigned interviews and scorecards',
+}
+
+export async function sendInvitationEmail({
+  to,
+  role,
+  invitedByName,
+  token,
+}: {
+  to: string
+  role: string
+  invitedByName?: string | null
+  token: string
+}) {
+  const baseUrl = process.env.NEXTAUTH_URL ?? 'https://zb-hires.vercel.app'
+  const link = `${baseUrl}/auth/register?token=${token}`
+  const roleLabel = role.replace('_', ' ').toLowerCase()
+  const blurb = ROLE_BLURBS[role] ?? 'access to the hiring platform'
+
+  await sendEmail({
+    to,
+    subject: `${invitedByName ?? 'Your team'} invited you to join ZB Hire`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #111;">
+        <div style="background: #111111; padding: 20px 28px; border-radius: 8px 8px 0 0;">
+          <span style="color: white; font-weight: 900; font-size: 18px; letter-spacing: -0.5px;">ZB Hire</span>
+          <span style="color: rgba(255,255,255,0.4); font-size: 13px; margin-left: 10px;">by ZB Designs</span>
+        </div>
+        <div style="border: 1px solid #e5e7eb; border-top: none; padding: 28px 32px; border-radius: 0 0 8px 8px;">
+          <h2 style="margin: 0 0 12px; font-size: 20px; font-weight: 700;">You've been invited to join the team</h2>
+          <p style="margin: 0 0 20px; color: #6b7280; font-size: 14px; line-height: 1.6;">
+            ${invitedByName ? `<strong>${invitedByName}</strong> has` : 'You have been'} invited you to ZB Hire,
+            the hiring platform for ZB Designs. You'll join as a
+            <strong style="text-transform: capitalize;">${roleLabel}</strong>, which gives you ${blurb}.
+          </p>
+          <a href="${link}" style="display:inline-block; background:#4AFFD2; color:#111111; font-weight:700; font-size:14px; padding:12px 24px; border-radius:6px; text-decoration:none;">
+            Accept Invitation &rarr;
+          </a>
+          <p style="margin: 24px 0 0; font-size: 12px; color: #9ca3af; line-height: 1.6;">
+            This invitation expires in 7 days. If you weren't expecting it, you can ignore this email.
+          </p>
+          <p style="margin: 12px 0 0; font-size: 12px; color: #9ca3af; word-break: break-all;">
+            Button not working? Paste this into your browser:<br>${link}
+          </p>
+        </div>
+      </div>
+    `,
+  })
+}
+
 export async function sendPasswordResetEmail({
   to,
   name,

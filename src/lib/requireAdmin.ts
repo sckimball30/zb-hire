@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
  */
 export async function requireAdmin(
   req: NextRequest
-): Promise<{ id: string; role: string } | NextResponse> {
+): Promise<{ id: string; role: string; name: string | null; email: string | null } | NextResponse> {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET ?? 'dev-secret' })
 
   if (!token?.id) {
@@ -17,7 +17,7 @@ export async function requireAdmin(
 
   const user = await prisma.user.findUnique({
     where: { id: token.id as string },
-    select: { id: true, role: true },
+    select: { id: true, role: true, name: true, email: true },
   })
 
   if (!user || user.role !== 'ADMIN') {

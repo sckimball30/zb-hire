@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { sendEmail } from '@/lib/email'
+import { sendInvitationEmail } from '@/lib/email'
 import { requireAdmin } from '@/lib/requireAdmin'
 
 export async function GET(req: NextRequest) {
@@ -34,25 +34,28 @@ export async function POST(req: NextRequest) {
     },
   })
 
-  const baseUrl = process.env.NEXTAUTH_URL ?? 'http://localhost:3000'
+  const baseUrl = process.env.NEXTAUTH_URL ?? 'https://zb-hires.vercel.app'
   const link = `${baseUrl}/auth/register?token=${invitation.token}`
 
+  // The invitation record is valid whether or not the email goes out, so a send
+  // failure isn't fatal — but it must be reported, otherwise the UI claims the
+  // invite was delivered when nobody received anything.
+  let emailSent = true
+  let emailError: string | undefined
   try {
-    await sendEmail({
+    await sendInvitationEmail({
       to: email,
-      subject: "You've been invited to join ATS",
-      html: `
-        <p>You've been invited to join the ATS platform.</p>
-        <p><a href="${link}">Click here to accept your invitation</a></p>
-        <p>This link expires in 7 days.</p>
-        <p style="color:#888;font-size:12px">Or copy this URL: ${link}</p>
-      `,
+      role: invitation.role,
+      invitedByName: admin.name ?? admin.email,
+      token: invitation.token,
     })
   } catch (err) {
+    emailSent = false
+    emailError = err instanceof Error ? err.message : 'Unknown error'
     console.error('[invite email]', err)
   }
 
-  return NextResponse.json({ ok: true, link })
+  return NextResponse.json({ ok: true, link, emailSent, emailError })
 }
 
 export async function PATCH(req: NextRequest) {
@@ -72,25 +75,25 @@ export async function PATCH(req: NextRequest) {
     },
   })
 
-  const baseUrl = process.env.NEXTAUTH_URL ?? 'http://localhost:3000'
+  const baseUrl = process.env.NEXTAUTH_URL ?? 'https://zb-hires.vercel.app'
   const link = `${baseUrl}/auth/register?token=${invitation.token}`
 
+  let emailSent = true
+  let emailError: string | undefined
   try {
-    await sendEmail({
+    await sendInvitationEmail({
       to: invitation.email,
-      subject: "You've been invited to join ATS",
-      html: `
-        <p>You've been invited to join the ATS platform.</p>
-        <p><a href="${link}">Click here to accept your invitation</a></p>
-        <p>This link expires in 7 days.</p>
-        <p style="color:#888;font-size:12px">Or copy this URL: ${link}</p>
-      `,
+      role: invitation.role,
+      invitedByName: admin.name ?? admin.email,
+      token: invitation.token,
     })
   } catch (err) {
+    emailSent = false
+    emailError = err instanceof Error ? err.message : 'Unknown error'
     console.error('[resend invite email]', err)
   }
 
-  return NextResponse.json({ ok: true, link })
+  return NextResponse.json({ ok: true, link, emailSent, emailError })
 }
 
 export async function DELETE(req: NextRequest) {
