@@ -321,6 +321,7 @@ export default function UsersSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [bootstrapping, setBootstrapping] = useState(false)
   const [emailFailed, setEmailFailed] = useState(false)
+  const [emailErrorMsg, setEmailErrorMsg] = useState('')
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState('RECRUITER')
   const [inviting, setInviting] = useState(false)
@@ -369,6 +370,7 @@ export default function UsersSettingsPage() {
         toast.success(`Invitation sent to ${inviteEmail}`)
       }
       setEmailFailed(data.emailSent === false)
+      setEmailErrorMsg(data.emailError ?? '')
       setNewLink(data.link)
       setInviteEmail('')
       await load()
@@ -395,6 +397,7 @@ export default function UsersSettingsPage() {
     const data = await res.json()
     if (res.ok) {
       setEmailFailed(data.emailSent === false)
+      setEmailErrorMsg(data.emailError ?? '')
       setNewLink(data.link)
       // Refresh so the new expiry shows
       await load()
@@ -477,9 +480,16 @@ export default function UsersSettingsPage() {
             emailFailed ? 'bg-amber-50 border-amber-300' : 'bg-blue-50 border-blue-200'
           }`}>
             {emailFailed && (
-              <p className="text-xs font-semibold text-amber-800 mb-2">
-                The invitation email could not be delivered. Send this link to them directly — it works the same way.
-              </p>
+              <>
+                <p className="text-xs font-semibold text-amber-800 mb-1.5">
+                  The invitation email could not be delivered. Send this link to them directly — it works the same way.
+                </p>
+                {emailErrorMsg && (
+                  <p className="text-[11px] text-amber-700/80 font-mono mb-2 break-words">
+                    Mail server said: {emailErrorMsg}
+                  </p>
+                )}
+              </>
             )}
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 min-w-0">
@@ -497,7 +507,7 @@ export default function UsersSettingsPage() {
                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 </button>
                 <button
-                  onClick={() => { setNewLink(''); setEmailFailed(false) }}
+                  onClick={() => { setNewLink(''); setEmailFailed(false); setEmailErrorMsg('') }}
                   className={emailFailed ? 'text-amber-400 hover:text-amber-600' : 'text-blue-400 hover:text-blue-600'}
                 >
                   <X className="w-4 h-4" />
