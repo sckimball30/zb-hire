@@ -176,10 +176,10 @@ export default function PublicApplyPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Branded header banner */}
-      <div className="bg-white py-6 px-4">
-        <div className="max-w-xl mx-auto flex flex-col items-center gap-3">
-          <WigglitzLogo />
+      {/* Branded header banner — full-bleed white band, logo sized to fill it */}
+      <div className="bg-white w-full">
+        <div className="w-full max-w-4xl mx-auto px-4 py-7 sm:py-10 flex flex-col items-center gap-3">
+          <WigglitzLogo className="max-w-[300px] sm:max-w-lg lg:max-w-2xl" />
           <p className="text-gray-400 text-xs font-medium tracking-widest uppercase">Careers</p>
         </div>
       </div>
@@ -418,15 +418,13 @@ export default function PublicApplyPage() {
   )
 }
 
-function WigglitzLogo() {
+function WigglitzLogo({ className = 'max-w-[240px] sm:max-w-xs' }: { className?: string }) {
   return (
-    <div className="flex flex-col items-center">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/logos/wigglitz-logo.png"
-        alt="The Original Wigglitz"
-        className="h-16 sm:h-20 w-auto object-contain"
-      />
-    </div>
+    /* eslint-disable-next-line @next/next/no-img-element */
+    <img
+      src="/logos/wigglitz-by-zb-horz.png"
+      alt="The Original Wigglitz by ZB Designs"
+      className={`w-full h-auto object-contain mx-auto ${className}`}
+    />
   )
 }
